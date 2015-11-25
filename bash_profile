@@ -1,8 +1,9 @@
 # echo "*** now executing .bash_profile"
 # everything goes into .bash_profile
 #   .bashrc sources this, and .profile is empty
-# {{{
 
+if [ -e ~/.node_completion ] ; then
+# {{{
 # Node Completion - Auto-generated, do not touch.
 shopt -s progcomp
 for f in $(command ls ~/.node-completion); do
@@ -10,6 +11,7 @@ for f in $(command ls ~/.node-completion); do
   test -f "$f" && . "$f"
 done
 # }}}
+fi
 
 # This is how we keep global packages...
 # nvm install v4 --reinstall-packages-from=0.10.31
