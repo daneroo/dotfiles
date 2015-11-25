@@ -1,4 +1,4 @@
-# echo "*** now executing .bash_profile" `python -c'import time; print repr(time.time())'`
+# echo "*** now executing .bash_profile"
 # everything goes into .bash_profile
 #   .bashrc sources this, and .profile is empty
 # {{{
@@ -13,8 +13,12 @@ done
 
 # This is how we keep global packages...
 # nvm install v4 --reinstall-packages-from=0.10.31
-export NVM_SYMLINK_CURRENT=true
-[ -s "/Users/daniel/.nvm/nvm.sh" ] && . "/Users/daniel/.nvm/nvm.sh" # This loads nvm
+TIMEFORMAT="nvm.sh took %lR" # reset later
+time {
+    export NVM_SYMLINK_CURRENT=true
+    [ -s "/Users/daniel/.nvm/nvm.sh" ] && . "/Users/daniel/.nvm/nvm.sh" # This loads nvm    
+}
+export TIMEFORMAT="%lR"
 
 # Old .profile content
 # This is source'd from .bash_profile, since I installed rvm!
@@ -45,7 +49,7 @@ export PATH=/usr/local/bin:$PATH
 #   git config color.ui true
 export CLICOLOR=1
 
-export TIMEFORMAT="%Rs"
+export TIMEFORMAT="%lR"
 #TIMEFORMAT="%lR"
 alias ls='ls -sF'
 alias pp='pushd'
