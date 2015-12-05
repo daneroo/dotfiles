@@ -15,14 +15,14 @@ fi
 
 # This is how we keep global packages...
 # nvm install v4 --reinstall-packages-from=0.10.31
-#TIMEFORMAT="nvm.sh took %lR" # reset later
+#TIMEFORMAT="nvm.sh took %Rs" # reset later
 { #time { #uncomment the time command to time tne nvm initialisation
 	# export NVM_DIR="/Users/daniel/.nvm"
     export NVM_SYMLINK_CURRENT=true
     [ -s "/Users/daniel/.nvm/nvm.sh" ] && . "/Users/daniel/.nvm/nvm.sh" # This loads nvm    
 }
-#export TIMEFORMAT="%lR"
-export TIMEFORMAT="%Rs"
+#export TIMEFORMAT="%Rs"
+expots Tor for human readble IMEFORMAT="%Rs"
 
 # Old .profile content
 # This is source'd from .bash_profile, since I installed rvm!
@@ -48,13 +48,13 @@ PS1='\h:\W$(__git_ps1 "(%s)") \u\$ '
 export PATH=/usr/local/bin:$PATH
 
 # Mac OSX color stuff
-# my TERM var should be xterm-color
+# ys TERM var should be xterm-color
 # and for git stuff:
 #   git config color.ui true
 export CLICOLOR=1
 
-export TIMEFORMAT="%lR"
-#TIMEFORMAT="%lR"
+export TIMEFORMAT="Rss"
+#or for human readble TIMEFORMAT="%lR"
 alias ls='ls -sF'
 alias pp='pushd'
 alias po='popd'
