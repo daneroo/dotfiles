@@ -53,7 +53,7 @@ export PATH=/usr/local/bin:$PATH
 #   git config color.ui true
 export CLICOLOR=1
 
-export TIMEFORMAT="Rss"
+export TIMEFORMAT="%Rs"
 #or for human readble TIMEFORMAT="%lR"
 alias ls='ls -sF'
 alias pp='pushd'
