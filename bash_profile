@@ -22,7 +22,6 @@ fi
     [ -s "/Users/daniel/.nvm/nvm.sh" ] && . "/Users/daniel/.nvm/nvm.sh" # This loads nvm    
 }
 #export TIMEFORMAT="%Rs"
-expots Tor for human readble IMEFORMAT="%Rs"
 
 # Old .profile content
 # This is source'd from .bash_profile, since I installed rvm!
@@ -54,7 +53,7 @@ export PATH=/usr/local/bin:$PATH
 export CLICOLOR=1
 
 export TIMEFORMAT="%Rs"
-#or for human readble TIMEFORMAT="%lR"
+#for human readble, use export TIMEFORMAT="%lR"
 alias ls='ls -sF'
 alias pp='pushd'
 alias po='popd'
