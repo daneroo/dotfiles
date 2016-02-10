@@ -44,7 +44,7 @@ PROMPT_COMMAND="__git_ps1 '\u@\h:\w' '\\$ '; $PROMPT_COMMAND"
 PS1='\h:\W$(__git_ps1 "(%s)") \u\$ '
 
 # put /usr/local/bin ahead of /usr/bin
-export PATH=/usr/local/bin:$PATH
+export PATH=/usr/local/sbin:/usr/local/bin:$PATH
 
 # Mac OSX color stuff
 # ys TERM var should be xterm-color
