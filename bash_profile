@@ -17,7 +17,7 @@ fi
 # nvm install v4 --reinstall-packages-from=0.10.31
 #TIMEFORMAT="nvm.sh took %Rs" # reset later
 { #time { #uncomment the time command to time tne nvm initialisation
-	# export NVM_DIR="/Users/daniel/.nvm"
+    export NVM_ADIR="/Users/daniel/.nvm"
     export NVM_SYMLINK_CURRENT=true
     [ -s "/Users/daniel/.nvm/nvm.sh" ] && . "/Users/daniel/.nvm/nvm.sh" # This loads nvm    
 }
