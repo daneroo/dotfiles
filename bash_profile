@@ -2,6 +2,9 @@
 # everything goes into .bash_profile
 #   .bashrc sources this, and .profile is empty
 
+# could do some bash foo magic: 
+DOTFILES=${HOME}/.dotfiles
+
 if [ -e ~/.node_completion ] ; then
 # {{{
 # Node Completion - Auto-generated, do not touch.
@@ -32,6 +35,10 @@ if [ -f $(brew --prefix)/etc/bash_completion.d/git-prompt.sh ]; then
 fi
 if [ -f $(brew --prefix)/etc/bash_completion.d/git-completion.bash ]; then
   . $(brew --prefix)/etc/bash_completion.d/git-completion.bash
+fi
+# docker completion
+if [ -f $(brew --prefix)/etc/bash_completion.d/docker ]; then
+  . $(brew --prefix)/etc/bash_completion.d/docker
 fi
 
  
