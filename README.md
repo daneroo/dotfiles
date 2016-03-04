@@ -15,6 +15,14 @@ This script should be idempotent, and warn if any file are already present, or t
 
 # completion (for docker)
 
+brew install bash 
+
+# add to allowed shells as root
+sudo su -
+echo /usr/local/bin/bash >> /etc/shells
+# as daniel
+chsh -s /usr/local/bin/bash
+
 brew install homebrew/completions/docker-completion
 
 cd completion.d
