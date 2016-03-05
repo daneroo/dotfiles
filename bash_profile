@@ -88,8 +88,9 @@ export GO15VENDOREXPERIMENT=1
 export PATH="/usr/local/heroku/bin:$PATH"
 
 # Docker default on OSX: careful if this dotfile goes to cantor/ubuntu
-# Should go to extr5as ?? or if boot2docker exists...
+# Should go to extras ?? or if boot2docker exists...
 # export DOCKER_HOST=tcp://192.168.59.103:2375
 alias b2d='boot2docker init && boot2docker up && $(boot2docker shellinit)'
 alias dme='eval "$(docker-machine env dev)"; env|grep DOCKER;echo docker-machine env dev set'
 alias dmc='docker-machine create -d virtualbox --virtualbox-disk-size "40000" --virtualbox-memory "2048" --virtualbox-cpu-count "2" dev'
+alias dangling='docker rmi $(docker images --quiet --filter "dangling=true")'
