@@ -20,6 +20,7 @@ fi
 # nvm install v4 --reinstall-packages-from=0.10.31
 #TIMEFORMAT="nvm.sh took %Rs" # reset later
 { #time { #uncomment the time command to time tne nvm initialisation
+	# might not always be ~daniel!
     export NVM_DIR="/Users/daniel/.nvm"
     export NVM_SYMLINK_CURRENT=true
     [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
@@ -92,5 +93,5 @@ export PATH="/usr/local/heroku/bin:$PATH"
 # export DOCKER_HOST=tcp://192.168.59.103:2375
 alias b2d='boot2docker init && boot2docker up && $(boot2docker shellinit)'
 alias dme='eval "$(docker-machine env dev)"; env|grep DOCKER;echo docker-machine env dev set'
-alias dmc='docker-machine create -d virtualbox --virtualbox-disk-size "40000" --virtualbox-memory "2048" --virtualbox-cpu-count "2" dev'
+alias dmc='docker-machine create -d virtualbox --virtualbox-disk-size "40000" --virtualbox-memory "4096" --virtualbox-cpu-count "2" dev'
 alias dangling='docker rmi $(docker images --quiet --filter "dangling=true")'
