@@ -1,0 +1,3 @@
+progress=true
+//registry.npmjs.org/:_authToken=xxxxxxxxx
+prefix=${HOME}/.npm-packages

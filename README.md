@@ -6,14 +6,27 @@ Managing dotfiles for bash
     ~/.profile
     ~/.bashrc
 
-# install script
+## TODO
+Make some sections for:
+
+- brew/case (stephane)
+- nvm ?
+- [npm globals](https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md)
+
+    mkdir "${HOME}/.npm-packages"
+
+## npm global package list
+
+    npm uninstall -g babel-cli eslint gulp-cli http-server json serverless uglify-js
+
+## install script
 This script should be idempotent, and warn if any file are already present, or there are dead symlinks in $HOME
 
     cd ~/.dotfiles/
     ./install.sh
 
 
-# completion (for docker)
+## completion (for docker)
 
 brew install bash 
 

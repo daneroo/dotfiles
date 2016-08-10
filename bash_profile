@@ -16,6 +16,14 @@ done
 # }}}
 fi
 
+# This is how we move global package root for system node.js (no nvm)
+# https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md
+# npm install -g babel-cli eslint gulp-cli http-server json serverless uglify-js
+# How does this interact with nvm?
+NPM_PACKAGES="${HOME}/.npm-packages"
+PATH="$NPM_PACKAGES/bin:$PATH"
+# ignore MANPATH stuff from instructions
+
 # This is how we keep global packages...
 # nvm install v4 --reinstall-packages-from=0.10.31
 #TIMEFORMAT="nvm.sh took %Rs" # reset later
