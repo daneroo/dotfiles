@@ -45,6 +45,9 @@ if [ -f $(brew --prefix)/etc/bash_completion.d/docker ]; then
   . $(brew --prefix)/etc/bash_completion.d/docker
 fi
 
+# brew install awscli / aws completion
+complete -C aws_completer aws
+
  
 GIT_PS1_SHOWUPSTREAM="auto"
 GIT_PS1_SHOWCOLORHINTS="yes"
