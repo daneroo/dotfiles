@@ -33,6 +33,9 @@ fi
 # Old .profile content
 # This is source'd from .bash_profile, since I installed rvm!
 
+if [ -f $(brew --prefix)/etc/bash_completion ]; then
+  . $(brew --prefix)/etc/bash_completion
+fi
 # brew's git and completion : brew install git bash-completion
 if [ -f $(brew --prefix)/etc/bash_completion.d/git-prompt.sh ]; then
   . $(brew --prefix)/etc/bash_completion.d/git-prompt.sh
