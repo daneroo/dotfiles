@@ -88,7 +88,6 @@ export PATH=$PATH:/usr/local/sbin
 export GOPATH=$HOME/Code/Go
 # If I want to export my own built binaries, or installed go utils (govend)
 export PATH=$PATH:$GOPATH/bin
-export GO15VENDOREXPERIMENT=1
 
 # Android ADT path for phonegap to work
 #export ADTHOME=/Users/daniel/Downloads/devops/adt-bundle-mac-x86_64-20130917
