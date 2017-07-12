@@ -93,9 +93,6 @@ export PATH=$PATH:$GOPATH/bin
 #export ADTHOME=/Users/daniel/Downloads/devops/adt-bundle-mac-x86_64-20130917
 #export PATH=${PATH}:${ADTHOME}/sdk/platform-tools:${ADTHOME}/sdk/tools
 
-### Added by the Heroku Toolbelt
-export PATH="/usr/local/heroku/bin:$PATH"
-
 # Docker default on OSX: careful if this dotfile goes to cantor/ubuntu
 # Should go to extras ?? or if boot2docker exists...
 # export DOCKER_HOST=tcp://192.168.59.103:2375
