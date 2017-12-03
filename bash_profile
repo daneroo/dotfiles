@@ -61,6 +61,7 @@ PROMPT_COMMAND="__git_ps1 '\u@\h:\w' '\\$ '; $PROMPT_COMMAND"
 PS1='\h:\W$(__git_ps1 "(%s)") \u\$ '
 
 # put /usr/local/bin ahead of /usr/bin
+# as per homebrew's suggestion add /usr/local/sbin
 export PATH=/usr/local/sbin:/usr/local/bin:$PATH
 
 # Mac OSX color stuff
@@ -75,23 +76,15 @@ alias ls='ls -sF'
 alias pp='pushd'
 alias po='popd'
 
-# add mongo to path
-#export MONGO_HOME=~/Downloads/mongo
-#export PATH=$PATH:$MONGO_HOME/bin
-
 #export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home/
-
-# as per homebrew's suggestion add /usr/local/sbin
-export PATH=$PATH:/usr/local/sbin
 
 # for Go, without docker
 export GOPATH=$HOME/Code/Go
 # If I want to export my own built binaries, or installed go utils (govend)
 export PATH=$PATH:$GOPATH/bin
 
-# Android ADT path for phonegap to work
-#export ADTHOME=/Users/daniel/Downloads/devops/adt-bundle-mac-x86_64-20130917
-#export PATH=${PATH}:${ADTHOME}/sdk/platform-tools:${ADTHOME}/sdk/tools
+# added by Anaconda2 5.0.1 installer
+export PATH="/Users/daniel/anaconda2/bin:$PATH"
 
 # Docker default on OSX: careful if this dotfile goes to cantor/ubuntu
 # Should go to extras ?? or if boot2docker exists...
@@ -100,3 +93,4 @@ alias b2d='boot2docker init && boot2docker up && $(boot2docker shellinit)'
 alias dme='eval "$(docker-machine env dev)"; env|grep DOCKER;echo docker-machine env dev set'
 alias dmc='docker-machine create -d virtualbox --virtualbox-disk-size "40000" --virtualbox-memory "4096" --virtualbox-cpu-count "2" dev'
 alias dangling='docker rmi $(docker images --quiet --filter "dangling=true")'
+
