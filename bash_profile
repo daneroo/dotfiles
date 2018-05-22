@@ -19,6 +19,7 @@ fi
 # Where should this list go?
 # npm install -g babel-cli eslint gulp-cli http-server json uglify-js
 
+# TODO: Remove nvm: dirac,shannon,goedel
 # This is how we keep global packages...
 # nvm install v4 --reinstall-packages-from=0.10.31
 #TIMEFORMAT="nvm.sh took %Rs" # reset later
@@ -36,6 +37,7 @@ fi
 if [ -f $(brew --prefix)/etc/bash_completion ]; then
   . $(brew --prefix)/etc/bash_completion
 fi
+
 # brew's git and completion : brew install git bash-completion
 if [ -f $(brew --prefix)/etc/bash_completion.d/git-prompt.sh ]; then
   . $(brew --prefix)/etc/bash_completion.d/git-prompt.sh
@@ -43,26 +45,56 @@ fi
 if [ -f $(brew --prefix)/etc/bash_completion.d/git-completion.bash ]; then
   . $(brew --prefix)/etc/bash_completion.d/git-completion.bash
 fi
+
 # docker completion
 if [ -f $(brew --prefix)/etc/bash_completion.d/docker ]; then
   . $(brew --prefix)/etc/bash_completion.d/docker
 fi
 
+# kube completion - conditional, 
+# TODO: unless? brew install bash-completion@2
+# see kubectl completion -h
+if [ -f $(brew --prefix)/bin/kubectl ]; then
+  source <(kubectl completion bash)
+fi
+
+# kube-ps1 prompt functions
+# side effect: appends _kube_ps1_update_cache to PROMPT_COMMAND
+if [ -f $(brew --prefix)/opt/kube-ps1/share/kube-ps1.sh ]; then
+  . $(brew --prefix)/opt/kube-ps1/share/kube-ps1.sh
+fi
+
 # brew install awscli / aws completion
 complete -C aws_completer aws
 
- 
-GIT_PS1_SHOWUPSTREAM="auto"
-GIT_PS1_SHOWCOLORHINTS="yes"
+# *** Prompt: (bash+git+kube)
+# Prompt uses PROMPT_COMMAND instead of PS1, 
+# because git prompt only supports color when used that way.
+# Note that PROMPT_COMMAND was appended to by kube-ps1.sh
+PROMPT_DIRTRIM=2  # depth of directory for \w directive
 
-## modified to keep updated terminal cwd: for nerw tabs
-# Fixed my problems by not 'exporting PROMPT_COMMAND'
-PROMPT_COMMAND="__git_ps1 '\u@\h:\w' '\\$ '; $PROMPT_COMMAND"
-PS1='\h:\W$(__git_ps1 "(%s)") \u\$ '
+GIT_PS1_SHOWUPSTREAM="auto"
+GIT_PS1_SHOWCOLORHINTS=true
+GIT_PS1_SHOWDIRTYSTATE=true
+GIT_PS1_SHOWUNTRACKEDFILES=true
+
+# KUBE_PS1_SYMBOL_ENABLE=false # default is true
+KUBE_PS1_SEPARATOR=''  # to remove separator, because symbol addds a space.
+
+## Don't forget to append previous PROMPT_COMMAND..
+PROMPT_PFX='\u@\h:\w'
+if [ -n "$KUBE_PS1_BINARY" ]; then
+  PROMPT_SFX='$(kube_ps1)$ '
+  kubeoff
+else
+  PROMPT_SFX='$ ' // if no kube-ps1
+fi
+PROMPT_COMMAND="__git_ps1 '${PROMPT_PFX}' '${PROMPT_SFX}'; ${PROMPT_COMMAND}"
 
 # put /usr/local/bin ahead of /usr/bin
 # as per homebrew's suggestion add /usr/local/sbin
 export PATH=/usr/local/sbin:/usr/local/bin:$PATH
+
 
 # Mac OSX color stuff
 # ys TERM var should be xterm-color
