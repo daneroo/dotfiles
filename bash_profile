@@ -87,7 +87,7 @@ if [ -n "$KUBE_PS1_BINARY" ]; then
   PROMPT_SFX='$(kube_ps1)$ '
   kubeoff
 else
-  PROMPT_SFX='$ ' // if no kube-ps1
+  PROMPT_SFX='$ ' # if no kube-ps1
 fi
 PROMPT_COMMAND="__git_ps1 '${PROMPT_PFX}' '${PROMPT_SFX}'; ${PROMPT_COMMAND}"
 
