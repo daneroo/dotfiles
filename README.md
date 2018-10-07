@@ -8,16 +8,21 @@ Managing dotfiles for bash
 
 ## TODO
 Make some sections for:
-
-- brew/case (stephane)
-- nvm ?
-- [npm globals](https://github.com/sindresorhus/guides/blob/master/npm-global-without-sudo.md)
-
-    mkdir "${HOME}/.npm-packages"
+- List of necessary installs
+    - applications (brew cask?)
+    - brew
+    - npm
 
 ## npm global package list
-
-    npm uninstall -g babel-cli eslint gulp-cli http-server json serverless uglify-js
+```
+    ├── babel-cli@6.11.4
+    ├── eslint@3.3.0
+    ├── gulp-cli@1.2.2
+    ├── http-server@0.9.0
+    ├── json@9.0.4
+    ├── npm@6.4.1
+    └── uglify-js@2.7.0
+```
 
 ## install script
 This script should be idempotent, and warn if any file are already present, or there are dead symlinks in $HOME
