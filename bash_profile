@@ -104,9 +104,6 @@ export GOPATH=$HOME/Code/Go
 # If I want to export my own built binaries, or installed go utils (govend)
 export PATH=$PATH:$GOPATH/bin
 
-# added by Anaconda2 5.0.1 installer
-export PATH="/Users/daniel/anaconda2/bin:$PATH"
-
 # Docker default on OSX: careful if this dotfile goes to cantor/ubuntu
 # Should go to extras ?? or if boot2docker exists...
 # export DOCKER_HOST=tcp://192.168.59.103:2375
