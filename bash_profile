@@ -104,6 +104,9 @@ export GOPATH=$HOME/Code/Go
 # If I want to export my own built binaries, or installed go utils (govend)
 export PATH=$PATH:$GOPATH/bin
 
+# For ngs NATS.io utility
+export PATH=$HOME/.ngs/bin:$PATH  #Add NGS utility to the path
+
 # Docker default on OSX: careful if this dotfile goes to cantor/ubuntu
 # Should go to extras ?? or if boot2docker exists...
 # export DOCKER_HOST=tcp://192.168.59.103:2375
