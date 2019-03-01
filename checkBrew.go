@@ -34,7 +34,8 @@ func main() {
 		for _, cask := range missing {
 			fmt.Printf(" brew install %s\n", cask)
 		}
-		fmt.Printf("\n")
+		fmt.Printf("\n  or\n\n")
+		fmt.Printf(" brew install %s\n", strings.Join(missing, " "))
 	} else {
 		fmt.Printf("✓ - No missing casks\n")
 	}
@@ -46,7 +47,8 @@ func main() {
 		for _, e := range extra {
 			fmt.Printf(" brew uninstall %s\n", e)
 		}
-		fmt.Printf("\n")
+		fmt.Printf("\n  or\n\n")
+		fmt.Printf(" brew uninstall %s\n\n", strings.Join(extra, " "))
 	} else {
 		fmt.Printf("✓ - No extraneous casks\n")
 	}
