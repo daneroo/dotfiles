@@ -47,6 +47,7 @@ brew outdated
 brew upgrade
 brew cleanup
 
+brew tap beeftornado/rmtree
 brew rmtree thing
 ```
 
