@@ -3,7 +3,7 @@
 echo "Installing dotfiles"
 
 DOTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-DOTFILES="bash_profile profile bashrc npmrc"
+DOTFILES="bash_profile profile bashrc"
 
 doSymlinks () {
     for f in ${DOTFILES}; do
