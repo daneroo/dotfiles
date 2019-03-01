@@ -12,33 +12,62 @@ import (
 	"strings"
 )
 
+var verbose = true
+
 func main() {
 	required := getRequired()
-	fmt.Printf("Required:\n %v\n\n", required)
-
 	deps := getDeps()
-	fmt.Printf("Deps:\n %v\n\n", deps)
-
 	installed := getInstalled()
-	// fmt.Printf("Installed:\n %v\n\n", installed)
+
+	fmt.Printf("--- Checks: --- ( ✓ / ✗ ) \n")
 
 	ok := sanity(installed, deps)
 	if ok {
-		fmt.Printf("✓ - Sanity passed: installed < keys(deps)\n\n")
+		fmt.Printf("✓ - Sanity passed: installed < keys(deps)\n")
 	} else {
-		fmt.Printf("✗ -Sanity failed: installed > keys(deps)\n\n")
+		fmt.Printf("✗ -Sanity failed: installed > keys(deps)\n")
+	}
+
+	missing := checkMissing(required, installed)
+	if len(missing) > 0 {
+		fmt.Printf("✗ -Missing casks:\n")
+		for _, cask := range missing {
+			fmt.Printf(" brew install %s\n", cask)
+		}
+		fmt.Printf("\n")
+	} else {
+		fmt.Printf("✓ - No missing casks\n")
 	}
 
 	// Check if all installed are either required, or a dpendant of a required package
-	extra := extraneous(installed, required, deps)
+	extra := extraneous(required, installed, deps)
 	if len(extra) > 0 {
-		fmt.Printf("✗ -Extraneous casks:\n %q\n\n", extra)
+		fmt.Printf("✗ -Extraneous casks: (brew uninstall or brew rmtree)\n")
+		for _, e := range extra {
+			fmt.Printf(" brew uninstall %s\n", e)
+		}
+		fmt.Printf("\n")
 	} else {
-		fmt.Printf("✓ - No extraneous casks\n\n")
+		fmt.Printf("✓ - No extraneous casks\n")
 	}
+	fmt.Printf("---\n")
+
 }
 
-func extraneous(installed, required []string, deps map[string][]string) []string {
+func checkMissing(required, installed []string) []string {
+	missing := []string{}
+	for _, req := range required {
+		if !contains(installed, req) {
+			missing = append(missing, req)
+			// fmt.Printf(" - required cask: %s is missing\n", req)
+		} else {
+			// fmt.Printf(" - required cask: %s is installed\n", req)
+		}
+	}
+	return missing
+}
+
+func extraneous(required, installed []string, deps map[string][]string) []string {
 	extra := []string{}
 	for _, inst := range installed {
 		ok := false
@@ -57,7 +86,8 @@ func extraneous(installed, required []string, deps map[string][]string) []string
 			}
 		}
 		if !ok {
-			fmt.Printf(" - %s is not required transitevely, no unrequired casks\n", inst)
+			extra = append(extra, inst)
+			fmt.Printf(" - %s is not required (transitevely)\n", inst)
 		}
 	}
 	return extra
@@ -81,7 +111,21 @@ func getRequired() []string {
 	if err != nil {
 		log.Fatal(err)
 	}
-	required := strings.Split(string(out), "\n")
+	// remove emtpy lines, and lines starting with # (comment)
+	required := filter(
+		strings.Split(string(out), "\n"),
+		func(s string) bool {
+			return len(s) > 0 && !strings.HasPrefix(strings.TrimSpace(s), "#")
+		})
+
+	// Trim entries
+	for i := 0; i < len(required); i++ {
+		required[i] = strings.TrimSpace(required[i])
+	}
+
+	if verbose {
+		fmt.Printf("Required: (./brewDeps)\n %v\n\n", required)
+	}
 	return required
 }
 
@@ -109,6 +153,9 @@ func getDeps() map[string][]string {
 		deps[c] = ds
 	}
 
+	if verbose {
+		fmt.Printf("Deps: (brew deps --installed)\n %v\n\n", deps)
+	}
 	return deps
 }
 
@@ -121,6 +168,9 @@ func getInstalled() []string {
 
 	// split by line, remove empty lines
 	installed := spliyByLineNoEmpty(string(out))
+	if verbose {
+		fmt.Printf("Installed: (brew ls --full-name)\n %v\n\n", installed)
+	}
 	return installed
 }
 
