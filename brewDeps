@@ -2,6 +2,7 @@ asciinema
 aws-iam-authenticator
 awscli
 azure-cli
+azure/draft/draft
 bash
 bash-completion
 docker-completion
