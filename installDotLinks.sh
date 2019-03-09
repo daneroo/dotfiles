@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "Installing dotfiles"
+echo "-= Installing dotfiles"
 
 DOTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES="bash_profile profile bashrc"
@@ -26,20 +26,20 @@ safesymlink () {
 
     # echo Linking dotfile ${dotfile} to ${linkfile}
     if [[ ! -f ${dotfile} ]]; then
-        echo "  ERR: Missing dotfile ${dotfile}"
+        echo "✗ - Missing dotfile ${dotfile}"
         return
     fi
     if [ "${dotfile}" -ef "${linkfile}" ]; then # $1 and $2 are different files        
-        echo "  OK: ${f} already linked and identical"
+        echo "✓ - ${f} already linked and identical"
         return
     fi
 
     # perform the link and report error
     ln -s ${dotfile} ${linkfile}
     if [ $? -ne 0 ]; then
-        echo "  ERR: remove ${linkfile} first"
+        echo "✗ - remove ${linkfile} first"
     else
-        echo "  OK: Linked dotfile ${dotfile} to ${linkfile}"
+        echo "✓ - Linked dotfile ${dotfile} to ${linkfile}"
     fi
 }
 
@@ -48,12 +48,12 @@ showBadlinks(){
     echo "Checking for broken links..."
     local badLines=`find -L $HOME -maxdepth 1 -name .\* -type l -ls | wc -l`
     if [ $badLines -eq 0 ]; then
-        echo "  OK: No broken links"
+        echo "✓ - No broken links"
     else
         # now show them...
         find -L $HOME -maxdepth 1 -name .\* -type l -ls
         echo
-        echo "  ERR: Check the above broken links: e.g. ~/.somebadlink -> missing_file"
+        echo "✗ - Check the above broken links: e.g. ~/.somebadlink -> missing_file"
     fi
 }
 

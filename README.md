@@ -1,16 +1,19 @@
 # dotfiles
 
-Managing dotfiles for bash
+## Operating
 
+_Systems under control:_ `dirac,shannon,MB292 (goedel)`
+
+The check script is used to run regular maintenance
 ```bash
-  ~/.bash_profile
-  ~/.bash_login NOT PRESENT
-  ~/.profile
-  ~/.bashrc
+./check.sh
 ```
 
 ## TODO
 
+- [Strap](https://github.com/MikeMcQuaid/strap)
+  - [Brew Bundle](https://github.com/Homebrew/homebrew-bundle)
+  - [Brew Cask](https://github.com/Homebrew/homebrew-cask)
 Make some sections for:
 
 - List of necessary installs
@@ -36,7 +39,7 @@ This script should be idempotent, and warn if any file are already present, or t
 
 ```bash
 cd ~/.dotfiles/
-./install.sh
+./installDotLinks.sh
 ```
 
 ## Brew management

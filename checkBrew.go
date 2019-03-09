@@ -25,7 +25,7 @@ func main() {
 	if ok {
 		fmt.Printf("✓ - Sanity passed: installed < keys(deps)\n")
 	} else {
-		fmt.Printf("✗ -Sanity failed: installed > keys(deps)\n")
+		fmt.Printf("✗ - Sanity failed: installed > keys(deps)\n")
 	}
 
 	missing := checkMissing(required, installed)
