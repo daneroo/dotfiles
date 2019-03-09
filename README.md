@@ -4,7 +4,8 @@
 
 _Systems under control:_ `dirac,shannon,MB292 (goedel)`
 
-The check script is used to run regular maintenance
+Regular maintenance (_idemppotent_):
+
 ```bash
 ./check.sh
 ```
