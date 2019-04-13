@@ -16,6 +16,7 @@ heroku/brew/heroku
 heroku/brew/heroku-node
 htop
 iftop
+jhead
 jq
 kompose
 kube-ps1
@@ -28,6 +29,7 @@ md5sha1sum
 netlify/netlifyctl/netlifyctl
 node
 openssl
+rustup-init
 skaffold
 sqlite
 stern

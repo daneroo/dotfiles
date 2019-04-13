@@ -115,3 +115,6 @@ alias dme='eval "$(docker-machine env dev)"; env|grep DOCKER;echo docker-machine
 alias dmc='docker-machine create -d virtualbox --virtualbox-disk-size "40000" --virtualbox-memory "4096" --virtualbox-cpu-count "2" dev'
 alias dangling='docker rmi $(docker images --quiet --filter "dangling=true")'
 
+
+# Path for Rust
+export PATH="$PATH:$HOME/.cargo/bin"
