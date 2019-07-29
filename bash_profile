@@ -104,6 +104,9 @@ export GOPATH=$HOME/Code/Go
 # If I want to export my own built binaries, or installed go utils (govend)
 export PATH=$PATH:$GOPATH/bin
 
+# for Rust, cargo's build dir in PATH
+export PATH=$PATH:$HOME/.cargo/bin
+
 # For ngs NATS.io utility
 export PATH=$HOME/.ngs/bin:$PATH  #Add NGS utility to the path
 
