@@ -35,6 +35,11 @@ if [ -f $(brew --prefix)/etc/bash_completion.d/git-completion.bash ]; then
   . $(brew --prefix)/etc/bash_completion.d/git-completion.bash
 fi
 
+# gcloud (brew) completion : brew cask install google-cloud-sdk
+if [ -f $(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc ]; then
+  . $(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc
+fi
+
 # docker completion
 if [ -f $(brew --prefix)/etc/bash_completion.d/docker ]; then
   . $(brew --prefix)/etc/bash_completion.d/docker

@@ -10,6 +10,10 @@ Regular maintenance (_idemppotent_):
 ./check.sh
 ```
 
+### Note for `gcloud` cask
+
+This is not captured in brewDeps: `brew cask install google-cloud-sdk`
+
 ## TODO
 
 - [Strap](https://github.com/MikeMcQuaid/strap)
