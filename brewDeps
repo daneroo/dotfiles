@@ -14,6 +14,7 @@ gnu-tar
 go
 heroku/brew/heroku
 heroku/brew/heroku-node
+helm
 htop
 iftop
 jhead
@@ -22,7 +23,6 @@ kompose
 kube-ps1
 kubectx
 kubernetes-cli
-kubernetes-helm
 kustomize
 loadimpact/k6/k6
 md5sha1sum
