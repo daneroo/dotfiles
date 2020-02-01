@@ -3,8 +3,10 @@ aws-iam-authenticator
 awscli
 azure-cli
 azure/draft/draft
+azure/functions/azure-functions-core-tools@3
 bash
 bash-completion
+black
 docker-completion
 docker-compose-completion
 docker-machine-completion
@@ -12,6 +14,7 @@ doctl
 git
 gnu-tar
 go
+flake8
 heroku/brew/heroku
 heroku/brew/heroku-node
 helm
@@ -28,6 +31,8 @@ loadimpact/k6/k6
 md5sha1sum
 netlify/netlifyctl/netlifyctl
 node
+poetry
+python
 rustup-init
 skaffold
 sqlite
