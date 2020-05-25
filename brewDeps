@@ -20,6 +20,7 @@ heroku/brew/heroku-node
 helm
 htop
 iftop
+iperf
 jhead
 jq
 kompose
@@ -31,6 +32,7 @@ loadimpact/k6/k6
 md5sha1sum
 netlify/netlifyctl/netlifyctl
 node
+pipenv
 poetry
 python
 rustup-init
