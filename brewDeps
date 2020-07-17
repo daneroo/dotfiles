@@ -34,7 +34,8 @@ netlify/netlifyctl/netlifyctl
 node
 pipenv
 poetry
-python
+pulumi
+python@3.8
 rustup-init
 skaffold
 sqlite
