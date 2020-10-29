@@ -1,4 +1,5 @@
-asciinema
+# commented out unused
+# asciinema
 aws-iam-authenticator
 awscli
 azure-cli
@@ -6,7 +7,7 @@ azure/draft/draft
 azure/functions/azure-functions-core-tools@3
 bash
 bash-completion
-black
+# black
 docker-completion
 docker-compose-completion
 docker-machine-completion
@@ -32,15 +33,15 @@ loadimpact/k6/k6
 md5sha1sum
 netlify/netlifyctl/netlifyctl
 node
-pipenv
-poetry
+# pipenv
+# poetry
 pulumi
-python@3.8
+# python@3.8
 rustup-init
 skaffold
 sqlite
 stern
-terraform
+# terraform
 tree
 watch
 wget
