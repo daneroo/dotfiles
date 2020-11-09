@@ -28,4 +28,49 @@ else
     echo "brew upgrade && brew cleanup"
 fi
 
+function nvm_update_lts() {
+  export NVM_DIR=$HOME/.nvm;
+  # This loads nvm (from brew installed setup, in this script)
+  [ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  
 
+  # assuming default (current) is lts
+  local -r current_node_version=$(nvm current)
+  local -r next_node_version=$(nvm version-remote --lts)
+  if [ "$current_node_version" != "$next_node_version" ]; then
+    echo "✗ - Updates available"
+    echo "  Upgrading to latest node lts: $next_node_version"
+    echo "  from current: $current_node_version"
+    local -r previous_node_version=$current_node_version
+    nvm install --lts
+    nvm reinstall-packages "$previous_node_version"
+    nvm uninstall "$previous_node_version"
+    nvm cache clear
+  else
+    echo "✓ - No updates: Latest LTS is default/current"    
+  fi
+}
+echo
+echo "-=-= nvm --lts"
+nvm_update_lts
+
+echo
+echo "-=-= npm global requirements (slow)"
+npm_global_deps="babel-cli eslint hasura-cli json lerna serve ssvmup standard typescript vercel wasm-pack yarn"
+any_missing=false
+
+for i in $npm_global_deps; do
+  # echo "Checking $i"
+  if npm ls -g --depth=0 --parseable 2>/dev/null | grep -q "$i"; then
+    echo "✓ - Found $i"
+  else
+    echo "✗ - Missing $i"
+    any_missing=true
+  fi
+done
+if [ "$any_missing" = true ] ; then
+    echo "Install missing:"
+    echo "npm i -g $npm_global_deps"
+fi
+
+echo
+echo "-=-= TODO clean up extraneous node nvm versions, accelerate npm -g checks (Go)"

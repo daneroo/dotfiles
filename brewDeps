@@ -34,7 +34,9 @@ kustomize
 loadimpact/k6/k6
 md5sha1sum
 netlify/netlifyctl/netlifyctl
-node
+# Replace node with nvm (fnm would be an option)
+# node
+nvm
 pulumi
 rustup-init
 skaffold
