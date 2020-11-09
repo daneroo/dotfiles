@@ -1,4 +1,7 @@
-# commented out unused
+# Commented out unused with # lines
+# - Moving to nvm/fnm
+# - Moved Python stuff to end
+#
 # asciinema
 aws-iam-authenticator
 awscli
@@ -7,7 +10,6 @@ azure/draft/draft
 azure/functions/azure-functions-core-tools@3
 bash
 bash-completion
-# black
 docker-completion
 docker-compose-completion
 docker-machine-completion
@@ -15,13 +17,13 @@ doctl
 git
 gnu-tar
 go
-flake8
 heroku/brew/heroku
 heroku/brew/heroku-node
 helm
 htop
 iftop
 iperf
+ipfs
 jhead
 jq
 kompose
@@ -33,10 +35,7 @@ loadimpact/k6/k6
 md5sha1sum
 netlify/netlifyctl/netlifyctl
 node
-# pipenv
-# poetry
 pulumi
-# python@3.8
 rustup-init
 skaffold
 sqlite
@@ -45,3 +44,10 @@ stern
 tree
 watch
 wget
+#
+# Python stuff
+# black
+# flake8
+# pipenv
+# poetry
+# python@3.8
