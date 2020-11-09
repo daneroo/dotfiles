@@ -125,6 +125,7 @@ func getRequired() []string {
 		required[i] = strings.TrimSpace(required[i])
 	}
 
+	fmt.Printf("✓ - Got Required\n")
 	if verbose {
 		fmt.Printf("Required: (./brewDeps)\n %v\n\n", required)
 	}
@@ -155,6 +156,7 @@ func getDeps() map[string][]string {
 		deps[c] = ds
 	}
 
+	fmt.Printf("✓ - Got Deps\n")
 	if verbose {
 		fmt.Printf("Deps: (brew deps --installed)\n %v\n\n", deps)
 	}
@@ -162,16 +164,17 @@ func getDeps() map[string][]string {
 }
 
 func getInstalled() []string {
-	out, err := exec.Command("brew", "ls", "--full-name").Output()
+	out, err := exec.Command("brew", "ls", "--formula", "--full-name").Output()
 	// out, err := exec.Command("brew", "ls").Output()
 	if err != nil {
 		log.Fatal(err)
 	}
 
 	// split by line, remove empty lines
+	fmt.Printf("✓ - Got Installed\n")
 	installed := spliyByLineNoEmpty(string(out))
 	if verbose {
-		fmt.Printf("Installed: (brew ls --full-name)\n %v\n\n", installed)
+		fmt.Printf("Installed: (brew ls --formula --full-name)\n %v\n\n", installed)
 	}
 	return installed
 }
