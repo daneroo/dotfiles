@@ -46,7 +46,7 @@ function nvm_update_lts() {
     nvm uninstall "$previous_node_version"
     nvm cache clear
   else
-    echo "✓ - No updates: Latest LTS is default/current"    
+    echo "✓ - No updates: Latest LTS is default/current ($current_node_version)"    
   fi
 }
 echo
@@ -70,6 +70,18 @@ done
 if [ "$any_missing" = true ] ; then
     echo "Install missing:"
     echo "npm i -g $npm_global_deps"
+fi
+
+echo
+echo "-=-= NPM -g outdated"
+OUTDATED=$(npm -g outdated)
+
+if [ -z "${OUTDATED}" ]; then
+    echo "✓ - No npm global updates"
+else
+    echo "✗ - Updates available"
+    echo "${OUTDATED}"
+    echo " You should: ..."
 fi
 
 echo
