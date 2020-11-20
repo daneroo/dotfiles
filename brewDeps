@@ -26,12 +26,13 @@ iperf
 ipfs
 jhead
 jq
+#loadimpact/k6/k6 renamed to k6
+k6
 kompose
 kube-ps1
 kubectx
 kubernetes-cli
 kustomize
-loadimpact/k6/k6
 md5sha1sum
 netlify/netlifyctl/netlifyctl
 # Replace node with nvm (fnm would be an option)
