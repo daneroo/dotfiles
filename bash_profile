@@ -117,6 +117,9 @@ export PATH=$PATH:$GOPATH/bin
 # for Rust, cargo's build dir in PATH
 export PATH=$PATH:$HOME/.cargo/bin
 
+# for Deno as installed from denoland's install script
+export PATH=$PATH:$HOME/.deno/bin
+
 # For ngs NATS.io utility
 export PATH=$HOME/.ngs/bin:$PATH  #Add NGS utility to the path
 
@@ -127,7 +130,3 @@ alias b2d='boot2docker init && boot2docker up && $(boot2docker shellinit)'
 alias dme='eval "$(docker-machine env dev)"; env|grep DOCKER;echo docker-machine env dev set'
 alias dmc='docker-machine create -d virtualbox --virtualbox-disk-size "40000" --virtualbox-memory "4096" --virtualbox-cpu-count "2" dev'
 alias dangling='docker rmi $(docker images --quiet --filter "dangling=true")'
-
-
-# Path for Rust
-export PATH="$PATH:$HOME/.cargo/bin"
