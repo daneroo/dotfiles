@@ -2,10 +2,10 @@
 # - Moving to nvm/fnm
 # - Moved Python stuff to end
 #
-# asciinema
+asciinema
 aws-iam-authenticator
 awscli
-azure-cli
+# azure-cli
 azure/draft/draft
 azure/functions/azure-functions-core-tools@3
 bash
@@ -14,6 +14,7 @@ docker-completion
 docker-compose-completion
 docker-machine-completion
 doctl
+findutils
 git
 gnu-tar
 go
