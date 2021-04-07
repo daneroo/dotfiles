@@ -4,7 +4,7 @@
 
 _Systems under control:_ `dirac,shannon,MB292 (goedel)`
 
-Regular maintenance (_idemppotent_):
+Regular maintenance (_idempotent_):
 
 ```bash
 ./check.sh
@@ -40,7 +40,7 @@ Make some sections for:
 
 ## install script
 
-This script should be idempotent, and warn if any file are already present, or there are dead symlinks in $HOME
+This script should be idempotent, and warn if any file are already present, or there are dead symbolic links in `$HOME/`.
 
 ```bash
 cd ~/.dotfiles/

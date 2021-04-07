@@ -1,5 +1,6 @@
 # Commented out unused with # lines
-# - Moving to nvm/fnm
+# - Moved to nvm - 2021-04-06 - fixed by remove System (pkg node)
+#    keeping nvm to use lts
 # - Moved Python stuff to end
 #
 asciinema

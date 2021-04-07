@@ -21,10 +21,6 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
 [ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && . "/usr/local/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
-# Where should this list go?
-# npm install -g babel-cli eslint gulp-cli http-server json uglify-js
-
-
 # Old .profile content
 # This is source'd from .bash_profile, since I installed rvm!
 
