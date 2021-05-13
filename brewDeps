@@ -53,6 +53,6 @@ wget
 # Python stuff
 # black
 # flake8
-# pipenv
 # poetry
-# python@3.8
+pipenv
+python@3.9

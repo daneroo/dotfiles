@@ -105,6 +105,9 @@ alias po='popd'
 
 #export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home/
 
+# Put Homebrew's Python ahead in the path
+export PATH="/usr/local/opt/python/libexec/bin:$PATH"
+
 # for Go, without docker
 export GOPATH=$HOME/Code/Go
 # If I want to export my own built binaries, or installed go utils (govend)
