@@ -119,6 +119,14 @@ export PATH=$PATH:$HOME/.deno/bin
 # For ngs NATS.io utility
 export PATH=$HOME/.ngs/bin:$PATH  #Add NGS utility to the path
 
+# For Chia on MacOS
+CHIA_PATH='/Applications/Chia.app/Contents/Resources/app.asar.unpacked/daemon'
+if [ -d ${CHIA_PATH} ]; then
+  export PATH=$PATH:${CHIA_PATH}
+fi
+
+
+
 # Docker default on OSX: careful if this dotfile goes to cantor/ubuntu
 # Should go to extras ?? or if boot2docker exists...
 # export DOCKER_HOST=tcp://192.168.59.103:2375
