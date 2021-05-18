@@ -127,7 +127,7 @@ func getRequired() []string {
 
 	fmt.Printf("✓ - Got Required\n")
 	if verbose {
-		fmt.Printf("Required: (./brewDeps)\n %v\n\n", required)
+		fmt.Printf("Required: (./brewDeps)\n %s\n\n", strings.Join(required, ", "))
 	}
 	return required
 }
@@ -174,7 +174,7 @@ func getInstalled() []string {
 	fmt.Printf("✓ - Got Installed\n")
 	installed := spliyByLineNoEmpty(string(out))
 	if verbose {
-		fmt.Printf("Installed: (brew ls --formula --full-name)\n %v\n\n", installed)
+		fmt.Printf("Installed: (brew ls --formula --full-name)\n %v\n\n", strings.Join(installed, ", "))
 	}
 	return installed
 }

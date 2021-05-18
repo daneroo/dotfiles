@@ -2,7 +2,7 @@
 
 ## Operating
 
-_Systems under control:_ `dirac,shannon,MB292 (goedel)`
+_Systems under control:_ `dirac,shannon, (goedel), WH..`
 
 Regular maintenance (_idempotent_):
 
@@ -10,12 +10,20 @@ Regular maintenance (_idempotent_):
 ./check.sh
 ```
 
+### Note for uninstalling packaged node.js
+
+- <https://reactgo.com/uninstall-node-npm-from-macos/>
+
 ### Note for `gcloud` cask
 
 This is not captured in brewDeps: `brew cask install google-cloud-sdk`
 
 ## TODO
 
+- brewDeps (verbose flag), pretty map
+- speed up npm global deps, and find extraneous
+  - remove babel-cli,...
+- gcloud - note in bash_profile, and test
 - [Strap](https://github.com/MikeMcQuaid/strap)
   - [Brew Bundle](https://github.com/Homebrew/homebrew-bundle)
   - [Brew Cask](https://github.com/Homebrew/homebrew-cask)
