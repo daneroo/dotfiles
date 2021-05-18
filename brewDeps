@@ -16,13 +16,16 @@ docker-compose-completion
 docker-machine-completion
 doctl
 findutils
+fio
 git
+glances
 gnu-tar
 go
 heroku/brew/heroku
 heroku/brew/heroku-node
 helm
 htop
+hyperfine
 iftop
 iperf
 ipfs
