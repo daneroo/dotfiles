@@ -6,6 +6,19 @@
 # Silence the MacOS default zsh warning message
 export BASH_SILENCE_DEPRECATION_WARNING=1
 
+# Handle Mac M1 https://blog.smittytone.net/2021/02/07/how-to-migrate-to-native-homebrew-on-an-m1-mac/
+#CPU=$(uname -p)
+#if [[ "$CPU" == "arm" ]]; then
+#    export PATH="/opt/homebrew/bin:$PATH"
+#    export EDITOR=/opt/homebrew/bin/nano
+#    alias nano=/opt/homebrew/bin/nano
+#    alias oldbrew=/usr/local/bin/brew
+#else
+#    export PATH="/usr/local/bin:$PATH"
+#    export EDITOR=/usr/local/bin/nano
+#    alias nano=/usr/local/bin/nano
+#fi
+
 # could do some bash foo magic: 
 DOTFILES=${HOME}/.dotfiles
 
