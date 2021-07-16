@@ -1,7 +1,7 @@
 package main
 
-// 1-Compares requested dependancies: `brewDeps`
-// to make sure thay are all installed
+// 1-Compares requested dependencies: `brewDeps`
+// to make sure that are all installed
 // 2- makes sure any other installed casks are dependants of the requested ones.
 
 import (

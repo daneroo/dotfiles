@@ -19,7 +19,8 @@ docker-completion
 
 ## TODO
 
-- M1'ify
+- [M1'ify](https://blog.smittytone.net/2021/02/07/how-to-migrate-to-native-homebrew-on-an-m1-mac/)
+
 - brewDeps (verbose flag), pretty map
 - speed up npm global deps, and find extraneous
   - remove babel-cli,...
