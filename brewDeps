@@ -31,7 +31,6 @@ iperf
 ipfs
 jhead
 jq
-#loadimpact/k6/k6 renamed to k6
 k6
 kompose
 kube-ps1
@@ -46,9 +45,10 @@ nvm
 pulumi
 rustup-init
 skaffold
+sops
 sqlite
 stern
-# terraform
+terraform
 tree
 watch
 wget
