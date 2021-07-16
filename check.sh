@@ -31,7 +31,7 @@ fi
 function nvm_update_lts() {
   export NVM_DIR=$HOME/.nvm;
   # This loads nvm (from brew installed setup, in this script)
-  [ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  
+  [ -s "${HOMEBREW_PREFIX}/opt/nvm/nvm.sh" ] && . "${HOMEBREW_PREFIX}/opt/nvm/nvm.sh"  
 
   # assuming default (current) is lts
   local -r current_node_version=$(nvm current)

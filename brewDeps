@@ -7,8 +7,8 @@ asciinema
 aws-iam-authenticator
 awscli
 # azure-cli
-azure/draft/draft
-azure/functions/azure-functions-core-tools@3
+# azure/draft/draft
+# azure/functions/azure-functions-core-tools@3
 bash
 bash-completion
 docker-completion

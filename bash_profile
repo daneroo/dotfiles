@@ -11,9 +11,8 @@ export BASH_SILENCE_DEPRECATION_WARNING=1
 #  - consider both known candidate prefixes
 #  - since this sets HOMEBREW_PREFIX, no longer need to invoke $(brew --prefix)
 for homebrew_pfx in /usr/local /opt/homebrew; do
-  echo testing $homebrew_pfx
   if [ -x ${homebrew_pfx}/bin/brew ]; then
-    echo executing $homebrew_pfx
+    # set the variables and paths
     eval "$(${homebrew_pfx}/bin/brew shellenv)"
   fi
 done
@@ -23,15 +22,15 @@ done
 
 # NVM Setup
 export NVM_DIR="$HOME/.nvm"
-[ -s "/usr/local/opt/nvm/nvm.sh" ] && . "/usr/local/opt/nvm/nvm.sh"  # This loads nvm
-[ -s "/usr/local/opt/nvm/etc/bash_completion.d/nvm" ] && . "/usr/local/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+[ -s "${HOMEBREW_PREFIX}/opt/nvm/nvm.sh" ] && . "${HOMEBREW_PREFIX}/opt/nvm/nvm.sh"  # This loads nvm
+[ -s "${HOMEBREW_PREFIX}/opt/nvm/etc/bash_completion.d/nvm" ] && . "${HOMEBREW_PREFIX}/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
 # Old .profile content
 # This is source'd from .bash_profile, since I installed rvm!
 
 # gcloud (brew) completion : brew cask install google-cloud-sdk
-if [ -f $(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc ]; then
-  . $(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc
+if [ -f ${HOMEBREW_PREFIX}/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc ]; then
+  . ${HOMEBREW_PREFIX}/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc
 fi
 
 # kube-ps1 prompt functions
