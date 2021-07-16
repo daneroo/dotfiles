@@ -6,31 +6,20 @@
 # Silence the MacOS default zsh warning message
 export BASH_SILENCE_DEPRECATION_WARNING=1
 
-# Handle Mac M1 https://blog.smittytone.net/2021/02/07/how-to-migrate-to-native-homebrew-on-an-m1-mac/
-#CPU=$(uname -p)
-#if [[ "$CPU" == "arm" ]]; then
-#    export PATH="/opt/homebrew/bin:$PATH"
-#    export EDITOR=/opt/homebrew/bin/nano
-#    alias nano=/opt/homebrew/bin/nano
-#    alias oldbrew=/usr/local/bin/brew
-#else
-#    export PATH="/usr/local/bin:$PATH"
-#    export EDITOR=/usr/local/bin/nano
-#    alias nano=/usr/local/bin/nano
-#fi
-
 # Move this up and make it conditional on platform
-# Sets HOMBREW vars and PATH's - brew shellenv : to see output
-if [ -f /opt/homebrew/bin/brew ]; then
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-fi
+# Sets HOMEBREW vars and PATH's - brew shellenv : to see output
+#  - consider both known candidate prefixes
+#  - since this sets HOMEBREW_PREFIX, no longer need to invoke $(brew --prefix)
+for homebrew_pfx in /usr/local /opt/homebrew; do
+  echo testing $homebrew_pfx
+  if [ -x ${homebrew_pfx}/bin/brew ]; then
+    echo executing $homebrew_pfx
+    eval "$(${homebrew_pfx}/bin/brew shellenv)"
+  fi
+done
 
 # brew's bash completion - assumes HOMEBREW_PREFIX is set
 [[ -r "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh" ]] && . "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh"
-
-#if [ -f $(brew --prefix)/etc/bash_completion ]; then
-#  . $(brew --prefix)/etc/bash_completion
-#fi
 
 # NVM Setup
 export NVM_DIR="$HOME/.nvm"
@@ -45,23 +34,10 @@ if [ -f $(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/compl
   . $(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc
 fi
 
-# docker completion
-#if [ -f $(brew --prefix)/etc/bash_completion.d/docker ]; then
-#  echo doin docker
-#  . $(brew --prefix)/etc/bash_completion.d/docker
-#fi
-
-# kube completion - conditional, 
-# TODO: unless? brew install bash-completion@2
-# see kubectl completion -h
-if [ -f $(brew --prefix)/bin/kubectl ]; then
-  source <(kubectl completion bash)
-fi
-
 # kube-ps1 prompt functions
 # side effect: appends _kube_ps1_update_cache to PROMPT_COMMAND
-if [ -f $(brew --prefix)/opt/kube-ps1/share/kube-ps1.sh ]; then
-  . $(brew --prefix)/opt/kube-ps1/share/kube-ps1.sh
+if [ -f ${HOMEBREW_PREFIX}/opt/kube-ps1/share/kube-ps1.sh ]; then
+  . ${HOMEBREW_PREFIX}/opt/kube-ps1/share/kube-ps1.sh
 fi
 
 # brew install awscli / aws completion
@@ -91,9 +67,9 @@ else
 fi
 PROMPT_COMMAND="__git_ps1 '${PROMPT_PFX}' '${PROMPT_SFX}'; ${PROMPT_COMMAND}"
 
-# put /usr/local/bin ahead of /usr/bin
-# as per homebrew's suggestion add /usr/local/sbin
-export PATH=/usr/local/sbin:/usr/local/bin:$PATH
+# Path put /usr/local/bin ahead of /usr/bin
+# this is redundant if HOMEBREW_PREFIX is /usr/local
+export PATH="/usr/local/bin:/usr/local/sbin${PATH+:$PATH}";
 
 
 # Mac OSX color stuff
@@ -111,7 +87,7 @@ alias po='popd'
 #export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home/
 
 # Put Homebrew's Python ahead in the path
-export PATH="/usr/local/opt/python/libexec/bin:$PATH"
+export PATH="${HOMEBREW_PREFIX}/opt/python/libexec/bin:$PATH"
 
 # for Go, without docker
 export GOPATH=$HOME/Code/Go
@@ -125,7 +101,7 @@ export PATH=$PATH:$HOME/.cargo/bin
 export PATH=$PATH:$HOME/.deno/bin
 
 # For ngs NATS.io utility
-export PATH=$HOME/.ngs/bin:$PATH  #Add NGS utility to the path
+export PATH=$PATH:$HOME/.ngs/bin  #Add NGS utility to the path
 
 # For Chia on MacOS
 CHIA_PATH='/Applications/Chia.app/Contents/Resources/app.asar.unpacked/daemon'
