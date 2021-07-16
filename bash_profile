@@ -1,6 +1,10 @@
-# echo "*** now executing .bash_profile"
+#echo "*** now executing .bash_profile"
+#echo PATH: $PATH
 # everything goes into .bash_profile
 #   .bashrc sources this, and .profile is empty
+
+# Silence the MacOS default zsh warning message
+export BASH_SILENCE_DEPRECATION_WARNING=1
 
 # could do some bash foo magic: 
 DOTFILES=${HOME}/.dotfiles
