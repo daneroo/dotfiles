@@ -58,9 +58,10 @@ echo "-=-= npm global requirements (slow)"
 npm_global_deps="babel-cli eslint hasura-cli json lerna serve ssvmup standard typescript vercel wasm-pack yarn"
 any_missing=false
 
+installed_packages=$(npm ls -g --depth=0 --parseable 2>/dev/null )
 for i in $npm_global_deps; do
   # echo "Checking $i"
-  if npm ls -g --depth=0 --parseable 2>/dev/null | grep -q "$i"; then
+  if echo "${installed_packages}" | grep -q "$i"; then
     echo "✓ - Found $i"
   else
     echo "✗ - Missing $i"
@@ -81,7 +82,8 @@ if [ -z "${OUTDATED}" ]; then
 else
     echo "✗ - Updates available"
     echo "${OUTDATED}"
-    echo " You should: ..."
+    echo " You should: some subset of ..."
+    echo "npm i -g $npm_global_deps"
 fi
 
 echo
