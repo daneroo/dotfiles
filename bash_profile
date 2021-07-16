@@ -19,19 +19,18 @@ export BASH_SILENCE_DEPRECATION_WARNING=1
 #    alias nano=/usr/local/bin/nano
 #fi
 
-# could do some bash foo magic: 
-DOTFILES=${HOME}/.dotfiles
-
-if [ -e ~/.node_completion ] ; then
-# {{{
-# Node Completion - Auto-generated, do not touch.
-shopt -s progcomp
-for f in $(command ls ~/.node-completion); do
-  f="$HOME/.node-completion/$f"
-  test -f "$f" && . "$f"
-done
-# }}}
+# Move this up and make it conditional on platform
+# Sets HOMBREW vars and PATH's - brew shellenv : to see output
+if [ -f /opt/homebrew/bin/brew ]; then
+  eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
+
+# brew's bash completion - assumes HOMEBREW_PREFIX is set
+[[ -r "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh" ]] && . "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh"
+
+#if [ -f $(brew --prefix)/etc/bash_completion ]; then
+#  . $(brew --prefix)/etc/bash_completion
+#fi
 
 # NVM Setup
 export NVM_DIR="$HOME/.nvm"
@@ -41,27 +40,16 @@ export NVM_DIR="$HOME/.nvm"
 # Old .profile content
 # This is source'd from .bash_profile, since I installed rvm!
 
-if [ -f $(brew --prefix)/etc/bash_completion ]; then
-  . $(brew --prefix)/etc/bash_completion
-fi
-
-# brew's git and completion : brew install git bash-completion
-if [ -f $(brew --prefix)/etc/bash_completion.d/git-prompt.sh ]; then
-  . $(brew --prefix)/etc/bash_completion.d/git-prompt.sh
-fi
-if [ -f $(brew --prefix)/etc/bash_completion.d/git-completion.bash ]; then
-  . $(brew --prefix)/etc/bash_completion.d/git-completion.bash
-fi
-
 # gcloud (brew) completion : brew cask install google-cloud-sdk
 if [ -f $(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc ]; then
   . $(brew --prefix)/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc
 fi
 
 # docker completion
-if [ -f $(brew --prefix)/etc/bash_completion.d/docker ]; then
-  . $(brew --prefix)/etc/bash_completion.d/docker
-fi
+#if [ -f $(brew --prefix)/etc/bash_completion.d/docker ]; then
+#  echo doin docker
+#  . $(brew --prefix)/etc/bash_completion.d/docker
+#fi
 
 # kube completion - conditional, 
 # TODO: unless? brew install bash-completion@2

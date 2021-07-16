@@ -13,7 +13,6 @@ bash
 bash-completion
 docker-completion
 docker-compose-completion
-docker-machine-completion
 doctl
 findutils
 fio
