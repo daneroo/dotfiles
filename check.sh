@@ -55,7 +55,7 @@ nvm_update_lts
 
 echo
 echo "-=-= npm global requirements (slow)"
-npm_global_deps="babel-cli eslint hasura-cli json lerna serve ssvmup standard typescript vercel wasm-pack yarn"
+npm_global_deps="eslint json lerna nx serve standard typescript vercel yarn"
 any_missing=false
 
 installed_packages=$(npm ls -g --depth=0 --parseable 2>/dev/null )
@@ -75,6 +75,9 @@ fi
 
 echo
 echo "-=-= NPM -g outdated"
+echo "npm $(bash -c 'npm --version')"
+echo "node $(bash -c 'node --version')"
+
 OUTDATED=$(npm -g outdated)
 
 if [ -z "${OUTDATED}" ]; then
