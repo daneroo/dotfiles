@@ -19,6 +19,7 @@ docker-completion
 
 ## TODO
 
+- [Steal from Kent C Dodds](https://github.com/kentcdodds/dotfiles/blob/main/.macos)
 - [M1'ify](https://blog.smittytone.net/2021/02/07/how-to-migrate-to-native-homebrew-on-an-m1-mac/)
 
 - brewDeps (verbose flag), pretty map
@@ -34,4 +35,3 @@ Make some sections for:
   - applications (brew cask?)
   - brew
   - npm
-
