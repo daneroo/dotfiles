@@ -37,6 +37,7 @@ kubectx
 kubernetes-cli
 kustomize
 md5sha1sum
+nats-io/nats-tools/nats
 netlify/netlifyctl/netlifyctl
 # Replace node with nvm (fnm would be an option)
 # node
