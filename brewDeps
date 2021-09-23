@@ -13,6 +13,7 @@ awscli
 bash
 bash-completion
 caddy
+cue
 deno
 docker-completion
 docker-compose-completion
