@@ -3,6 +3,7 @@
 #    keeping nvm to use lts
 # - Moved Python stuff to end
 #
+act
 asciinema
 aws-iam-authenticator
 awscli
@@ -11,6 +12,8 @@ awscli
 # azure/functions/azure-functions-core-tools@3
 bash
 bash-completion
+caddy
+deno
 docker-completion
 docker-compose-completion
 doctl
