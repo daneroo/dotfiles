@@ -94,7 +94,9 @@ export GOPATH=$HOME/Code/Go
 export PATH=$PATH:$GOPATH/bin
 
 # for Rust, cargo's build dir in PATH
-export PATH=$PATH:$HOME/.cargo/bin
+if [ -f  "$HOME/.cargo/env" ]; then
+  . "$HOME/.cargo/env"
+fi
 
 # for Deno as installed from denoland's install script
 export PATH=$PATH:$HOME/.deno/bin

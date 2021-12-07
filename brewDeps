@@ -35,6 +35,7 @@ ipfs
 jhead
 jq
 k6
+kind
 kompose
 kube-ps1
 kubectx
