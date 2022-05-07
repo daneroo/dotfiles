@@ -24,8 +24,8 @@ git
 glances
 gnu-tar
 go
-heroku/brew/heroku
-heroku/brew/heroku-node
+# heroku/brew/heroku
+# heroku/brew/heroku-node
 helm
 htop
 hyperfine
