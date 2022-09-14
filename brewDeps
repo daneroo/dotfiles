@@ -63,4 +63,5 @@ wget
 # flake8
 # poetry
 pipenv
-python@3.9
+virtualenv
+python@3.10
