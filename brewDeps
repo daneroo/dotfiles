@@ -13,11 +13,14 @@ awscli
 bash
 bash-completion
 caddy
+coreutils
 cue
 deno
+difftastic
 docker-completion
 docker-compose-completion
 doctl
+ffmpeg
 findutils
 fio
 git
@@ -41,17 +44,19 @@ kube-ps1
 kubectx
 kubernetes-cli
 kustomize
-md5sha1sum
+# md5sha1sum # now included in coreutils
 nats-io/nats-tools/nats
 netlify/netlifyctl/netlifyctl
 # Replace node with nvm (fnm would be an option)
 # node
 nvm
+pstree
 pulumi
 rustup-init
 skaffold
 sops
 sqlite
+starship
 stern
 terraform
 tree

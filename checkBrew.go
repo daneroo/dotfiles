@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-var verbose = true
+var verbose = false
 
 func main() {
 	required := getRequired()

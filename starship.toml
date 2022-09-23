@@ -1,4 +1,5 @@
-# From Pure preset
+# From Pure preset ( https://starship.rs/presets/pure-preset.html < https://github.com/sindresorhus/pure)
+# I think I removed dependencies on NerdFonts. (Meslo)
 format = """
 $username\
 $hostname\
@@ -9,6 +10,7 @@ $git_status\
 $cmd_duration\
 $character"""
 
+# can be inserted into the format before $character
 # $line_break\
 
 [username]
@@ -17,7 +19,8 @@ show_always = true
 
 [hostname]
 ssh_only = false
-ssh_symbol = "🌎 "  # remove trailing space : 🌐 🌎 🌏
+# ssh_symbol = "🌎 "  #  🌐 🌎 🌏
+ssh_symbol = ""  # remove altogether
 # style = "bold dimmed green" - default
 style = "green"
 format = "@[$ssh_symbol$hostname]($style)"
@@ -32,20 +35,25 @@ style = "blue"
 
 [git_branch]
 #format = "on [$symbol$branch(:$remote_branch)]($style) "
+symbol = ""  # default " "
 format = "$symbol$branch($style)"
 style = "bright-black"
 
 [git_status]
 ahead = ">"  # default "⇡"
 behind = "<" # default "⇣"
+
 [git_state]
-format = '\([$state( $progress_current/$progress_total)]($style)\) '
+# default format
+# format = '\([$state( $progress_current/$progress_total)]($style)\) '
 style = "bright-black"
 
 [cmd_duration]
+show_milliseconds = true
 format = "[$duration]($style) "
 style = "yellow"
 
 [character]
+# default symbols
 # success_symbol = "[❯](green)"
 # error_symbol = "[❯](red)"

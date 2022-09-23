@@ -37,29 +37,40 @@ echo $SHELL # to confirm
 
 #?? yarn replace by corepack?
 corepack enable
-
 ```
 
 ## TODO
 
-- [Steal from Kent C Dodds](https://github.com/kentcdodds/dotfiles/blob/main/.macos)
-- [M1'ify](https://blog.smittytone.net/2021/02/07/how-to-migrate-to-native-homebrew-on-an-m1-mac/)
+- [ ] Prompt
 
+  - [ ] Starship - add kubernetes and docker-context
+  - [ ] ifelse starship, kubeon
+  - [ ] Profile shell startup performance?
+
+```bash
+# hyperfine
+time bash -c 'exit'
+time bash -i -c 'exit'
+# and may play with --norc and --noprofile.
+hyperfine bash -c 'exit'
+hyperfine bash -i -c 'exit'
+```
+
+- Clean up
+
+- [ ] [bashrc vs bash_profile vs ..](https://superuser.com/questions/789448/choosing-between-bashrc-profile-bash-profile-etc)
+- Bootstrap new machine script? casks, default writes.. (see Kent)
+- Zsh - determine why
 - brewDeps (verbose flag), pretty map
 - speed up npm global deps, and find extraneous
   - remove babel-cli,...
-- gcloud - note in bash_profile, and test
-- [Strap](https://github.com/MikeMcQuaid/strap)
 
+## References
+
+- [Strap](https://github.com/MikeMcQuaid/strap)
   - [Brew Bundle](https://github.com/Homebrew/homebrew-bundle)
   - [Brew Cask](https://github.com/Homebrew/homebrew-cask)
-    Make some sections for:
-
-- List of necessary installs
-  - applications (brew cask?)
-  - brew
-  - npm
-
-```
-
-```
+- [Steal from Kent C Dodds](https://github.com/kentcdodds/dotfiles/blob/main/.macos)
+- [M1'ify](https://blog.smittytone.net/2021/02/07/how-to-migrate-to-native-homebrew-on-an-m1-mac/)
+- [bashrc vs bash_profile vs ..](https://superuser.com/questions/789448/choosing-between-bashrc-profile-bash-profile-etc)
+- [profile bash startup](https://stackoverflow.com/questions/5014823/how-can-i-profile-a-bash-shell-script-slow-startup)
