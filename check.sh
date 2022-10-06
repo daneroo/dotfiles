@@ -56,7 +56,7 @@ nvm_update_lts
 echo
 echo "-=-= npm global requirements (slow)"
 # removed yarn for corepack?
-npm_global_deps="corepack pnpm eslint json lerna nx pino-pretty serve standard typescript vercel"
+npm_global_deps="corepack eslint json lerna nx pino-pretty serve standard typescript vercel"
 any_missing=false
 
 installed_packages=$(npm ls -g --depth=0 --parseable 2>/dev/null )
