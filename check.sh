@@ -56,7 +56,7 @@ nvm_update_lts
 echo
 echo "-=-= npm global requirements (slow)"
 # removed yarn for corepack?
-npm_global_deps="eslint json lerna nx pino-pretty serve standard typescript vercel"
+npm_global_deps="corepack pnpm eslint json lerna nx pino-pretty serve standard typescript vercel"
 any_missing=false
 
 installed_packages=$(npm ls -g --depth=0 --parseable 2>/dev/null )
@@ -89,6 +89,11 @@ else
     echo " You should: some subset of ..."
     echo "npm i -g $npm_global_deps"
 fi
+echo
+echo "pnpm section:"
+echo " assuming pnpm is installed with corepack, and not homebrew for now"
+echo "enable and update: (no global packages yet)"
+echo "corepack enable && corepack prepare pnpm@latest --activate"
 
 echo
 echo "-=-= TODO clean up extraneous node nvm versions, accelerate npm -g checks (Go)"

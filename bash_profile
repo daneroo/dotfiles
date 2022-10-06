@@ -104,18 +104,13 @@ export PATH=$PATH:$HOME/.deno/bin
 # For ngs NATS.io utility
 export PATH=$PATH:$HOME/.ngs/bin  #Add NGS utility to the path
 
-# For Chia on MacOS
-CHIA_PATH='/Applications/Chia.app/Contents/Resources/app.asar.unpacked/daemon'
-if [ -d ${CHIA_PATH} ]; then
-  export PATH=$PATH:${CHIA_PATH}
-fi
+## `pnpm install-completion` genrated this
+##  It should be run on each host to create the target files in ~/.config/tabtab
+# tabtab source for packages
+# uninstall by removing these lines
+[ -f ~/.config/tabtab/bash/__tabtab.bash ] && . ~/.config/tabtab/bash/__tabtab.bash || true
 
+# Not yet activated
+# export STARSHIP_CONFIG=~/.dotfiles/starship.toml
+# eval "$(starship init bash)"
 
-
-# Docker default on OSX: careful if this dotfile goes to cantor/ubuntu
-# Should go to extras ?? or if boot2docker exists...
-# export DOCKER_HOST=tcp://192.168.59.103:2375
-alias b2d='boot2docker init && boot2docker up && $(boot2docker shellinit)'
-alias dme='eval "$(docker-machine env dev)"; env|grep DOCKER;echo docker-machine env dev set'
-alias dmc='docker-machine create -d virtualbox --virtualbox-disk-size "40000" --virtualbox-memory "4096" --virtualbox-cpu-count "2" dev'
-alias dangling='docker rmi $(docker images --quiet --filter "dangling=true")'
