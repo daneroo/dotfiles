@@ -43,6 +43,7 @@ kompose
 kube-ps1
 kubectx
 kubernetes-cli
+# kubelogin for oidc (sidero/talos/omni)
 int128/kubelogin/kubelogin
 kustomize
 # md5sha1sum # now included in coreutils
