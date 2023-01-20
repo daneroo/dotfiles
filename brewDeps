@@ -43,6 +43,7 @@ kompose
 kube-ps1
 kubectx
 kubernetes-cli
+int128/kubelogin/kubelogin
 kustomize
 # md5sha1sum # now included in coreutils
 nats-io/nats-tools/nats
