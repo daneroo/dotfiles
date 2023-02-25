@@ -2,7 +2,7 @@
 
 ## Operating
 
-_Systems under control:_ `dirac,shannon,davinci(M1),goedel),feynman`
+_Systems under control:_ `dirac,shannon,davinci(M1),goedel,feynman,galois`
 
 Regular maintenance (_idempotent_):
 
@@ -12,29 +12,72 @@ Regular maintenance (_idempotent_):
 
 ## Bootstrap
 
-- First install [homebrew](https://brew.sh/).
-- then minimal formulas
-- start the dance: `./check.sh`
+### Setup `ssh`
+
+If you need an ssh key (to clone this repo) - see [Generate ssh key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
+
+```bash
+ssh-keygen -t ed25519 -C "daniel@newmachine"
+pbcopy < ~/.ssh/id_ed25519.pub
+```
+
+Then [add it to GitHub's keys](https://github.com/settings/keys)
+
+### Clone this repo
+
+```bash
+cd ~
+# This might trigger xcode developer tools download...
+git clone git@github.com:daneroo/dotfiles.git .dotfiles
+cd .dotfiles
+```
+
+And setup git:
+
+```bash
+git config --global user.name "Daniel Lauzon"
+git config --global user.email "daniel.lauzon@gmail.com"
+```
+
+### Install [homebrew](https://brew.sh/)
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
 
+### Minimal formulas
+
+```bash
+# put brew in the path - just for this shell
+eval "$(/opt/homebrew/bin/brew shellenv)"
 brew doctor
-brew install git go
+brew install bash git go
+```
 
-ssh-keygen -t ed25519 -C "daniel.lauzon@gmail.com"
-pbcopy < ~/.ssh/id_ed25519.pub
-# add key to github
-git clone git@github.com:daneroo/dotfiles.git .dotfiles
-cd .dotfiles
-./check.sh
+### Update default shell with brew's bash
+
+```bash
+echo $HOMEBREW_PREFIX/bin/bash
 
 # as root: sudo su -
+echo /opt/homebrew/bin/bash >> /etc/shells
+#  or
 echo /usr/local/bin/bash >> /etc/shells
-#as user:
-chsh -s /usr/local/bin/bash
-echo $SHELL # to confirm
 
+# as user:
+chsh -s /opt/homebrew/bin/bash
+#  or
+chsh -s /usr/local/bin/bash
+
+echo $SHELL # to confirm
+```
+
+### Normal update procedure starts
+
+- start the dance: `./check.sh`
+
+- nvm npm stuf ??
+```bash
 #?? yarn replace by corepack?
 corepack enable
 ```
@@ -42,7 +85,6 @@ corepack enable
 ## TODO
 
 - [ ] Prompt
-
   - [ ] Starship - add kubernetes and docker-context
   - [ ] ifelse starship, kubeon
   - [ ] Profile shell startup performance?
