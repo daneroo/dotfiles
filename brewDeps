@@ -1,8 +1,9 @@
+# Associate with 'Shell Script' file in VSCode to get '#' line comments
 # Commented out unused with # lines
 # - Moved to nvm - 2021-04-06 - fixed by remove System (pkg node)
 #    keeping nvm to use lts
 # - Moved Python stuff to end
-#
+# - sorted by basename in case of scoped packages (`teamookla/speedtest/speedtest` sorts as `speedtest`)
 act
 asciinema
 aws-iam-authenticator
@@ -18,7 +19,8 @@ cue
 deno
 difftastic
 docker-completion
-docker-compose-completion
+# docker-compose-completion has been disabled because it no upstream support for v2
+# docker-compose-completion
 doctl
 ffmpeg
 findutils
@@ -57,6 +59,7 @@ pulumi
 rustup-init
 skaffold
 sops
+teamookla/speedtest/speedtest
 sqlite
 starship
 stern
