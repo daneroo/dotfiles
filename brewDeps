@@ -35,7 +35,9 @@ helm
 htop
 hyperfine
 iftop
+# should I keep iperf as well as iperf3?
 iperf
+iperf3
 ipfs
 jhead
 jq
