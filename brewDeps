@@ -32,6 +32,7 @@ go
 # heroku/brew/heroku
 # heroku/brew/heroku-node
 helm
+hey
 htop
 hyperfine
 iftop
