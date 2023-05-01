@@ -15,12 +15,15 @@ bash
 bash-completion
 caddy
 coreutils
+ctop
 cue
 deno
 difftastic
 docker-completion
-# docker-compose-completion has been disabled because it no upstream support for v2
+# docker-compose-completion has been disabled because it has no upstream support for v2
 # docker-compose-completion
+# docker-slim's project has been renamed to slimtoolkit
+docker-slim
 doctl
 ffmpeg
 findutils
@@ -63,6 +66,7 @@ rustup-init
 skaffold
 sops
 teamookla/speedtest/speedtest
+snyk/tap/snyk
 sqlite
 starship
 stern
