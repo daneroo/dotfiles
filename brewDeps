@@ -28,10 +28,12 @@ doctl
 ffmpeg
 findutils
 fio
+gh
 git
 glances
 gnu-tar
 go
+gum
 # heroku/brew/heroku
 # heroku/brew/heroku-node
 helm
@@ -54,6 +56,8 @@ kubernetes-cli
 # kubelogin for oidc (sidero/talos/omni)
 int128/kubelogin/kubelogin
 kustomize
+# postgresql utilities
+libpq
 # md5sha1sum # now included in coreutils
 nats-io/nats-tools/nats
 netlify/netlifyctl/netlifyctl
@@ -74,6 +78,7 @@ terraform
 tree
 watch
 wget
+yq
 #
 # Python stuff
 # black

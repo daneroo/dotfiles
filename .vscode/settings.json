@@ -9,6 +9,7 @@
     "kompose",
     "kubectx",
     "kubelogin",
+    "libpq",
     "netlifyctl",
     "oidc",
     "pstree",
