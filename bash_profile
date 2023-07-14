@@ -1,10 +1,7 @@
-#echo "*** now executing .bash_profile"
+# echo "*** now executing .bash_profile"
 #echo PATH: $PATH
 # everything goes into .bash_profile
 #   .bashrc sources this, and .profile is empty
-
-# Silence the MacOS default zsh warning message
-export BASH_SILENCE_DEPRECATION_WARNING=1
 
 # Move this up and make it conditional on platform
 # Sets HOMEBREW vars and PATH's - brew shellenv : to see output
@@ -42,29 +39,31 @@ fi
 # brew install awscli / aws completion
 complete -C aws_completer aws
 
-# *** Prompt: (bash+git+kube)
-# Prompt uses PROMPT_COMMAND instead of PS1, 
-# because git prompt only supports color when used that way.
-# Note that PROMPT_COMMAND was appended to by kube-ps1.sh
-PROMPT_DIRTRIM=2  # depth of directory for \w directive
+##### PROMPT START - replaced with Starship #####
+# # *** Prompt: (bash+git+kube)
+# # Prompt uses PROMPT_COMMAND instead of PS1, 
+# # because git prompt only supports color when used that way.
+# # Note that PROMPT_COMMAND was appended to by kube-ps1.sh
+# PROMPT_DIRTRIM=2  # depth of directory for \w directive
 
-GIT_PS1_SHOWUPSTREAM="auto"
-GIT_PS1_SHOWCOLORHINTS=true
-GIT_PS1_SHOWDIRTYSTATE=true
-GIT_PS1_SHOWUNTRACKEDFILES=true
+# GIT_PS1_SHOWUPSTREAM="auto"
+# GIT_PS1_SHOWCOLORHINTS=true
+# GIT_PS1_SHOWDIRTYSTATE=true
+# GIT_PS1_SHOWUNTRACKEDFILES=true
 
-# KUBE_PS1_SYMBOL_ENABLE=false # default is true
-KUBE_PS1_SEPARATOR=''  # to remove separator, because symbol addds a space.
+# # KUBE_PS1_SYMBOL_ENABLE=false # default is true
+# KUBE_PS1_SEPARATOR=''  # to remove separator, because symbol addds a space.
 
-## Don't forget to append previous PROMPT_COMMAND..
-PROMPT_PFX='\u@\h:\w'
-if [ -n "$KUBE_PS1_BINARY" ]; then
-  PROMPT_SFX='$(kube_ps1)$ '
-  kubeoff
-else
-  PROMPT_SFX='$ ' # if no kube-ps1
-fi
-PROMPT_COMMAND="__git_ps1 '${PROMPT_PFX}' '${PROMPT_SFX}'; ${PROMPT_COMMAND}"
+# ## Don't forget to append previous PROMPT_COMMAND..
+# PROMPT_PFX='\u@\h:\w'
+# if [ -n "$KUBE_PS1_BINARY" ]; then
+#   PROMPT_SFX='$(kube_ps1)$ '
+#   kubeoff
+# else
+#   PROMPT_SFX='$ ' # if no kube-ps1
+# fi
+# PROMPT_COMMAND="__git_ps1 '${PROMPT_PFX}' '${PROMPT_SFX}'; ${PROMPT_COMMAND}"
+##### PROMPT END #####
 
 # Path put /usr/local/bin ahead of /usr/bin
 # this is redundant if HOMEBREW_PREFIX is /usr/local
@@ -110,7 +109,9 @@ export PATH=$PATH:$HOME/.ngs/bin  #Add NGS utility to the path
 # uninstall by removing these lines
 [ -f ~/.config/tabtab/bash/__tabtab.bash ] && . ~/.config/tabtab/bash/__tabtab.bash || true
 
-# Not yet activated
-# export STARSHIP_CONFIG=~/.dotfiles/starship.toml
-# eval "$(starship init bash)"
+# Starship prompt
+export STARSHIP_CONFIG=~/.dotfiles/starship.toml
+# starship-nice.toml requires nerdfont
+# export STARSHIP_CONFIG=~/.dotfiles/starship-nice.toml
+eval "$(starship init bash)"
 

@@ -3,6 +3,7 @@
 format = """
 $username\
 $hostname\
+$kubernetes\
 $directory\
 $git_branch\
 $git_state\
@@ -55,5 +56,16 @@ style = "yellow"
 
 [character]
 # default symbols
-# success_symbol = "[❯](green)"
-# error_symbol = "[❯](red)"
+success_symbol = "[❯](green)"
+error_symbol = "[❯](red)"
+# success_symbol = '[➜](bold green)'
+# error_symbol = '[✗](bold red)'
+# success_symbol = '[\$](green)'
+# error_symbol = '[\$](red)'
+
+
+[kubernetes]
+disabled = false
+#detect_files = ['k8s']
+#detect_folders = ['k8s']
+#detect_extensions = ['yaml']
