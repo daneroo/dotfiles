@@ -84,7 +84,7 @@ yq
 # Python stuff
 # black
 # flake8
-# poetry
+poetry
 pipenv
 virtualenv
 python@3.10
