@@ -25,6 +25,7 @@ docker-completion
 # docker-slim's project has been renamed to slimtoolkit
 docker-slim
 doctl
+elixir
 ffmpeg
 findutils
 fio
