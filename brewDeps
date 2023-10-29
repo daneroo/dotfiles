@@ -25,6 +25,8 @@ docker-completion
 # docker-slim's project has been renamed to slimtoolkit
 docker-slim
 doctl
+# Elixir: To get proper :observer.start to work
+# brew reinstall --build-from-source wxwidgets
 elixir
 ffmpeg
 findutils

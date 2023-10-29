@@ -10,6 +10,15 @@ Regular maintenance (_idempotent_):
 ./check.sh
 ```
 
+## TODO
+
+- [ ] move to `asdf`
+  - [ ] elixir/erlang,
+  - [ ]node,npm, remove nvm
+- [x] Prompt
+  - [ ] Moved to Starship - cleanup old (pre-starship) stuff
+- [ ] Profile shell startup performance?
+
 ## Bootstrap
 
 ### Setup `ssh`
@@ -77,17 +86,11 @@ echo $SHELL # to confirm
 - start the dance: `./check.sh`
 
 - nvm npm stuf ??
+
 ```bash
 #?? yarn replace by corepack?
 corepack enable
 ```
-
-## TODO
-
-- [ ] Prompt
-  - [ ] Starship - add kubernetes and docker-context
-  - [ ] ifelse starship, kubeon
-  - [ ] Profile shell startup performance?
 
 ```bash
 # hyperfine
