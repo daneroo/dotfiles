@@ -12,9 +12,37 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
+- [x] install asdf
+
+  - reproduce what I have with nvm
+    - [x] install asdf node
+    - [x] do we have completions: added suboptimal completions in bash_profile
+    - [x] where do npm's global packages go, In a node version specific directory
+      - npm root -g : /Users/daniel/.asdf/installs/nodejs/20.9.0/lib/node_modules
+    - [x] what happens to global packages where we upgrade node.js/npm: they get removed with the node version
+    - [x] does vscode see it : I guess so since it is global
+  - [x] write down and check asdf deps
+  - [x] see if I can use it; like will vscode see the right node version?
+  - [ ] python plugin, and ensure latest.
+
+- remove nvm from brew
+
+```bash
+asdf plugin-add nodejs
+asdf plugin-update nodejs
+asdf install nodejs latest
+asdf global nodejs latest
+node --version
+
+desired_node=$(asdf list all nodejs |grep "^20"|tail -1) # 20.9.0
+echo $desired_node
+asdf install nodejs ${desired_node}
+asdf global nodejs ${desired_node}
+```
+
 - [ ] move to `asdf`
   - [ ] elixir/erlang,
-  - [ ]node,npm, remove nvm
+  - [ ] node,npm, remove nvm
 - [x] Prompt
   - [ ] Moved to Starship - cleanup old (pre-starship) stuff
 - [ ] Profile shell startup performance?

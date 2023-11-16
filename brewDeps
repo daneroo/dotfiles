@@ -6,6 +6,7 @@
 # - sorted by basename in case of scoped packages (`teamookla/speedtest/speedtest` sorts as `speedtest`)
 act
 asciinema
+asdf
 aws-iam-authenticator
 awscli
 # azure-cli
@@ -49,6 +50,7 @@ iperf
 iperf3
 ipfs
 jhead
+just
 jq
 k6
 kind
@@ -64,9 +66,7 @@ libpq
 # md5sha1sum # now included in coreutils
 nats-io/nats-tools/nats
 netlify/netlifyctl/netlifyctl
-# Replace node with nvm (fnm would be an option)
-# node
-nvm
+# node is managed by asdf
 pstree
 pulumi
 rustup-init
@@ -90,4 +90,4 @@ yq
 poetry
 pipenv
 virtualenv
-python@3.10
+python@3.11

@@ -17,18 +17,25 @@ done
 # brew's bash completion - assumes HOMEBREW_PREFIX is set
 [[ -r "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh" ]] && . "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh"
 
+# ASDF Setup
+[[ -r "${HOMEBREW_PREFIX}/opt/asdf/libexec/asdf.sh" ]] && . "${HOMEBREW_PREFIX}/opt/asdf/libexec/asdf.sh"
+
+# NPM completion Setup : slooooow
+# TODO(daneroo): speed this up by making another dot file
+command -v npm &>/dev/null && source <(npm completion)
+
 # NVM Setup
-export NVM_DIR="$HOME/.nvm"
-[ -s "${HOMEBREW_PREFIX}/opt/nvm/nvm.sh" ] && . "${HOMEBREW_PREFIX}/opt/nvm/nvm.sh"  # This loads nvm
-[ -s "${HOMEBREW_PREFIX}/opt/nvm/etc/bash_completion.d/nvm" ] && . "${HOMEBREW_PREFIX}/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
+# export NVM_DIR="$HOME/.nvm"
+# [ -s "${HOMEBREW_PREFIX}/opt/nvm/nvm.sh" ] && . "${HOMEBREW_PREFIX}/opt/nvm/nvm.sh"  # This loads nvm
+# [ -s "${HOMEBREW_PREFIX}/opt/nvm/etc/bash_completion.d/nvm" ] && . "${HOMEBREW_PREFIX}/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
 # Old .profile content
 # This is source'd from .bash_profile, since I installed rvm!
 
 # gcloud (brew) completion : brew cask install google-cloud-sdk
-if [ -f ${HOMEBREW_PREFIX}/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc ]; then
-  . ${HOMEBREW_PREFIX}/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc
-fi
+# if [ -f ${HOMEBREW_PREFIX}/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc ]; then
+#   . ${HOMEBREW_PREFIX}/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc
+# fi
 
 # kube-ps1 prompt functions
 # side effect: appends _kube_ps1_update_cache to PROMPT_COMMAND
@@ -38,32 +45,6 @@ fi
 
 # brew install awscli / aws completion
 complete -C aws_completer aws
-
-##### PROMPT START - replaced with Starship #####
-# # *** Prompt: (bash+git+kube)
-# # Prompt uses PROMPT_COMMAND instead of PS1, 
-# # because git prompt only supports color when used that way.
-# # Note that PROMPT_COMMAND was appended to by kube-ps1.sh
-# PROMPT_DIRTRIM=2  # depth of directory for \w directive
-
-# GIT_PS1_SHOWUPSTREAM="auto"
-# GIT_PS1_SHOWCOLORHINTS=true
-# GIT_PS1_SHOWDIRTYSTATE=true
-# GIT_PS1_SHOWUNTRACKEDFILES=true
-
-# # KUBE_PS1_SYMBOL_ENABLE=false # default is true
-# KUBE_PS1_SEPARATOR=''  # to remove separator, because symbol addds a space.
-
-# ## Don't forget to append previous PROMPT_COMMAND..
-# PROMPT_PFX='\u@\h:\w'
-# if [ -n "$KUBE_PS1_BINARY" ]; then
-#   PROMPT_SFX='$(kube_ps1)$ '
-#   kubeoff
-# else
-#   PROMPT_SFX='$ ' # if no kube-ps1
-# fi
-# PROMPT_COMMAND="__git_ps1 '${PROMPT_PFX}' '${PROMPT_SFX}'; ${PROMPT_COMMAND}"
-##### PROMPT END #####
 
 # Path put /usr/local/bin ahead of /usr/bin
 # this is redundant if HOMEBREW_PREFIX is /usr/local
@@ -85,6 +66,7 @@ alias po='popd'
 #export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home/
 
 # Put Homebrew's Python ahead in the path
+# TODO(daneroo) asdf'ify this too
 export PATH="${HOMEBREW_PREFIX}/opt/python/libexec/bin:$PATH"
 
 # for Go, without docker

@@ -40,7 +40,7 @@ func main() {
 		fmt.Printf("✓ - No missing casks\n")
 	}
 
-	// Check if all installed are either required, or a dpendant of a required package
+	// Check if all installed are either required, or a dependant of a required package
 	extra := extraneous(required, installed, deps)
 	if len(extra) > 0 {
 		fmt.Printf("✗ -Extraneous casks: (brew uninstall or brew rmtree)\n")
