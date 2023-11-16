@@ -67,7 +67,7 @@ alias po='popd'
 
 # Put Homebrew's Python ahead in the path
 # TODO(daneroo) asdf'ify this too
-export PATH="${HOMEBREW_PREFIX}/opt/python/libexec/bin:$PATH"
+# export PATH="${HOMEBREW_PREFIX}/opt/python/libexec/bin:$PATH"
 
 # for Go, without docker
 export GOPATH=$HOME/Code/Go
