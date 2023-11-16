@@ -37,7 +37,7 @@ function update_asdf_plugins() {
     echo "✓ - asdf is installed"    
   fi
 
-  declare -a asdf_plugins=("nodejs")
+  declare -a asdf_plugins=("nodejs" "python")
   for plugin in "${asdf_plugins[@]}"; do
     if asdf plugin-list | grep -q "^$plugin$"; then
       echo "✓ - asdf plugin $plugin is installed"    
@@ -45,10 +45,18 @@ function update_asdf_plugins() {
       echo "✗ - asdf plugin $plugin is missing. Installing" 
       asdf plugin-add $plugin
     fi
-    # TODO(danieroo): update plugins
+    # Check/Apply for plugin update
+    # There is no way to only "check for updates" for a plugin, so we just update it, the reporting is finetuned however.
+    update_output=$(asdf plugin-update $plugin 2>&1)
+    if echo "$update_output" | grep -q "Already on 'master'" || echo "$update_output" | grep -q "Your branch is up to date"; then
+      echo "✓ - $plugin plugin is already up to date."
+    else
+      echo "✓ - $plugin plugin updated."
+      echo "$update_output"
+    fi
   done
-
 }
+
 echo
 echo "-=-= asdf - and plugins"
 update_asdf_plugins
@@ -60,6 +68,8 @@ function get_latest_node_lts_version() {
   curl -s https://nodejs.org/dist/index.json | jq -r '[.[] | select(.lts != false)][0].version'
 }
 
+# This section enforces that the lated LTS version of Node.js is installed and set as the global version
+# It will also warn about any extrneous versions. (Which might be fine)
 function update_node_lts() {
   desired_node_version=$(get_latest_node_lts_version)
 
@@ -92,13 +102,73 @@ function update_node_lts() {
     echo "✗ - Extraneous Node.js versions found: $extraneous_versions"
     echo "Consider removing them with: asdf uninstall nodejs $extraneous_versions (one at a time - TABTAB)"
   fi
-
 }
 
 echo
 echo "-=-= Node.js LTS"
 update_node_lts
 
+# This section enforces that we have the lates patch version from our desired major.minor versions
+# It will also warn about any extrneous versions. (Which might be fine)
+function update_python_versions() {
+  # Define the major.minor versions you want to maintain
+  # The last one in the list will be set as the global version
+  declare -a python_versions=("3.12" "3.11")
+
+  # Initialize a string to keep all desired versions - to filter for extranous versions at the end
+  desired_versions=""
+
+  # Initialize a variable to keep track of the last installed version - it will be made global at the end
+  last_installed_version=""
+
+  # For each major.minor version, find and install the latest patch version
+  for version in "${python_versions[@]}"; do
+    latest_patch=$(asdf list-all python | grep -E "^${version}\.[0-9]+$" | sort -V | tail -1)
+    # Keep track of this path version in our desired versions string
+    desired_versions+="${latest_patch}|"
+
+    # echo "Latest patch version for Python ${version} is ${latest_patch}"    
+    if asdf list python "${latest_patch}" >/dev/null 2>&1; then
+      echo "✓ - Python latest ${version} version: ${latest_patch} is installed"
+    else
+      echo "✗ - Python latest ${version} version: ${latest_patch} is not installed. Installing..."
+      asdf install python "${latest_patch}"
+    fi
+    last_installed_version="${latest_patch}" # Keep track of the last installed version
+  done
+
+  # Check if the desired version is set as the global version
+  current_global_version=$(awk '/^python/ {print $2}' ~/.tool-versions)
+  if [ "${current_global_version}" = "${last_installed_version}" ]; then
+    echo "✓ - Python ${last_installed_version} is set as the global version"
+  else
+    echo "✗ - Python ${last_installed_version} is not the global version. Making it global"
+    asdf global python "${last_installed_version}"
+  fi
+
+  # Remove the trailing pipe character from the string: e.g.  3.12.0|3.11.6|
+  desired_versions=${desired_versions%|}
+  # Check for extraneous versions
+  # grep -Ev "(${desired_versions})":
+  #   grep -E: This option enables extended regular expressions, allowing more complex patterns.
+  #   v: This option inverts the match, so grep selects lines that do not match the pattern.
+  #   (${desired_versions}): The pattern is a group containing all desired versions, 
+  #   separated by the pipe character |, which acts as an "or" operator in regular expressions.
+  #   For example, if desired_versions is 3.12.0|3.11.6, the pattern matches either 3.12.0 or 3.11.6.
+  #   So this grep command filters out the installed Python versions that are 
+  #   not in the list of desired versions (i.e., the latest patch versions of 3.12 and 3.11 in your case).
+
+  extraneous_versions=$(asdf list python | grep -Ev "(${desired_versions})" | awk '{print $1}' | tr '\n' ' ')
+  if [ -z "$extraneous_versions" ]; then
+    echo "✓ - No extraneous Python versions installed."
+  else
+    echo "✗ - Extraneous Python versions found: $extraneous_versions"
+    echo "Consider removing them with: asdf uninstall python $extraneous_versions (one at a time - TABTAB)"
+  fi
+}
+echo
+echo "-=-= Python versions"
+update_python_versions
 
 echo
 echo "-=-= npm global requirements (slow)"
