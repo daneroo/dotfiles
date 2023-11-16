@@ -21,21 +21,11 @@ done
 [[ -r "${HOMEBREW_PREFIX}/opt/asdf/libexec/asdf.sh" ]] && . "${HOMEBREW_PREFIX}/opt/asdf/libexec/asdf.sh"
 
 # NPM completion Setup : slooooow
-# TODO(daneroo): speed this up by making another dot file
+# TODO(daneroo): speed this up by making another dot file - and update it in check.sh
 command -v npm &>/dev/null && source <(npm completion)
-
-# NVM Setup
-# export NVM_DIR="$HOME/.nvm"
-# [ -s "${HOMEBREW_PREFIX}/opt/nvm/nvm.sh" ] && . "${HOMEBREW_PREFIX}/opt/nvm/nvm.sh"  # This loads nvm
-# [ -s "${HOMEBREW_PREFIX}/opt/nvm/etc/bash_completion.d/nvm" ] && . "${HOMEBREW_PREFIX}/opt/nvm/etc/bash_completion.d/nvm"  # This loads nvm bash_completion
 
 # Old .profile content
 # This is source'd from .bash_profile, since I installed rvm!
-
-# gcloud (brew) completion : brew cask install google-cloud-sdk
-# if [ -f ${HOMEBREW_PREFIX}/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc ]; then
-#   . ${HOMEBREW_PREFIX}/Caskroom/google-cloud-sdk/latest/google-cloud-sdk/completion.bash.inc
-# fi
 
 # kube-ps1 prompt functions
 # side effect: appends _kube_ps1_update_cache to PROMPT_COMMAND

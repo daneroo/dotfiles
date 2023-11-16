@@ -41,6 +41,8 @@ format = "$symbol$branch($style)"
 style = "bright-black"
 
 [git_status]
+# TODO(daneroo): perhaps color to help the meaning
+# e.g. modified = "MOD[$count](red)"
 ahead = ">"  # default "⇡"
 behind = "<" # default "⇣"
 
