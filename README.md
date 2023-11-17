@@ -12,15 +12,13 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
-- [ ] Profile shell startup performance - time it
-  - [ ] npm completion - TODO(daneroo): speed this up by making another dot file - and update it in check.sh
-- [ ] Moved to Starship - cleanup old (pre-starship) stuff
 - [ ] move to `asdf`
   - [ ] document asdf usage? node, python, erlang, elixir
   - [ ] elixir/erlang,
   - [x] node,npm, remove nvm
   - [x] python
     - python tools - VSCode interactions
+- [ ] Starship prompt: add colors?
 
 ## Bootstrap
 
