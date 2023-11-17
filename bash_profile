@@ -3,6 +3,9 @@
 # everything goes into .bash_profile
 #   .bashrc sources this, and .profile is empty
 
+# This is to perform timing of the bash_profile load
+# start_time=$(/opt/homebrew/bin/gdate +%s%N)  # Start time in nanoseconds
+
 # Move this up and make it conditional on platform
 # Sets HOMEBREW vars and PATH's - brew shellenv : to see output
 #  - consider both known candidate prefixes
@@ -20,9 +23,12 @@ done
 # ASDF Setup
 [[ -r "${HOMEBREW_PREFIX}/opt/asdf/libexec/asdf.sh" ]] && . "${HOMEBREW_PREFIX}/opt/asdf/libexec/asdf.sh"
 
-# NPM completion Setup : slooooow
-# TODO(daneroo): speed this up by making another dot file - and update it in check.sh
-command -v npm &>/dev/null && source <(npm completion)
+# NPM completion
+# This command is slow so was replaced by the file below, generated and checked in check.sh
+# command -v npm &>/dev/null && source <(npm completion)
+NPM_COMPLETION_FILE=~/.dotfiles/incl/npm_completion.sh
+[[ -r "${NPM_COMPLETION_FILE}" ]] && . "${NPM_COMPLETION_FILE}"
+
 
 # Old .profile content
 # This is source'd from .bash_profile, since I installed rvm!
@@ -87,3 +93,7 @@ export STARSHIP_CONFIG=~/.dotfiles/starship.toml
 # export STARSHIP_CONFIG=~/.dotfiles/starship-nice.toml
 eval "$(starship init bash)"
 
+# This is to perform timing of the bash_profile load: matches section above
+# end_time=$(gdate +%s%N)  # End time in nanoseconds
+# elapsed_time=$((end_time - start_time))  # Elapsed time in nanoseconds
+# echo "bash_profile load time: $((elapsed_time / 1000000)) ms"

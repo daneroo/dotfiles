@@ -170,6 +170,45 @@ echo
 echo "-=-= Python versions"
 update_python_versions
 
+update_npm_completions() {
+    NPM_COMPLETION_FILE="./incl/npm_completion.sh"
+
+    # Check if npm command is available
+    if ! command -v npm &>/dev/null; then
+        echo "✗ - npm command not found"
+        return 1
+    fi
+
+    # Generate the current npm completion text and its SHA256 hash
+    completion_text=$(npm completion)
+    completion_sha256=$(echo "${completion_text}" | sha256sum | awk '{print $1}')
+
+    # Default to requiring an update
+    update_required=true
+
+    # Check if the file exists and compare hashes to determine if update is needed
+    if [[ -r "${NPM_COMPLETION_FILE}" ]]; then
+        file_sha256=$(sha256sum "${NPM_COMPLETION_FILE}" | awk '{print $1}')
+        if [[ "${completion_sha256}" == "${file_sha256}" ]]; then
+            update_required=false
+            echo "✓ - npm completions are up to date (sha256)"
+        fi
+    fi
+
+    # Update the completion file if required
+    if [[ "${update_required}" == "true" ]]; then
+        echo "✗ - npm completions need updating (sha256: ${completion_sha256})"
+        # Ensure the incl directory exists
+        mkdir -p ./incl
+        echo "${completion_text}" > "${NPM_COMPLETION_FILE}"
+    fi
+}
+
+echo
+echo "-=-= NPM completions"
+update_npm_completions
+
+
 echo
 echo "-=-= npm global requirements (slow)"
 # removed yarn for corepack?
