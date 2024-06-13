@@ -86,8 +86,8 @@ wget
 yq
 #
 # Python stuff - TODO(daneroo): python is in asdf now - not sure where to put poetry, pipenv,.. et al.
-# black
-# flake8
+black
+flake8
 poetry
 pipenv
 virtualenv
