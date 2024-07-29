@@ -70,7 +70,7 @@ netlify/netlifyctl/netlifyctl
 # node is managed by asdf
 pstree
 pulumi
-rustup-init
+# rustup
 skaffold
 sops
 teamookla/speedtest/speedtest
