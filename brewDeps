@@ -30,6 +30,7 @@ doctl
 # Elixir: To get proper :observer.start to work
 # brew reinstall --build-from-source wxwidgets
 elixir
+exercism
 ffmpeg
 findutils
 fio

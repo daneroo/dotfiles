@@ -3,6 +3,7 @@
     "coreutils",
     "ctop",
     "difftastic",
+    "exercism",
     "iftop",
     "iperf",
     "jhead",
