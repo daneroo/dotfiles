@@ -16,13 +16,15 @@ awscli
 # azure/functions/azure-functions-core-tools@3
 bash
 bash-completion
-oven-sh/bun/bun
+# bun is now managed by asdf
+# oven-sh/bun/bun
 caddy
 calibre
 coreutils
 ctop
 cue
-deno
+# deno is now managed by asdf
+# deno
 difftastic
 docker-completion
 # docker-compose-completion has been disabled because it has no upstream support for v2

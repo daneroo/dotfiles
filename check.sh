@@ -28,7 +28,6 @@ else
     echo "brew upgrade && brew cleanup"
 fi
 
-
 function update_asdf_plugins() {
   if ! command -v asdf &>/dev/null; then
     echo "✗ - asdf is not installed. Exiting"
@@ -37,7 +36,7 @@ function update_asdf_plugins() {
     echo "✓ - asdf is installed"    
   fi
 
-  declare -a asdf_plugins=("nodejs" "python")
+  declare -a asdf_plugins=("nodejs" "python" "deno" "bun")
   for plugin in "${asdf_plugins[@]}"; do
     if asdf plugin-list | grep -q "^$plugin$"; then
       echo "✓ - asdf plugin $plugin is installed"    
@@ -169,6 +168,46 @@ function update_python_versions() {
 echo
 echo "-=-= Python versions"
 update_python_versions
+
+function update_latest_deno() {
+  if ! asdf plugin-list | grep -q "^deno$"; then
+    echo "✗ - asdf plugin deno is missing. Installing"
+    asdf plugin-add deno
+  fi
+
+  latest_deno=$(asdf latest deno)
+  if asdf list deno | grep -q "$latest_deno"; then
+    echo "✓ - Deno latest version ($latest_deno) is installed"
+  else
+    echo "✗ - Deno latest version ($latest_deno) is not installed. Installing..."
+    asdf install deno "$latest_deno"
+    asdf global deno "$latest_deno"
+  fi
+}
+
+echo
+echo "-=-= Deno Versions"
+update_latest_deno
+
+function update_latest_bun() {
+  if ! asdf plugin-list | grep -q "^bun$"; then
+    echo "✗ - asdf plugin bun is missing. Installing"
+    asdf plugin-add bun
+  fi
+
+  latest_bun=$(asdf latest bun)
+  if asdf list bun | grep -q "$latest_bun"; then
+    echo "✓ - Bun latest version ($latest_bun) is installed"
+  else
+    echo "✗ - Bun latest version ($latest_bun) is not installed. Installing..."
+    asdf install bun "$latest_bun"
+    asdf global bun "$latest_bun"
+  fi
+}
+
+echo
+echo "-=-= Bun Versions"
+update_latest_bun
 
 update_npm_completions() {
     NPM_COMPLETION_FILE="./incl/npm_completion.sh"
