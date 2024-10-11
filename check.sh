@@ -165,23 +165,36 @@ function update_python_versions() {
     echo "Consider removing them with: asdf uninstall python $extraneous_versions (one at a time - TABTAB)"
   fi
 }
+
 echo
 echo "-=-= Python versions"
 update_python_versions
 
 function update_latest_deno() {
-  if ! asdf plugin-list | grep -q "^deno$"; then
-    echo "✗ - asdf plugin deno is missing. Installing"
-    asdf plugin-add deno
-  fi
-
   latest_deno=$(asdf latest deno)
   if asdf list deno | grep -q "$latest_deno"; then
     echo "✓ - Deno latest version ($latest_deno) is installed"
   else
     echo "✗ - Deno latest version ($latest_deno) is not installed. Installing..."
     asdf install deno "$latest_deno"
-    asdf global deno "$latest_deno"
+  fi
+
+  # Set and check global version
+  asdf global deno "$latest_deno"
+  current_global=$(asdf current deno | awk '{print $2}')
+  if [ "$current_global" = "$latest_deno" ]; then
+    echo "✓ - Deno $latest_deno is set as the global version"
+  else
+    echo "✗ - Failed to set Deno $latest_deno as the global version"
+  fi
+
+  # Check for extraneous versions
+  extraneous_versions=$(asdf list deno | grep -v "$latest_deno" | awk '{print $1}' | tr '\n' '|')
+  if [ -z "$extraneous_versions" ]; then
+    echo "✓ - No extraneous Deno versions installed."
+  else
+    echo "✗ - Extraneous Deno versions found: $extraneous_versions"
+    echo "Consider removing them with: asdf uninstall deno $extraneous_versions (one at a time - TABTAB)"
   fi
 }
 
@@ -190,18 +203,30 @@ echo "-=-= Deno Versions"
 update_latest_deno
 
 function update_latest_bun() {
-  if ! asdf plugin-list | grep -q "^bun$"; then
-    echo "✗ - asdf plugin bun is missing. Installing"
-    asdf plugin-add bun
-  fi
-
   latest_bun=$(asdf latest bun)
   if asdf list bun | grep -q "$latest_bun"; then
     echo "✓ - Bun latest version ($latest_bun) is installed"
   else
     echo "✗ - Bun latest version ($latest_bun) is not installed. Installing..."
     asdf install bun "$latest_bun"
-    asdf global bun "$latest_bun"
+  fi
+
+  # Set and check global version
+  asdf global bun "$latest_bun"
+  current_global=$(asdf current bun | awk '{print $2}')
+  if [ "$current_global" = "$latest_bun" ]; then
+    echo "✓ - Bun $latest_bun is set as the global version"
+  else
+    echo "✗ - Failed to set Bun $latest_bun as the global version"
+  fi
+
+  # Check for extraneous versions
+  extraneous_versions=$(asdf list bun | grep -v "$latest_bun" | awk '{print $1}' | tr '\n' '|')
+  if [ -z "$extraneous_versions" ]; then
+    echo "✓ - No extraneous Bun versions installed."
+  else
+    echo "✗ - Extraneous Bun versions found: $extraneous_versions"
+    echo "Consider removing them with: asdf uninstall bun $extraneous_versions (one at a time - TABTAB)"
   fi
 }
 
