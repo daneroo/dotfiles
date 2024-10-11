@@ -2,7 +2,7 @@
 
 ## Operating
 
-_Systems under control:_ `dirac,shannon,davinci(M1),goedel,feynman,galois`
+_Systems under control:_ `galois, davinci, shannon, dirac, goedel, feynman`
 
 Regular maintenance (_idempotent_):
 
@@ -12,13 +12,8 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
-- [ ] move to `asdf`
-  - [ ] document asdf usage? node, python, erlang, elixir
-  - [ ] elixir/erlang,
-  - [x] node,npm, remove nvm
-  - [x] python
-    - python tools - VSCode interactions
-- [ ] Starship prompt: add colors?
+- [ ] move bash and go code to deno
+- [ ] Starship prompt: add colors and fonts?
 
 ## Bootstrap
 
