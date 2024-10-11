@@ -12,6 +12,7 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
+- update python tooling, after move to uv/ruff
 - [ ] move bash and go code to deno
 - [ ] Starship prompt: add colors and fonts?
 
