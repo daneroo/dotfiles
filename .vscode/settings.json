@@ -13,6 +13,7 @@
     "libpq",
     "netlifyctl",
     "oidc",
+    "pearcleaner",
     "pstree",
     "rustup",
     "sidero",

@@ -30,27 +30,27 @@ func main() {
 
 	missing := checkMissing(required, installed)
 	if len(missing) > 0 {
-		fmt.Printf("✗ -Missing casks:\n")
+		fmt.Printf("✗ -Missing casks/formulae:\n")
 		for _, cask := range missing {
 			fmt.Printf(" brew install %s\n", cask)
 		}
 		fmt.Printf("\n  or\n\n")
 		fmt.Printf(" brew install %s\n", strings.Join(missing, " "))
 	} else {
-		fmt.Printf("✓ - No missing casks\n")
+		fmt.Printf("✓ - No missing casks/formulae\n")
 	}
 
 	// Check if all installed are either required, or a dependant of a required package
 	extra := extraneous(required, installed, deps)
 	if len(extra) > 0 {
-		fmt.Printf("✗ -Extraneous casks: (brew uninstall or brew rmtree)\n")
+		fmt.Printf("✗ -Extraneous casks/formulae: (brew uninstall or brew rmtree)\n")
 		for _, e := range extra {
 			fmt.Printf(" brew uninstall %s\n", e)
 		}
 		fmt.Printf("\n  or\n\n")
 		fmt.Printf(" brew uninstall %s\n\n", strings.Join(extra, " "))
 	} else {
-		fmt.Printf("✓ - No extraneous casks\n")
+		fmt.Printf("✓ - No extraneous casks/formulae\n")
 	}
 	fmt.Printf("---\n")
 
@@ -164,8 +164,10 @@ func getDeps() map[string][]string {
 }
 
 func getInstalled() []string {
-	out, err := exec.Command("brew", "ls", "--formula", "--full-name").Output()
-	// out, err := exec.Command("brew", "ls").Output()
+	// list both formulae and casks
+	out, err := exec.Command("brew", "ls", "--full-name").Output()
+	// we previously excluded casks
+	// out, err := exec.Command("brew", "ls", "--formula", "--full-name").Output()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -174,7 +176,7 @@ func getInstalled() []string {
 	fmt.Printf("✓ - Got Installed\n")
 	installed := spliyByLineNoEmpty(string(out))
 	if verbose {
-		fmt.Printf("Installed: (brew ls --formula --full-name)\n %v\n\n", strings.Join(installed, ", "))
+		fmt.Printf("Installed: (brew ls --full-name)\n %v\n\n", strings.Join(installed, ", "))
 	}
 	return installed
 }
