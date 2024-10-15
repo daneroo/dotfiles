@@ -89,6 +89,7 @@ stern
 syncthing
 terraform
 tree
+vlc
 watch
 wget
 yq
@@ -98,5 +99,7 @@ black
 flake8
 poetry
 pipenv
+ruff
+uv
 virtualenv
 # python@3.11 - moved to asdf
