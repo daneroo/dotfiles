@@ -14,7 +14,10 @@ Regular maintenance (_idempotent_):
 
 - [ ] update python tooling, after move to uv/ruff
 - [ ] move bash and go code to deno
+  - [ ] separate casks
 - [ ] Starship prompt: add colors and fonts?
+  - Default VSCode font: 'MesloLGS Nerd Font Mono', Menlo, Monaco, 'Courier New', monospace
+  - Consider installing 'JetBrains Mono' and 'FiraCode Nerd Font Mono'
 
 ## Bootstrap
 
