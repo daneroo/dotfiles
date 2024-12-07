@@ -37,13 +37,12 @@ This repo is for managing:
 ### Desired State and Migration Plan
 
 - Code Modernization
-  - [ ] enhance `checkBrew.go` to separate formulae and casks
+  - [ ] Enhance `checkBrew.go` to separate formulae and casks
   - [ ] Migrate bash scripts to Go
     - [ ] Determine file structure (one file may no longer be enough)
     - [ ] Port `installDotLinks.sh` to Go
     - [ ] Create a unified configuration system
-  - [ ] Separate cask management from formula management
-  - [ ] Implement proper logging and error handling
+  - [ ] Implement proper UX (logging, progress and error reporting)
 
 - Configuration Enhancement
   - [ ] Enhance brewDeps text file format to jsonc or yaml
