@@ -1,5 +1,64 @@
 # dotfiles
 
+## Current State and Plan
+
+This repo is for managing:
+
+- personal config and dotfiles
+- required software installed by brew formulae and casks
+
+### Current State
+
+- Entry point: `check.sh`
+  - Orchestrates the entire reconciliation process
+  - Provides status reporting with ✓/✗ indicators
+  - Manages dotfiles via `installDotLinks.sh`
+    - Maintains and validates symlinks for bash configuration files
+  - Manages Homebrew packages via `checkBrew.go`
+    - Validates installed packages against required dependencies
+    - Detects missing packages
+    - Identifies extraneous packages
+    - Ensures transitive dependencies are maintained
+    - Handles both formulae and casks
+  - Manages runtime versions via asdf
+    - Manages asdf plugins: currently Node.js, Python, Deno, Bun
+    - For each plugin:
+      - Automatic installation of desired versions
+      - Global version management
+      - Detection of extraneous versions
+      - Plugin updates and maintenance
+  - Manages npm *global* state
+    - Desired packages: corepack, eslint, json, turbo, nx, etc.
+    - Maintains shell completions
+    - Reports outdated packages
+    - Proposes upgrades
+    - Handles pnpm via corepack
+
+### Desired State and Migration Plan
+
+- Code Modernization
+  - [ ] enhance `checkBrew.go` to separate formulae and casks
+  - [ ] Migrate bash scripts to Go
+    - [ ] Determine file structure (one file may no longer be enough)
+    - [ ] Port `installDotLinks.sh` to Go
+    - [ ] Create a unified configuration system
+  - [ ] Separate cask management from formula management
+  - [ ] Implement proper logging and error handling
+
+- Configuration Enhancement
+  - [ ] Enhance brewDeps text file format to jsonc or yaml
+  - [ ] Implement formula and cask separation
+  - [ ] Per machine specialization
+  - [ ] Enhance Starship prompt configuration
+    - [ ] Configure fonts
+    - [ ] Test alternative font options
+
+- Consider a compatible equivalent implementation in Deno/Typescript
+- Documentation and Testing
+  - [ ] Add succinct but complete documentation
+  - [ ] Create automated tests if possible
+  - [ ] Document bootstrap process
+
 ## Operating
 
 _Systems under control:_ `galois, davinci, shannon, dirac, goedel, feynman`
