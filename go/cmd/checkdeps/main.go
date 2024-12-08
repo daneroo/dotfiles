@@ -190,7 +190,7 @@ func getDeps() map[string][]string {
 	}
 
 	// split by line, remove empty lines
-	installedColonDeps := spliyByLineNoEmpty(string(out))
+	installedColonDeps := splitByLineNoEmpty(string(out))
 
 	deps := map[string][]string{}
 
@@ -222,14 +222,14 @@ func getInstalled() []string {
 
 	// split by line, remove empty lines
 	fmt.Printf("✓ - Got Installed\n")
-	installed := spliyByLineNoEmpty(string(out))
+	installed := splitByLineNoEmpty(string(out))
 	if verbose {
 		fmt.Printf("Installed: (brew ls --full-name)\n %v\n\n", strings.Join(installed, ", "))
 	}
 	return installed
 }
 
-func spliyByLineNoEmpty(s string) []string {
+func splitByLineNoEmpty(s string) []string {
 	return filter(
 		strings.Split(s, "\n"),
 		nonEmptyString,
