@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "description": "This schema validates brew formulae and casks configuration. Fully qualified formulae are written as: 'basename, tap/path/' Example: 'speedtest, teamookla/speedtest/' -> 'teamookla/speedtest/speedtest'",
+  "description": "This schema validates brew formulae and casks configuration. Formulae can be fully qualified with taps, e.g. 'int128/kubelogin/kubelogin'",
   "type": "object",
   "required": ["formulae", "casks"],
   "properties": {
@@ -13,10 +13,8 @@
           "uniqueItems": true,
           "items": {
             "type": "string",
-            "pattern": "^[a-zA-Z0-9-]+(, [a-zA-Z0-9/-]+/)?$",
-            "description": "Formula name, optionally followed by ', ' and its tap path",
-            "$data": "/1",
-            "errorMessage": "Array must be sorted alphabetically"
+            "pattern": "^[a-zA-Z0-9-]+(/[a-zA-Z0-9-]+/[a-zA-Z0-9-]+)?$",
+            "description": "Formula name, optionally prefixed with tap path"
           }
         }
       },
@@ -28,9 +26,8 @@
       "uniqueItems": true,
       "items": {
         "type": "string",
-        "pattern": "^[a-zA-Z0-9-]+$",
-        "$data": "/1",
-        "errorMessage": "Casks array must be sorted alphabetically"
+        "pattern": "^[a-zA-Z0-9-]+(/[a-zA-Z0-9-]+/[a-zA-Z0-9-]+)?$",
+        "description": "Cask name, optionally prefixed with tap path"
       }
     }
   },

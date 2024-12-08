@@ -9,7 +9,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
-	"sort"
+	"path"
 	"strings"
 
 	"github.com/daneroo/dotfiles/go/pkg/logsetup"
@@ -232,43 +232,6 @@ func contains(s []string, e string) bool {
 	return false
 }
 
-func slicesEqual(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-	// Make copies to sort
-	aCopy := make([]string, len(a))
-	bCopy := make([]string, len(b))
-	copy(aCopy, a)
-	copy(bCopy, b)
-	sort.Strings(aCopy)
-	sort.Strings(bCopy)
-
-	for i := range aCopy {
-		if aCopy[i] != bCopy[i] {
-			return false
-		}
-	}
-	return true
-}
-
-func validateSorting(items []string) []string {
-	sorted := make([]string, len(items))
-	copy(sorted, items)
-	sort.Strings(sorted)
-
-	var violations []string
-	for i := range items {
-		if items[i] != sorted[i] {
-			if sorted[i] < items[i] {
-				violations = append(violations, fmt.Sprintf("%q should come before %q",
-					sorted[i], items[i]))
-			}
-		}
-	}
-	return violations
-}
-
 func parseDeps() (BrewDeps, error) {
 	out, err := os.ReadFile(brewDepsYamlFile)
 	if err != nil {
@@ -282,6 +245,22 @@ func parseDeps() (BrewDeps, error) {
 
 	var violations []string
 	var sectionViolations []string
+
+	// Validate format for all sections
+	for section, formulae := range config.FormulaeBySection {
+		for _, f := range formulae {
+			if err := validateFormat(f); err != nil {
+				violations = append(violations, fmt.Sprintf("  ✗ - Section %q: %v", section, err))
+			}
+		}
+	}
+
+	// Validate format for casks
+	for _, c := range config.Casks {
+		if err := validateFormat(c); err != nil {
+			violations = append(violations, fmt.Sprintf("  ✗ - Casks: %v", err))
+		}
+	}
 
 	// Validate all sections
 	for section, formulae := range config.FormulaeBySection {
@@ -314,4 +293,41 @@ func parseDeps() (BrewDeps, error) {
 	}
 
 	return config, nil
+}
+
+// validateFormat checks if a formula/cask name is either:
+// - simple name: [a-zA-Z0-9-]+
+// - or fully qualified: name/tap/name
+func validateFormat(name string) error {
+	parts := strings.Split(name, "/")
+	if len(parts) != 1 && len(parts) != 3 {
+		return fmt.Errorf("invalid format %q: must be 'name' or 'tap/repo/name'", name)
+	}
+	return nil
+}
+
+// For use with validateSorting
+func compareByBasename(i, j string) bool {
+	iBase := path.Base(i)
+	jBase := path.Base(j)
+	if iBase == jBase {
+		return i < j // Use full path as tiebreaker
+	}
+	return iBase < jBase
+}
+
+func validateSorting(items []string) []string {
+	// Empty or single item is always sorted
+	if len(items) <= 1 {
+		return []string{}
+	}
+
+	var violations []string
+	for i := 1; i < len(items); i++ {
+		if !compareByBasename(items[i-1], items[i]) {
+			violations = append(violations, fmt.Sprintf("%q should come before %q",
+				items[i], items[i-1]))
+		}
+	}
+	return violations
 }

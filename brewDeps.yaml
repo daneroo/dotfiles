@@ -67,19 +67,19 @@ formulae:
     - kompose
     - kube-ps1
     - kubectx
-    - kubelogin, int128/kubelogin/
+    - int128/kubelogin/kubelogin
     - kubernetes-cli
     - kustomize
     - libpq
-    - nats, nats-io/nats-tools/
-    - netlifyctl, netlify/netlifyctl/
+    - nats-io/nats-tools/nats
+    - netlify/netlifyctl/netlifyctl
     - pstree
     - pulumi
     - rsync
     # rustup
     - skaffold
     - sops
-    - speedtest, teamookla/speedtest/
+    - teamookla/speedtest/speedtest
     - sqlite
     - starship
     - stern
