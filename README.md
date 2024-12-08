@@ -37,8 +37,8 @@ This repo is for managing:
 ### Desired State and Migration Plan
 
 - Code Modernization
-  - [ ] Enhance `checkBrew.go` to separate formulae and casks
-    - [ ] Enhance brewDeps text file format to jsonc or yaml
+  - [x] Enhance `checkBrew.go` to separate formulae and casks
+    - [x] Enhance brewDeps text file format to jsonc or yaml
     - [ ] Detect and propose removing unused taps
   - [ ] Migrate bash scripts to Go
     - [ ] Determine file structure (one file may no longer be enough)

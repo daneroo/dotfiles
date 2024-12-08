@@ -123,31 +123,7 @@ func sanity(installed []string, deps map[string][]string) bool {
 	return !insane
 }
 
-func getRequiredOld() []string {
-	out, err := os.ReadFile("brewDeps")
-	if err != nil {
-		log.Fatal(err)
-	}
-	// remove empty lines, and lines starting with # (comment)
-	required := filter(
-		strings.Split(string(out), "\n"),
-		func(s string) bool {
-			return len(s) > 0 && !strings.HasPrefix(strings.TrimSpace(s), "#")
-		})
-
-	// Trim entries
-	for i := 0; i < len(required); i++ {
-		required[i] = strings.TrimSpace(required[i])
-	}
-
-	fmt.Printf("✓ - Got Required (old)\n")
-	if verbose {
-		fmt.Printf("Required: (./brewDeps)\n %s\n\n", strings.Join(required, ", "))
-	}
-	return required
-}
-
-func getRequiredNew() []string {
+func getRequired() []string {
 	config, err := parseDeps()
 	if err != nil {
 		log.Fatal(err)
@@ -170,29 +146,11 @@ func getRequiredNew() []string {
 	}
 	required = append(required, config.Casks...)
 
-	fmt.Printf("✓ - Got Required (new)\n")
+	fmt.Printf("✓ - Got Required\n")
 	if verbose {
-		fmt.Printf("Required: (./brewDeps.yaml)\n %s\n\n", strings.Join(required, ", "))
+		fmt.Printf("Required: (%s)\n %s\n\n", brewDepsYamlFile, strings.Join(required, ", "))
 	}
 	return required
-}
-
-func getRequired() []string {
-	oldReq := getRequiredOld()
-	newReq := getRequiredNew()
-
-	// Sort both lists before comparing
-	sort.Strings(oldReq)
-	sort.Strings(newReq)
-
-	// Compare sorted slices
-	if !slicesEqual(oldReq, newReq) {
-		log.Fatalf("Mismatch between brewDeps and brewDeps.yaml:\nOld: %v\nNew: %v", oldReq, newReq)
-	}
-	fmt.Printf("✓ - Required old and new are consistent\n")
-
-	// During transition, return old version (unsorted)
-	return getRequiredOld() // Return fresh copy of old version
 }
 
 func getDeps() map[string][]string {
