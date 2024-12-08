@@ -12,6 +12,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/daneroo/dotfiles/go/pkg/logsetup"
 	"gopkg.in/yaml.v3"
 )
 
@@ -22,20 +23,13 @@ type BrewDeps struct {
 
 var verbose = false
 
-// Validation errors can be collected and joined
-type ValidationError struct {
-	Errors []string
-}
-
-func (e *ValidationError) Error() string {
-	return strings.Join(e.Errors, "\n")
-}
-
-func (e *ValidationError) Add(format string, args ...interface{}) {
-	e.Errors = append(e.Errors, fmt.Sprintf(format, args...))
-}
+const (
+	brewDepsFile     = "brewDeps"
+	brewDepsYamlFile = "brewDeps.yaml"
+)
 
 func main() {
+	logsetup.SetupFormat()
 	required := getRequired()
 	deps := getDeps()
 	installed := getInstalled()
@@ -156,7 +150,7 @@ func getRequiredOld() []string {
 func getRequiredNew() []string {
 	config, err := parseDeps()
 	if err != nil {
-		log.Fatal(err) // This will now show ALL validation errors
+		log.Fatal(err)
 	}
 
 	required := make([]string, 0)
@@ -300,55 +294,65 @@ func slicesEqual(a, b []string) bool {
 	return true
 }
 
-func validateSorting(items []string) error {
+func validateSorting(items []string) []string {
 	sorted := make([]string, len(items))
 	copy(sorted, items)
 	sort.Strings(sorted)
 
-	var errors []string
+	var violations []string
 	for i := range items {
 		if items[i] != sorted[i] {
 			if sorted[i] < items[i] {
-				errors = append(errors, fmt.Sprintf("%q should come before %q",
+				violations = append(violations, fmt.Sprintf("%q should come before %q",
 					sorted[i], items[i]))
 			}
 		}
 	}
-
-	if len(errors) > 0 {
-		return fmt.Errorf("%s", strings.Join(errors, "\n    "))
-	}
-	return nil
+	return violations
 }
 
 func parseDeps() (BrewDeps, error) {
-	out, err := os.ReadFile("brewDeps.yaml")
+	out, err := os.ReadFile(brewDepsYamlFile)
 	if err != nil {
-		return BrewDeps{}, err
+		return BrewDeps{}, fmt.Errorf("reading %s: %w", brewDepsYamlFile, err)
 	}
 
 	var config BrewDeps
 	if err := yaml.Unmarshal(out, &config); err != nil {
-		return BrewDeps{}, fmt.Errorf("parsing YAML: %v", err)
+		return BrewDeps{}, fmt.Errorf("parsing %s: %v", brewDepsYamlFile, err)
 	}
 
-	// Collect all validation errors
-	var validationErr ValidationError
+	var violations []string
+	var sectionViolations []string
 
 	// Validate all sections
 	for section, formulae := range config.FormulaeBySection {
-		if err := validateSorting(formulae); err != nil {
-			validationErr.Add("Section %q: %v", section, err)
+		if sortViolations := validateSorting(formulae); len(sortViolations) > 0 {
+			sectionViolations = append(sectionViolations, fmt.Sprintf("  ✗ - Section %q is not sorted", section))
+			for _, v := range sortViolations {
+				sectionViolations = append(sectionViolations, fmt.Sprintf("    ✗ - %s", v))
+			}
 		}
 	}
 
-	// Validate casks
-	if err := validateSorting(config.Casks); err != nil {
-		validationErr.Add("Casks: %v", err)
+	// If we have any section violations, add the header
+	if len(sectionViolations) > 0 {
+		violations = append(violations, "✗ - Formulae are not sorted")
+		violations = append(violations, sectionViolations...)
 	}
 
-	if len(validationErr.Errors) > 0 {
-		return BrewDeps{}, &validationErr
+	// Validate casks
+	if sortViolations := validateSorting(config.Casks); len(sortViolations) > 0 {
+		violations = append(violations, "✗ - Casks are not sorted")
+		for _, v := range sortViolations {
+			violations = append(violations, fmt.Sprintf("  ✗ - %s", v))
+		}
+	}
+
+	// Print violations and return validation error
+	if len(violations) > 0 {
+		fmt.Println(strings.Join(violations, "\n"))
+		return config, fmt.Errorf("validation failed for %s", brewDepsYamlFile)
 	}
 
 	return config, nil

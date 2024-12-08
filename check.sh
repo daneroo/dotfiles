@@ -13,7 +13,7 @@ brew update
 
 echo
 echo "-=-= Brew deps (mine)"
-go run ./cmd/checkdeps/main.go
+go run ./go/cmd/checkdeps/main.go
 
 echo
 echo "-=-= Brew outdated"
