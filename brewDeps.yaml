@@ -104,6 +104,7 @@ casks:
   - 1password-cli
   - calibre
   - google-drive
+  # - macvim
   - pearcleaner
   - stats
   - vlc
