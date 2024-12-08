@@ -103,7 +103,7 @@ formulae:
 casks:
   - 1password-cli
   - calibre
-  # google-drive
+  - google-drive
   - pearcleaner
   - stats
   - vlc

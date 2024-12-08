@@ -5,6 +5,7 @@ package main
 // 2- makes sure any other installed casks are dependants of the requested ones.
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -21,7 +22,7 @@ type BrewDeps struct {
 	Casks             []string            `yaml:"casks"`
 }
 
-var verbose = false
+var verbose bool
 
 const (
 	brewDepsFile     = "brewDeps"
@@ -29,6 +30,9 @@ const (
 )
 
 func main() {
+	flag.BoolVar(&verbose, "verbose", false, "turn on verbose logging")
+	flag.BoolVar(&verbose, "v", false, "turn on verbose logging (shorthand)")
+	flag.Parse()
 	logsetup.SetupFormat()
 	required := getRequired()
 	deps := getDeps()
@@ -84,27 +88,50 @@ func checkMissing(required, installed []string) []string {
 	return missing
 }
 
+func isTransitiveDep(pkg string, required []string, deps map[string][]string, seen map[string]bool) bool {
+	if seen[pkg] {
+		return false // avoid cycles
+	}
+	seen[pkg] = true
+
+	// Direct dependency of a required package?
+	for _, req := range required {
+		if pkgDeps, ok := deps[req]; ok {
+			if contains(pkgDeps, pkg) {
+				return true
+			}
+			// Check deps of deps
+			for _, dep := range pkgDeps {
+				if isTransitiveDep(pkg, []string{dep}, deps, seen) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 func extraneous(required, installed []string, deps map[string][]string) []string {
 	extra := []string{}
 	for _, inst := range installed {
 		ok := false
 		if contains(required, inst) {
 			ok = true
-			// fmt.Printf(" - %s is required\n", inst)
+			if verbose {
+				fmt.Printf(" - %s is required\n", inst)
+			}
 		} else {
-			// if cask is required, then it's deps are OK
-			for cask, deps := range deps {
-				if contains(required, cask) {
-					if contains(deps, inst) {
-						ok = true
-						// fmt.Printf(" - %s is required transitively by %s\n", inst, cask)
-					}
+			seen := make(map[string]bool)
+			ok = isTransitiveDep(inst, required, deps, seen)
+			if ok {
+				if verbose {
+					fmt.Printf(" - %s is required transitively\n", inst)
 				}
 			}
 		}
 		if !ok {
 			extra = append(extra, inst)
-			fmt.Printf(" - %s is not required (transitevely)\n", inst)
+			fmt.Printf(" - %s is not required (transitively)\n", inst)
 		}
 	}
 	return extra
@@ -117,7 +144,7 @@ func sanity(installed []string, deps map[string][]string) bool {
 		_, ok := deps[inst]
 		if !ok {
 			insane = true
-			fmt.Printf("(In)Sanity: Installed package %s not present in dependancies\n", inst)
+			fmt.Printf("(In)Sanity: Installed package %s not present in dependencies\n", inst)
 		}
 	}
 	return !insane

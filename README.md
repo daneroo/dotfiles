@@ -41,6 +41,7 @@ This repo is for managing:
     - [x] Enhance brewDeps text file format to jsonc or yaml
     - [ ] Detect and propose removing unused taps
   - [ ] Migrate bash scripts to Go
+    - [ ] ensure brew outdated / brew upgrade is executed before deps part
     - [ ] Determine file structure (one file may no longer be enough)
     - [ ] Port `installDotLinks.sh` to Go
     - [ ] Create a unified configuration system
