@@ -134,7 +134,8 @@ func checkMissing(required, installed []Package) []Package {
 }
 
 // containsPackage checks if a Package is in a slice, matching both Name and IsCask.
-// Used by checkMissing to compare required vs installed packages.
+// Used by checkMissing to compare required vs installed packages, and also by
+// isTransitiveDep to check if a package is a dependency of another.
 func containsPackage(s []Package, e Package) bool {
 	for _, a := range s {
 		if a.Name == e.Name && a.IsCask == e.IsCask {
@@ -172,6 +173,7 @@ func isTransitiveDep(pkg Package, required []Package, deps map[Package][]Package
 }
 
 func extraneous(required, installed []Package, deps map[Package][]Package) []Package {
+	// First find all extraneous packages
 	extra := []Package{}
 	for _, inst := range installed {
 		ok := isTransitiveDep(inst, required, deps)
@@ -184,7 +186,45 @@ func extraneous(required, installed []Package, deps map[Package][]Package) []Pac
 			fmt.Printf(" - %s is not required (transitively)\n", inst.Name)
 		}
 	}
-	return extra
+
+	// Find minimal set of packages to uninstall
+	minimalExtra := minimizeExtraneous(extra, deps)
+	if len(minimalExtra) == 0 && len(extra) > 0 {
+		log.Fatal("Impossible: found extraneous packages but no minimal set - circular dependencies?")
+	}
+	return minimalExtra
+}
+
+// minimizeExtraneous returns the minimal set of packages that need to be uninstalled.
+// When these packages are uninstalled, brew will automatically remove all their
+// dependencies that aren't needed by other packages.
+//
+// For example, if macvim (extraneous) depends on lua (also extraneous),
+// only macvim will be returned because `brew uninstall macvim` will automatically
+// remove lua if no other package needs it.
+func minimizeExtraneous(extra []Package, deps map[Package][]Package) []Package {
+	// Track which extraneous packages are dependencies of other extraneous packages
+	isDependency := make(map[Package]bool)
+	for _, pkg := range extra {
+		if pkgDeps, ok := deps[pkg]; ok {
+			for _, dep := range pkgDeps {
+				if containsPackage(extra, dep) {
+					isDependency[dep] = true
+				}
+			}
+		}
+	}
+
+	// Keep only packages that aren't dependencies
+	var roots []Package
+	for _, pkg := range extra {
+		if !isDependency[pkg] {
+			roots = append(roots, pkg)
+		} else {
+			fmt.Printf(" - %s is a dependency of another extraneous package, so skipping\n", pkg.Name)
+		}
+	}
+	return roots
 }
 
 // sanity checks if all installed packages appear as keys in the deps map.
