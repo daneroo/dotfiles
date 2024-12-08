@@ -6,13 +6,34 @@ package main
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 	"os/exec"
+	"sort"
 	"strings"
+
+	"gopkg.in/yaml.v3"
 )
 
+type BrewDeps struct {
+	FormulaeBySection map[string][]string `yaml:"formulae"`
+	Casks             []string            `yaml:"casks"`
+}
+
 var verbose = false
+
+// Validation errors can be collected and joined
+type ValidationError struct {
+	Errors []string
+}
+
+func (e *ValidationError) Error() string {
+	return strings.Join(e.Errors, "\n")
+}
+
+func (e *ValidationError) Add(format string, args ...interface{}) {
+	e.Errors = append(e.Errors, fmt.Sprintf(format, args...))
+}
 
 func main() {
 	required := getRequired()
@@ -108,12 +129,12 @@ func sanity(installed []string, deps map[string][]string) bool {
 	return !insane
 }
 
-func getRequired() []string {
-	out, err := ioutil.ReadFile("brewDeps")
+func getRequiredOld() []string {
+	out, err := os.ReadFile("brewDeps")
 	if err != nil {
 		log.Fatal(err)
 	}
-	// remove emtpy lines, and lines starting with # (comment)
+	// remove empty lines, and lines starting with # (comment)
 	required := filter(
 		strings.Split(string(out), "\n"),
 		func(s string) bool {
@@ -125,11 +146,59 @@ func getRequired() []string {
 		required[i] = strings.TrimSpace(required[i])
 	}
 
-	fmt.Printf("✓ - Got Required\n")
+	fmt.Printf("✓ - Got Required (old)\n")
 	if verbose {
 		fmt.Printf("Required: (./brewDeps)\n %s\n\n", strings.Join(required, ", "))
 	}
 	return required
+}
+
+func getRequiredNew() []string {
+	config, err := parseDeps()
+	if err != nil {
+		log.Fatal(err) // This will now show ALL validation errors
+	}
+
+	required := make([]string, 0)
+	// Process all sections
+	for _, formulae := range config.FormulaeBySection {
+		for _, f := range formulae {
+			if strings.Contains(f, ",") {
+				parts := strings.Split(f, ",")
+				basename := strings.TrimSpace(parts[0])
+				tap := strings.TrimSpace(parts[1])
+				tap = strings.TrimSuffix(tap, "/")
+				required = append(required, tap+"/"+basename)
+			} else {
+				required = append(required, f)
+			}
+		}
+	}
+	required = append(required, config.Casks...)
+
+	fmt.Printf("✓ - Got Required (new)\n")
+	if verbose {
+		fmt.Printf("Required: (./brewDeps.yaml)\n %s\n\n", strings.Join(required, ", "))
+	}
+	return required
+}
+
+func getRequired() []string {
+	oldReq := getRequiredOld()
+	newReq := getRequiredNew()
+
+	// Sort both lists before comparing
+	sort.Strings(oldReq)
+	sort.Strings(newReq)
+
+	// Compare sorted slices
+	if !slicesEqual(oldReq, newReq) {
+		log.Fatalf("Mismatch between brewDeps and brewDeps.yaml:\nOld: %v\nNew: %v", oldReq, newReq)
+	}
+	fmt.Printf("✓ - Required old and new are consistent\n")
+
+	// During transition, return old version (unsorted)
+	return getRequiredOld() // Return fresh copy of old version
 }
 
 func getDeps() map[string][]string {
@@ -209,4 +278,78 @@ func contains(s []string, e string) bool {
 		}
 	}
 	return false
+}
+
+func slicesEqual(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	// Make copies to sort
+	aCopy := make([]string, len(a))
+	bCopy := make([]string, len(b))
+	copy(aCopy, a)
+	copy(bCopy, b)
+	sort.Strings(aCopy)
+	sort.Strings(bCopy)
+
+	for i := range aCopy {
+		if aCopy[i] != bCopy[i] {
+			return false
+		}
+	}
+	return true
+}
+
+func validateSorting(items []string) error {
+	sorted := make([]string, len(items))
+	copy(sorted, items)
+	sort.Strings(sorted)
+
+	var errors []string
+	for i := range items {
+		if items[i] != sorted[i] {
+			if sorted[i] < items[i] {
+				errors = append(errors, fmt.Sprintf("%q should come before %q",
+					sorted[i], items[i]))
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return fmt.Errorf("%s", strings.Join(errors, "\n    "))
+	}
+	return nil
+}
+
+func parseDeps() (BrewDeps, error) {
+	out, err := os.ReadFile("brewDeps.yaml")
+	if err != nil {
+		return BrewDeps{}, err
+	}
+
+	var config BrewDeps
+	if err := yaml.Unmarshal(out, &config); err != nil {
+		return BrewDeps{}, fmt.Errorf("parsing YAML: %v", err)
+	}
+
+	// Collect all validation errors
+	var validationErr ValidationError
+
+	// Validate all sections
+	for section, formulae := range config.FormulaeBySection {
+		if err := validateSorting(formulae); err != nil {
+			validationErr.Add("Section %q: %v", section, err)
+		}
+	}
+
+	// Validate casks
+	if err := validateSorting(config.Casks); err != nil {
+		validationErr.Add("Casks: %v", err)
+	}
+
+	if len(validationErr.Errors) > 0 {
+		return BrewDeps{}, &validationErr
+	}
+
+	return config, nil
 }

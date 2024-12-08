@@ -38,6 +38,8 @@ This repo is for managing:
 
 - Code Modernization
   - [ ] Enhance `checkBrew.go` to separate formulae and casks
+    - [ ] Enhance brewDeps text file format to jsonc or yaml
+    - [ ] Detect and propose removing unused taps
   - [ ] Migrate bash scripts to Go
     - [ ] Determine file structure (one file may no longer be enough)
     - [ ] Port `installDotLinks.sh` to Go
@@ -45,7 +47,6 @@ This repo is for managing:
   - [ ] Implement proper UX (logging, progress and error reporting)
 
 - Configuration Enhancement
-  - [ ] Enhance brewDeps text file format to jsonc or yaml
   - [ ] Implement formula and cask separation
   - [ ] Per machine specialization
   - [ ] Enhance Starship prompt configuration

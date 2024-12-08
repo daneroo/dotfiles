@@ -1,0 +1,109 @@
+# yaml-language-server: $schema=./brewDeps.schema.json
+
+# This file manages brew formulae and casks
+# - Commented out unused with # lines
+# - Sorted by basename (naturally sorted as tap info is after the comma)
+# - Properly separates casks from formulae
+# - Fully qualified formulae are written as: "basename, tap/path/"
+#   Example: "speedtest, teamookla/speedtest/" -> "teamookla/speedtest/speedtest"
+# - Moved Python stuff to its own section
+
+formulae:
+  main:
+    - act
+    - asciinema
+    - asdf
+    - aws-iam-authenticator
+    - awscli
+    # azure-cli
+    # azure/draft/draft
+    # azure/functions/azure-functions-core-tools@3
+    - bash
+    - bash-completion
+    # bun is now managed by asdf
+    # bun, oven-sh/bun/
+    - caddy
+    - coreutils
+    - ctop
+    - cue
+    # deno is now managed by asdf
+    # deno
+    - difftastic
+    - docker-completion
+    # docker-compose-completion has been disabled because it has no upstream support for v2
+    # docker-compose-completion
+    # docker-slim's project has been renamed to slimtoolkit
+    - docker-slim
+    - doctl
+    # Elixir: To get proper :observer.start to work
+    # brew reinstall --build-from-source wxwidgets
+    - elixir
+    - exercism
+    - ffmpeg
+    - findutils
+    - fio
+    - gh
+    - git
+    - glances
+    - gnu-tar
+    - go
+    - gum
+    # heroku/brew/heroku
+    # heroku/brew/heroku-node
+    - helm
+    - hey
+    - htop
+    - hyperfine
+    - iftop
+    # should I keep iperf as well as iperf3?
+    - iperf
+    - iperf3
+    - ipfs
+    - jhead
+    - jq
+    - just
+    - k6
+    - kind
+    - kompose
+    - kube-ps1
+    - kubectx
+    - kubelogin, int128/kubelogin/
+    - kubernetes-cli
+    - kustomize
+    - libpq
+    - nats, nats-io/nats-tools/
+    - netlifyctl, netlify/netlifyctl/
+    - pstree
+    - pulumi
+    - rsync
+    # rustup
+    - skaffold
+    - sops
+    - speedtest, teamookla/speedtest/
+    - sqlite
+    - starship
+    - stern
+    - syncthing
+    - tree
+    - watch
+    - wget
+    - yq
+
+  python:
+    # Python stuff - TODO(daneroo): python is in asdf now
+    - black
+    - flake8
+    - pipenv
+    - poetry
+    - ruff
+    - uv
+    - virtualenv
+    # python@3.11 - moved to asdf
+
+casks:
+  - 1password-cli
+  - calibre
+  # google-drive
+  - pearcleaner
+  - stats
+  - vlc
