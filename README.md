@@ -62,9 +62,9 @@ This repo is for managing:
 
 ## Operating
 
-_Systems under control:_ `galois, davinci, shannon, dirac, goedel, feynman`
+*Systems under control:* `galois, davinci, shannon, dirac, goedel, feynman`
 
-Regular maintenance (_idempotent_):
+Regular maintenance (*idempotent*):
 
 ```bash
 ./check.sh
@@ -86,7 +86,7 @@ Regular maintenance (_idempotent_):
 If you need an ssh key (to clone this repo) - see [Generate ssh key](https://docs.github.com/en/authentication/connecting-to-github-with-ssh)
 
 ```bash
-ssh-keygen -t ed25519 -C "daniel@newmachine"
+ssh-keygen -t ed25519 -C "daniel@new_machine"
 pbcopy < ~/.ssh/id_ed25519.pub
 ```
 
@@ -145,7 +145,7 @@ echo $SHELL # to confirm
 
 - start the dance: `./check.sh`
 
-- nvm npm stuf ??
+- nvm npm stuff ??
 
 ```bash
 #?? yarn replace by corepack?

@@ -1,9 +1,12 @@
 {
   "cSpell.words": [
     "checkdeps",
+    "chsh",
     "coreutils",
     "ctop",
     "difftastic",
+    "Dodds",
+    "DOTDIR",
     "exercism",
     "iftop",
     "iperf",
@@ -13,8 +16,12 @@
     "kubelogin",
     "libpq",
     "logsetup",
+    "Meslo",
     "netlifyctl",
+    "noprofile",
+    "norc",
     "oidc",
+    "parseable",
     "pearcleaner",
     "pkgs",
     "pstree",
@@ -24,6 +31,7 @@
     "snyk",
     "speedtest",
     "syncthing",
+    "TABTAB",
     "teamookla"
   ]
 }

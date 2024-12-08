@@ -45,7 +45,7 @@ function update_asdf_plugins() {
       asdf plugin-add $plugin
     fi
     # Check/Apply for plugin update
-    # There is no way to only "check for updates" for a plugin, so we just update it, the reporting is finetuned however.
+    # There is no way to only "check for updates" for a plugin, so we just update it, the reporting is fine tuned however.
     update_output=$(asdf plugin-update $plugin 2>&1)
     if echo "$update_output" | grep -q "Already on 'master'" || echo "$update_output" | grep -q "Your branch is up to date"; then
       echo "✓ - $plugin plugin is already up to date."
@@ -68,7 +68,7 @@ function get_latest_node_lts_version() {
 }
 
 # This section enforces that the lated LTS version of Node.js is installed and set as the global version
-# It will also warn about any extrneous versions. (Which might be fine)
+# It will also warn about any extraneous versions. (Which might be fine)
 function update_node_lts() {
   desired_node_version=$(get_latest_node_lts_version)
 
@@ -107,14 +107,14 @@ echo
 echo "-=-= Node.js LTS"
 update_node_lts
 
-# This section enforces that we have the lates patch version from our desired major.minor versions
-# It will also warn about any extrneous versions. (Which might be fine)
+# This section enforces that we have the latest patch version from our desired major.minor versions
+# It will also warn about any extraneous versions. (Which might be fine)
 function update_python_versions() {
   # Define the major.minor versions you want to maintain
   # The last one in the list will be set as the global version
   declare -a python_versions=("3.12" "3.11")
 
-  # Initialize a string to keep all desired versions - to filter for extranous versions at the end
+  # Initialize a string to keep all desired versions - to filter for extraneous versions at the end
   desired_versions=""
 
   # Initialize a variable to keep track of the last installed version - it will be made global at the end
