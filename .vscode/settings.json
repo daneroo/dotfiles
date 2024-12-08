@@ -16,6 +16,7 @@
     "netlifyctl",
     "oidc",
     "pearcleaner",
+    "pkgs",
     "pstree",
     "rustup",
     "sidero",
