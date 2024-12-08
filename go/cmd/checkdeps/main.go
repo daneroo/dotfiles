@@ -2,7 +2,7 @@ package main
 
 // 1-Compares requested dependencies: `brewDeps`
 // to make sure that are all installed
-// 2- makes sure any other installed casks are dependants of the requested ones.
+// 2- makes sure any other installed casks are dependents of the requested ones.
 
 import (
 	"flag"
@@ -86,6 +86,7 @@ func main() {
 
 	// Check if all installed are either required, or a dependant of a required package
 	extra := extraneous(required, installed, deps)
+
 	if len(extra) > 0 {
 		fmt.Printf("✗ -Extraneous casks/formulae:\n")
 		for _, e := range extra {
@@ -143,35 +144,27 @@ func containsPackage(s []Package, e Package) bool {
 	return false
 }
 
-// isTransitiveDep checks if pkg is a transitive dependency of any required package.
-// A package is considered a transitive dependency if it is:
-//  1. A direct dependency of a required package
-//  2. A direct dependency of a required package's dependency (depth=2)
-//
-// The seen map is used to avoid cycles in the dependency graph.
-// Note: We only check up to depth 2 because:
-//   - Direct dependencies (depth 1): pkg is directly required by a required package
-//   - Dependencies of dependencies (depth 2): pkg is required by a dependency
-//   - We don't check deeper to avoid counting distant transitive dependencies
-func isTransitiveDep(pkg Package, required []Package, deps map[Package][]Package, seen map[Package]bool) bool {
-	if seen[pkg] {
-		return false // avoid cycles
+// isTransitiveDep checks if pkg is required (directly or transitively).
+// Returns true if either:
+//   - pkg is in required
+//   - pkg is a dependency of any required package (at any depth)
+func isTransitiveDep(pkg Package, required []Package, deps map[Package][]Package) bool {
+	// Check if directly required
+	if containsPackage(required, pkg) {
+		return true
 	}
-	seen[pkg] = true
 
-	// Direct dependency of a required package?
+	// Check if pkg is needed by any required package
 	for _, req := range required {
-		if pkgDeps, ok := deps[req]; ok {
-			// Is pkg directly required by req?
-			if containsPackage(pkgDeps, pkg) {
+		// Get req's dependencies
+		if reqDeps, ok := deps[req]; ok {
+			// Is pkg a direct dependency?
+			if containsPackage(reqDeps, pkg) {
 				return true
 			}
-			// Is pkg a dependency of any of req's dependencies?
-			for _, dep := range pkgDeps {
-				// Only check if pkg is a dependency of dep
-				if containsPackage(deps[dep], pkg) {
-					return true
-				}
+			// Recursively check req's dependencies
+			if isTransitiveDep(pkg, reqDeps, deps) {
+				return true
 			}
 		}
 	}
@@ -181,22 +174,12 @@ func isTransitiveDep(pkg Package, required []Package, deps map[Package][]Package
 func extraneous(required, installed []Package, deps map[Package][]Package) []Package {
 	extra := []Package{}
 	for _, inst := range installed {
-		ok := false
-		if containsPackage(required, inst) {
-			ok = true
+		ok := isTransitiveDep(inst, required, deps)
+		if ok {
 			if verbose {
-				fmt.Printf(" - %s is required\n", inst.Name)
+				fmt.Printf(" - %s is required (directly or transitively)\n", inst.Name)
 			}
 		} else {
-			seen := make(map[Package]bool)
-			ok = isTransitiveDep(inst, required, deps, seen)
-			if ok {
-				if verbose {
-					fmt.Printf(" - %s is required transitively\n", inst.Name)
-				}
-			}
-		}
-		if !ok {
 			extra = append(extra, inst)
 			fmt.Printf(" - %s is not required (transitively)\n", inst.Name)
 		}
