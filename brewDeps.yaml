@@ -83,6 +83,7 @@ formulae:
     - sqlite
     - starship
     - stern
+    - supabase/tap/supabase
     - syncthing
     - tree
     - watch

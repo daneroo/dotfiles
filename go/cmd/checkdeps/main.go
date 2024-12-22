@@ -1,62 +1,40 @@
 package main
 
-// 1-Compares requested dependencies: `brewDeps`
-// to make sure that are all installed
-// 2- makes sure any other installed casks are dependents of the requested ones.
-
 import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
-	"os/exec"
-	"path"
 	"strings"
 
+	"github.com/daneroo/dotfiles/go/pkg/brewdeps/actual"
+	"github.com/daneroo/dotfiles/go/pkg/brewdeps/config"
+	"github.com/daneroo/dotfiles/go/pkg/brewdeps/desired"
+	"github.com/daneroo/dotfiles/go/pkg/brewdeps/reconcile"
 	"github.com/daneroo/dotfiles/go/pkg/logsetup"
-	"gopkg.in/yaml.v3"
-)
-
-type BrewDeps struct {
-	FormulaeBySection map[string][]Package `yaml:"formulae"`
-	Casks             []Package            `yaml:"casks"`
-}
-
-type Package struct {
-	Name   string
-	IsCask bool
-}
-
-var verbose bool
-
-const (
-	brewDepsFile     = "brewDeps"
-	brewDepsYamlFile = "brewDeps.yaml"
 )
 
 func main() {
-	flag.BoolVar(&verbose, "verbose", false, "turn on verbose logging")
-	flag.BoolVar(&verbose, "v", false, "turn on verbose logging (shorthand)")
+	flag.BoolVar(&config.Global.Verbose, "verbose", false, "turn on verbose logging")
+	flag.BoolVar(&config.Global.Verbose, "v", false, "turn on verbose logging (shorthand)")
 	flag.Parse()
 	logsetup.SetupFormat()
 
-	required := getRequired()
-	deps := getDeps()
-	installed := getInstalled()
-
 	fmt.Printf("--- Checks: --- ( ✓ / ✗ ) \n")
 
-	ok := sanity(installed, deps)
-	if ok {
-		fmt.Printf("✓ - Sanity passed: installed < keys(deps)\n")
-	} else {
+	required := desired.GetRequired()
+	state, err := actual.GetState()
+	if err != nil {
 		fmt.Printf("✗ - Sanity failed: installed > keys(deps)\n")
+		log.Fatal(err)
 	}
 
-	missing := checkMissing(required, installed)
-	if len(missing) > 0 {
-		fmt.Printf("✗ -Missing casks/formulae:\n")
-		for _, pkg := range missing {
+	fmt.Printf("✓ - Sanity passed: installed < keys(deps)\n")
+
+	result := reconcile.Reconcile(required, state)
+
+	if len(result.Missing) > 0 {
+		fmt.Printf("✗ - Missing casks/formulae:\n")
+		for _, pkg := range result.Missing {
 			flag := "--formula"
 			if pkg.IsCask {
 				flag = "--cask"
@@ -67,7 +45,7 @@ func main() {
 		// Group by type for combined command
 		formulas := []string{}
 		casks := []string{}
-		for _, pkg := range missing {
+		for _, pkg := range result.Missing {
 			if pkg.IsCask {
 				casks = append(casks, pkg.Name)
 			} else {
@@ -84,12 +62,9 @@ func main() {
 		fmt.Printf("✓ - No missing casks/formulae\n")
 	}
 
-	// Check if all installed are either required, or a dependant of a required package
-	extra := extraneous(required, installed, deps)
-
-	if len(extra) > 0 {
-		fmt.Printf("✗ -Extraneous casks/formulae:\n")
-		for _, e := range extra {
+	if len(result.Extra) > 0 {
+		fmt.Printf("✗ - Extraneous casks/formulae:\n")
+		for _, e := range result.Extra {
 			flag := "--formula"
 			if e.IsCask {
 				flag = "--cask"
@@ -100,7 +75,7 @@ func main() {
 		// Group by type for combined command
 		formulas := []string{}
 		casks := []string{}
-		for _, pkg := range extra {
+		for _, pkg := range result.Extra {
 			if pkg.IsCask {
 				casks = append(casks, pkg.Name)
 			} else {
@@ -118,401 +93,4 @@ func main() {
 	}
 	fmt.Printf("---\n")
 
-}
-
-// checkMissing returns a list of packages that are required but not installed.
-// The caller (main) will use this information to suggest appropriate
-// `brew install --formula` or `brew install --cask` commands.
-func checkMissing(required, installed []Package) []Package {
-	missing := []Package{}
-	for _, req := range required {
-		if !containsPackage(installed, req) {
-			missing = append(missing, req)
-		}
-	}
-	return missing
-}
-
-// containsPackage checks if a Package is in a slice, matching both Name and IsCask.
-// Used by checkMissing to compare required vs installed packages, and also by
-// isTransitiveDep to check if a package is a dependency of another.
-func containsPackage(s []Package, e Package) bool {
-	for _, a := range s {
-		if a.Name == e.Name && a.IsCask == e.IsCask {
-			return true
-		}
-	}
-	return false
-}
-
-// isTransitiveDep checks if pkg is required (directly or transitively).
-// Returns true if either:
-//   - pkg is in required
-//   - pkg is a dependency of any required package (at any depth)
-func isTransitiveDep(pkg Package, required []Package, deps map[Package][]Package) bool {
-	// Check if directly required
-	if containsPackage(required, pkg) {
-		return true
-	}
-
-	// Check if pkg is needed by any required package
-	for _, req := range required {
-		// Get req's dependencies
-		if reqDeps, ok := deps[req]; ok {
-			// Is pkg a direct dependency?
-			if containsPackage(reqDeps, pkg) {
-				return true
-			}
-			// Recursively check req's dependencies
-			if isTransitiveDep(pkg, reqDeps, deps) {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func extraneous(required, installed []Package, deps map[Package][]Package) []Package {
-	// First find all extraneous packages
-	extra := []Package{}
-	for _, inst := range installed {
-		ok := isTransitiveDep(inst, required, deps)
-		if ok {
-			if verbose {
-				fmt.Printf(" - %s is required (directly or transitively)\n", inst.Name)
-			}
-		} else {
-			extra = append(extra, inst)
-			fmt.Printf(" - %s is not required (transitively)\n", inst.Name)
-		}
-	}
-
-	// Find minimal set of packages to uninstall
-	minimalExtra := minimizeExtraneous(extra, deps)
-	if len(minimalExtra) == 0 && len(extra) > 0 {
-		log.Fatal("Impossible: found extraneous packages but no minimal set - circular dependencies?")
-	}
-	return minimalExtra
-}
-
-// minimizeExtraneous returns the minimal set of packages that need to be uninstalled.
-// When these packages are uninstalled, brew will automatically remove all their
-// dependencies that aren't needed by other packages.
-//
-// For example, if macvim (extraneous) depends on lua (also extraneous),
-// only macvim will be returned because `brew uninstall macvim` will automatically
-// remove lua if no other package needs it.
-func minimizeExtraneous(extra []Package, deps map[Package][]Package) []Package {
-	// Track which extraneous packages are dependencies of other extraneous packages
-	isDependency := make(map[Package]bool)
-	for _, pkg := range extra {
-		if pkgDeps, ok := deps[pkg]; ok {
-			for _, dep := range pkgDeps {
-				if containsPackage(extra, dep) {
-					isDependency[dep] = true
-				}
-			}
-		}
-	}
-
-	// Keep only packages that aren't dependencies
-	var roots []Package
-	for _, pkg := range extra {
-		if !isDependency[pkg] {
-			roots = append(roots, pkg)
-		} else {
-			fmt.Printf(" - %s is a dependency of another extraneous package, so skipping\n", pkg.Name)
-		}
-	}
-	return roots
-}
-
-// sanity checks if all installed packages appear as keys in the deps map.
-// This verifies that `brew deps --installed` returns dependency information
-// for every installed package.
-//
-// Note: This is a precondition for the extraneous check, which assumes
-// we can look up dependencies for any installed package.
-func sanity(installed []Package, deps map[Package][]Package) bool {
-	// Sanity: make sure all installed appear as a key in deps
-	insane := false
-	for _, inst := range installed {
-		_, ok := deps[inst]
-		if !ok {
-			insane = true
-			fmt.Printf("(In)Sanity: Installed package %q (cask=%v) not present in dependencies\n",
-				inst.Name, inst.IsCask)
-		}
-	}
-	return !insane
-}
-
-func getRequired() []Package {
-	config, err := parseDeps()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	required := make([]Package, 0)
-
-	// Process all sections
-	for _, formulae := range config.FormulaeBySection {
-		required = append(required, formulae...)
-	}
-	required = append(required, config.Casks...)
-
-	fmt.Printf("✓ - Got Required\n")
-	if verbose {
-		fmt.Printf("Required: (%s)\n %v\n\n", brewDepsYamlFile, required)
-	}
-	return required
-}
-
-// getDeps returns a map of installed packages to their dependencies by running:
-//   - brew deps --installed --formula
-//   - brew deps --installed --cask
-//
-// Note: We don't use --full-name for deps because:
-//   - Dependencies are always formulae (not casks)
-//   - Simple names are sufficient for dependencies
-//   - Tap qualification is only needed for explicitly required packages
-//
-// The returned map includes both formulae and casks as keys, but all dependencies
-// (values) are formulae, following Homebrew's (ASSUMED) rules:
-//   - Formulae can depend on other formulae
-//   - Casks can depend on formulae
-//   - Neither can depend on casks
-func getDeps() map[Package][]Package {
-	deps := make(map[Package][]Package)
-
-	configs := []struct {
-		arg    string
-		isCask bool
-	}{
-		{"--formula", false},
-		{"--cask", true},
-	}
-
-	for _, cfg := range configs {
-		out, err := exec.Command("brew", "deps", "--installed", cfg.arg).Output()
-		if err != nil {
-			log.Fatal(err)
-		}
-		for _, line := range splitByLineNoEmpty(string(out)) {
-			ss := strings.SplitN(line, ":", 2)
-			if len(ss) != 2 {
-				log.Fatalf("Cannot split(:) %q \n", line)
-			}
-			pkg := Package{Name: ss[0], IsCask: cfg.isCask}
-			// Note: dependencies are always formulae
-			deps[pkg] = parseDepsAsPackages(ss[1])
-		}
-	}
-
-	fmt.Printf("✓ - Got Deps\n")
-	if verbose {
-		fmt.Printf("Deps: (brew deps --installed)\n %v\n\n", deps)
-	}
-	return deps
-}
-
-// parseDepsAsPackages converts a space-separated string of package names into Package objects.
-// Note: All dependencies (the right-hand side of `brew deps` output) are assumed to be formulae,
-// not casks. This matches Homebrew's (ASSUMED) rules where:
-//   - Formulae can depend on other formulae
-//   - Casks can depend on formulae
-//   - Neither can depend on casks
-func parseDepsAsPackages(s string) []Package {
-	var deps []Package
-	for _, name := range strings.Fields(s) {
-		// All dependencies are formulae
-		deps = append(deps, Package{Name: name, IsCask: false})
-	}
-	return deps
-}
-
-// getInstalled returns a list of all installed packages (both formulae and casks) by running:
-//   - brew ls --full-name --formula
-//   - brew ls --full-name --cask
-//
-// The returned slice is the typed union of both commands, with each package marked
-// as either formula or cask. We use --full-name to get tap-qualified names where
-// appropriate (unlike dependencies which are always simple names).
-//
-// This list represents the current state of the system and will be compared against:
-//   - Required packages from brewDeps.yaml
-//   - Dependencies from brew deps --installed (--formula|--cask)
-func getInstalled() []Package {
-	var pkgs []Package
-
-	configs := []struct {
-		arg    string
-		isCask bool
-	}{
-		{"--formula", false},
-		{"--cask", true},
-	}
-
-	for _, cfg := range configs {
-		out, err := exec.Command("brew", "ls", "--full-name", cfg.arg).Output()
-		if err != nil {
-			log.Fatal(err)
-		}
-		for _, name := range splitByLineNoEmpty(string(out)) {
-			pkgs = append(pkgs, Package{Name: name, IsCask: cfg.isCask})
-		}
-	}
-
-	fmt.Printf("✓ - Got Installed\n")
-	if verbose {
-		fmt.Printf("Installed: (brew ls --full-name)\n %v\n\n", pkgs)
-	}
-	return pkgs
-}
-
-func splitByLineNoEmpty(s string) []string {
-	return filter(
-		strings.Split(s, "\n"),
-		nonEmptyString,
-	)
-}
-
-func nonEmptyString(s string) bool {
-	return len(s) > 0
-}
-
-func filter(vs []string, f func(string) bool) []string {
-	vsf := make([]string, 0)
-	for _, v := range vs {
-		if f(v) {
-			vsf = append(vsf, v)
-		}
-	}
-	return vsf
-}
-
-func parseDeps() (BrewDeps, error) {
-	out, err := os.ReadFile(brewDepsYamlFile)
-	if err != nil {
-		return BrewDeps{}, fmt.Errorf("reading %s: %w", brewDepsYamlFile, err)
-	}
-
-	// Temporary struct for YAML parsing
-	var temp struct {
-		FormulaeBySection map[string][]string `yaml:"formulae"`
-		Casks             []string            `yaml:"casks"`
-	}
-	if err := yaml.Unmarshal(out, &temp); err != nil {
-		return BrewDeps{}, fmt.Errorf("parsing %s: %v", brewDepsYamlFile, err)
-	}
-
-	// Convert to Package types
-	config := BrewDeps{
-		FormulaeBySection: make(map[string][]Package),
-		Casks:             make([]Package, 0),
-	}
-
-	// Convert formulae
-	for section, formulae := range temp.FormulaeBySection {
-		config.FormulaeBySection[section] = make([]Package, 0)
-		for _, f := range formulae {
-			config.FormulaeBySection[section] = append(
-				config.FormulaeBySection[section],
-				Package{Name: f, IsCask: false},
-			)
-		}
-	}
-
-	// Convert casks
-	for _, c := range temp.Casks {
-		config.Casks = append(config.Casks, Package{Name: c, IsCask: true})
-	}
-
-	var violations []string
-	var sectionViolations []string
-
-	// Validate format for all sections
-	for section, formulae := range config.FormulaeBySection {
-		for _, f := range formulae {
-			if err := validateFormat(f); err != nil {
-				violations = append(violations, fmt.Sprintf("  ✗ - Section %q: %v", section, err))
-			}
-		}
-	}
-
-	// Validate format for casks
-	for _, c := range config.Casks {
-		if err := validateFormat(c); err != nil {
-			violations = append(violations, fmt.Sprintf("  ✗ - Casks: %v", err))
-		}
-	}
-
-	// Validate all sections
-	for section, formulae := range config.FormulaeBySection {
-		if sortViolations := validateSorting(formulae); len(sortViolations) > 0 {
-			sectionViolations = append(sectionViolations, fmt.Sprintf("  ✗ - Section %q is not sorted", section))
-			for _, v := range sortViolations {
-				sectionViolations = append(sectionViolations, fmt.Sprintf("    ✗ - %s", v))
-			}
-		}
-	}
-
-	// If we have any section violations, add the header
-	if len(sectionViolations) > 0 {
-		violations = append(violations, "✗ - Formulae are not sorted")
-		violations = append(violations, sectionViolations...)
-	}
-
-	// Validate casks
-	if sortViolations := validateSorting(config.Casks); len(sortViolations) > 0 {
-		violations = append(violations, "✗ - Casks are not sorted")
-		for _, v := range sortViolations {
-			violations = append(violations, fmt.Sprintf("  ✗ - %s", v))
-		}
-	}
-
-	// Print violations and return validation error
-	if len(violations) > 0 {
-		fmt.Println(strings.Join(violations, "\n"))
-		return config, fmt.Errorf("validation failed for %s", brewDepsYamlFile)
-	}
-
-	return config, nil
-}
-
-// validateFormat checks if a formula/cask name is either:
-// - simple name: [a-zA-Z0-9-]+
-// - or fully qualified: name/tap/name
-func validateFormat(pkg Package) error {
-	parts := strings.Split(pkg.Name, "/")
-	if len(parts) != 1 && len(parts) != 3 {
-		return fmt.Errorf("invalid format %q: must be 'name' or 'tap/repo/name'", pkg.Name)
-	}
-	return nil
-}
-
-// For use with validateSorting
-func compareByBasename(i, j Package) bool {
-	iBase := path.Base(i.Name)
-	jBase := path.Base(j.Name)
-	if iBase == jBase {
-		return i.Name < j.Name // Use full path as tiebreaker
-	}
-	return iBase < jBase
-}
-
-func validateSorting(items []Package) []string {
-	// Empty or single item is always sorted
-	if len(items) <= 1 {
-		return []string{}
-	}
-
-	var violations []string
-	for i := 1; i < len(items); i++ {
-		if !compareByBasename(items[i-1], items[i]) {
-			violations = append(violations, fmt.Sprintf("%q should come before %q",
-				items[i].Name, items[i-1].Name))
-		}
-	}
-	return violations
 }
