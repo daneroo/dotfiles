@@ -21,8 +21,8 @@ func main() {
 
 	fmt.Printf("--- Checks: --- ( ✓ / ✗ ) \n")
 
-	required := desired.GetRequired()
-	state, err := actual.GetState()
+	desiredState := desired.GetDesired()
+	actualState, err := actual.GetActual()
 	if err != nil {
 		fmt.Printf("✗ - Sanity failed: installed > keys(deps)\n")
 		log.Fatal(err)
@@ -30,7 +30,7 @@ func main() {
 
 	fmt.Printf("✓ - Sanity passed: installed < keys(deps)\n")
 
-	result := reconcile.Reconcile(required, state)
+	result := reconcile.Reconcile(desiredState, actualState)
 
 	if len(result.Missing) > 0 {
 		fmt.Printf("✗ - Missing casks/formulae:\n")

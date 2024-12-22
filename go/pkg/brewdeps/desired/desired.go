@@ -23,7 +23,7 @@ const (
 )
 
 // GetRequired returns the list of required packages from brewDeps.yaml
-func GetRequired() []types.Package {
+func GetDesired() types.DesiredState {
 	brewDeps, err := parseDeps()
 	if err != nil {
 		log.Fatal(err)
@@ -39,7 +39,7 @@ func GetRequired() []types.Package {
 	if config.Global.Verbose {
 		fmt.Printf("Required: (%s)\n %v\n\n", brewDepsYamlFile, required)
 	}
-	return required
+	return types.DesiredState{Packages: required}
 }
 
 func validateFormat(pkg types.Package) error {
