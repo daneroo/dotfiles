@@ -6,8 +6,8 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/daneroo/dotfiles/go/pkg/brewdeps/config"
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/types"
+	"github.com/daneroo/dotfiles/go/pkg/config"
 )
 
 // State represents the current state of the system

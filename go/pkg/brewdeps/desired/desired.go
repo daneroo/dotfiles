@@ -7,8 +7,8 @@ import (
 	"path"
 	"strings"
 
-	"github.com/daneroo/dotfiles/go/pkg/brewdeps/config"
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/types"
+	"github.com/daneroo/dotfiles/go/pkg/config"
 	"gopkg.in/yaml.v3"
 )
 
@@ -17,9 +17,19 @@ type BrewDeps struct {
 	Casks             []types.Package            `yaml:"casks"`
 }
 
-// GetRequired returns the list of required packages from brewDeps.yaml
-func GetDesired() types.DesiredState {
-	brewDeps, err := parseDeps()
+// simply a passthrough for now (validation happens in Parse)
+// Later we will externalize the parsing, and may retain some validation here!
+func GetDesired(desired types.DesiredState) types.DesiredState {
+	fmt.Printf("✓ - Got Desired\n")
+	if config.Global.Verbose {
+		fmt.Printf("Desired: (%s)\n %v\n\n", config.Global.ConfigFile, desired)
+	}
+	return desired
+}
+
+// Parse returns the list of required packages from brewDeps.yaml
+func Parse(configFile string) types.DesiredState {
+	brewDeps, err := parseDeps(configFile)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,9 +40,9 @@ func GetDesired() types.DesiredState {
 	}
 	required = append(required, brewDeps.Casks...)
 
-	fmt.Printf("✓ - Got Required\n")
+	fmt.Printf("✓ - Parsed Desired\n")
 	if config.Global.Verbose {
-		fmt.Printf("Required: (%s)\n %v\n\n", config.Global.ConfigFile, required)
+		fmt.Printf("Desired: (%s)\n %v\n\n", configFile, required)
 	}
 	return types.DesiredState{Packages: required}
 }
@@ -69,10 +79,10 @@ func validateSorting(items []types.Package) []string {
 	return violations
 }
 
-func parseDeps() (BrewDeps, error) {
-	out, err := os.ReadFile(config.Global.ConfigFile)
+func parseDeps(configFile string) (BrewDeps, error) {
+	out, err := os.ReadFile(configFile)
 	if err != nil {
-		return BrewDeps{}, fmt.Errorf("reading %s: %w", config.Global.ConfigFile, err)
+		return BrewDeps{}, fmt.Errorf("reading %s: %w", configFile, err)
 	}
 
 	var temp struct {
@@ -80,7 +90,7 @@ func parseDeps() (BrewDeps, error) {
 		Casks             []string            `yaml:"casks"`
 	}
 	if err := yaml.Unmarshal(out, &temp); err != nil {
-		return BrewDeps{}, fmt.Errorf("parsing %s: %v", config.Global.ConfigFile, err)
+		return BrewDeps{}, fmt.Errorf("parsing %s: %v", configFile, err)
 	}
 
 	brewDeps := BrewDeps{
@@ -151,7 +161,7 @@ func parseDeps() (BrewDeps, error) {
 	// Print violations and return validation error
 	if len(violations) > 0 {
 		fmt.Println(strings.Join(violations, "\n"))
-		return brewDeps, fmt.Errorf("validation failed for %s", config.Global.ConfigFile)
+		return brewDeps, fmt.Errorf("validation failed for %s", configFile)
 	}
 
 	return brewDeps, nil

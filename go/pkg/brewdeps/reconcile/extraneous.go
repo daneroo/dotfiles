@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/daneroo/dotfiles/go/pkg/brewdeps/config"
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/types"
+	"github.com/daneroo/dotfiles/go/pkg/config"
 )
 
 var verbose bool
