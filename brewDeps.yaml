@@ -72,6 +72,7 @@ formulae:
     - kustomize
     - libpq
     - nats-io/nats-tools/nats
+    # - neovim
     - netlify/netlifyctl/netlifyctl
     - pstree
     - pulumi

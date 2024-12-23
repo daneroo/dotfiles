@@ -18,16 +18,16 @@ import (
 
 // GetActual returns the current state of installed packages and their dependencies
 func GetActual() (types.ActualState, error) {
-	deps := GetDeps(config.Global.Verbose)
+	depsMap := GetDepsMap(config.Global.Verbose)
 	installed := GetInstalled(config.Global.Verbose)
 
-	if !Validate(installed, deps) {
-		return types.ActualState{}, fmt.Errorf("validation failed: some installed packages missing from deps")
+	if err := Validate(installed, depsMap); err != nil {
+		return types.ActualState{}, err
 	}
 
 	return types.ActualState{
 		Packages: installed,
-		DepsMap:  deps,
+		DepsMap:  depsMap,
 	}, nil
 }
 
@@ -70,7 +70,7 @@ func GetInstalled(verbose bool) []types.Package {
 	return pkgs
 }
 
-// GetDeps returns a map of installed packages to their dependencies by running:
+// GetDepsMap returns a map of installed packages to their dependencies by running:
 //   - brew deps --installed --formula
 //   - brew deps --installed --cask
 //
@@ -84,7 +84,7 @@ func GetInstalled(verbose bool) []types.Package {
 //   - Formulae can depend on other formulae
 //   - Casks can depend on formulae
 //   - Neither can depend on casks
-func GetDeps(verbose bool) map[types.Package][]types.Package {
+func GetDepsMap(verbose bool) map[types.Package][]types.Package {
 	deps := make(map[types.Package][]types.Package)
 
 	configs := []struct {
@@ -160,15 +160,37 @@ func filter(vs []string, f func(string) bool) []string {
 //
 // Note: This is a precondition for the extraneous check, which assumes
 // we can look up dependencies for any installed package.
-func Validate(installed []types.Package, deps map[types.Package][]types.Package) bool {
-	insane := false
+func Validate(installed []types.Package, depsMap map[types.Package][]types.Package) error {
+	var missingFromMap []types.Package
 	for _, inst := range installed {
-		_, ok := deps[inst]
+		_, ok := depsMap[inst]
+		// force an inconsistency to test output and error handling
+		// if inst.Name == "git" || inst.Name == "vlc" {
+		// 	ok = false
+		// }
 		if !ok {
-			insane = true
-			fmt.Printf("(In)Sanity: Installed package %q (cask=%v) not present in dependencies\n",
-				inst.Name, inst.IsCask)
+			missingFromMap = append(missingFromMap, inst)
 		}
 	}
-	return !insane
+	if len(missingFromMap) > 0 {
+		return &ValidationError{MissingFromDepsMap: missingFromMap}
+	}
+	return nil
+}
+
+// ValidationError represents an inconsistency between installed packages
+// and the dependency map. This indicates that some installed packages
+// are not present as keys in the deps map, which is a precondition
+// for the extraneous check.
+type ValidationError struct {
+	MissingFromDepsMap []types.Package
+}
+
+func (e *ValidationError) Error() string {
+	var msgs []string
+	for _, pkg := range e.MissingFromDepsMap {
+		msgs = append(msgs, fmt.Sprintf("%q (cask=%v)", pkg.Name, pkg.IsCask))
+	}
+	return fmt.Sprintf("dependency map inconsistency: installed packages not found in deps map: %s",
+		strings.Join(msgs, ", "))
 }

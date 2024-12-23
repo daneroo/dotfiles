@@ -17,11 +17,6 @@ type BrewDeps struct {
 	Casks             []types.Package            `yaml:"casks"`
 }
 
-const (
-	brewDepsFile     = "brewDeps"
-	brewDepsYamlFile = "brewDeps.yaml"
-)
-
 // GetRequired returns the list of required packages from brewDeps.yaml
 func GetDesired() types.DesiredState {
 	brewDeps, err := parseDeps()
@@ -37,7 +32,7 @@ func GetDesired() types.DesiredState {
 
 	fmt.Printf("✓ - Got Required\n")
 	if config.Global.Verbose {
-		fmt.Printf("Required: (%s)\n %v\n\n", brewDepsYamlFile, required)
+		fmt.Printf("Required: (%s)\n %v\n\n", config.Global.ConfigFile, required)
 	}
 	return types.DesiredState{Packages: required}
 }
@@ -75,9 +70,9 @@ func validateSorting(items []types.Package) []string {
 }
 
 func parseDeps() (BrewDeps, error) {
-	out, err := os.ReadFile(brewDepsYamlFile)
+	out, err := os.ReadFile(config.Global.ConfigFile)
 	if err != nil {
-		return BrewDeps{}, fmt.Errorf("reading %s: %w", brewDepsYamlFile, err)
+		return BrewDeps{}, fmt.Errorf("reading %s: %w", config.Global.ConfigFile, err)
 	}
 
 	var temp struct {
@@ -85,20 +80,20 @@ func parseDeps() (BrewDeps, error) {
 		Casks             []string            `yaml:"casks"`
 	}
 	if err := yaml.Unmarshal(out, &temp); err != nil {
-		return BrewDeps{}, fmt.Errorf("parsing %s: %v", brewDepsYamlFile, err)
+		return BrewDeps{}, fmt.Errorf("parsing %s: %v", config.Global.ConfigFile, err)
 	}
 
-	config := BrewDeps{
+	brewDeps := BrewDeps{
 		FormulaeBySection: make(map[string][]types.Package),
 		Casks:             make([]types.Package, 0),
 	}
 
 	// Convert formulae
 	for section, formulae := range temp.FormulaeBySection {
-		config.FormulaeBySection[section] = make([]types.Package, 0)
+		brewDeps.FormulaeBySection[section] = make([]types.Package, 0)
 		for _, f := range formulae {
-			config.FormulaeBySection[section] = append(
-				config.FormulaeBySection[section],
+			brewDeps.FormulaeBySection[section] = append(
+				brewDeps.FormulaeBySection[section],
 				types.Package{Name: f, IsCask: false},
 			)
 		}
@@ -106,7 +101,7 @@ func parseDeps() (BrewDeps, error) {
 
 	// Convert casks
 	for _, c := range temp.Casks {
-		config.Casks = append(config.Casks, types.Package{Name: c, IsCask: true})
+		brewDeps.Casks = append(brewDeps.Casks, types.Package{Name: c, IsCask: true})
 	}
 
 	// Validate format and sorting
@@ -114,7 +109,7 @@ func parseDeps() (BrewDeps, error) {
 	var sectionViolations []string
 
 	// Validate format for all sections
-	for section, formulae := range config.FormulaeBySection {
+	for section, formulae := range brewDeps.FormulaeBySection {
 		for _, f := range formulae {
 			if err := validateFormat(f); err != nil {
 				violations = append(violations, fmt.Sprintf("  ✗ - Section %q: %v", section, err))
@@ -123,14 +118,14 @@ func parseDeps() (BrewDeps, error) {
 	}
 
 	// Validate format for casks
-	for _, c := range config.Casks {
+	for _, c := range brewDeps.Casks {
 		if err := validateFormat(c); err != nil {
 			violations = append(violations, fmt.Sprintf("  ✗ - Casks: %v", err))
 		}
 	}
 
 	// Validate all sections
-	for section, formulae := range config.FormulaeBySection {
+	for section, formulae := range brewDeps.FormulaeBySection {
 		if sortViolations := validateSorting(formulae); len(sortViolations) > 0 {
 			sectionViolations = append(sectionViolations, fmt.Sprintf("  ✗ - Section %q is not sorted", section))
 			for _, v := range sortViolations {
@@ -146,7 +141,7 @@ func parseDeps() (BrewDeps, error) {
 	}
 
 	// Validate casks
-	if sortViolations := validateSorting(config.Casks); len(sortViolations) > 0 {
+	if sortViolations := validateSorting(brewDeps.Casks); len(sortViolations) > 0 {
 		violations = append(violations, "✗ - Casks are not sorted")
 		for _, v := range sortViolations {
 			violations = append(violations, fmt.Sprintf("  ✗ - %s", v))
@@ -156,8 +151,8 @@ func parseDeps() (BrewDeps, error) {
 	// Print violations and return validation error
 	if len(violations) > 0 {
 		fmt.Println(strings.Join(violations, "\n"))
-		return config, fmt.Errorf("validation failed for %s", brewDepsYamlFile)
+		return brewDeps, fmt.Errorf("validation failed for %s", config.Global.ConfigFile)
 	}
 
-	return config, nil
+	return brewDeps, nil
 }
