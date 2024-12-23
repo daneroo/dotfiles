@@ -17,6 +17,9 @@ func main() {
 	var (
 		verbose    bool
 		configFile string
+		// TODO: Add execution mode flags
+		// dryRun bool - Show commands vs Execute them
+		// force bool - Skip confirmation
 	)
 	flag.BoolVar(&verbose, "verbose", false, "turn on verbose logging")
 	flag.BoolVar(&verbose, "v", false, "turn on verbose logging (shorthand)")

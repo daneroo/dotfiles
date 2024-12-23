@@ -9,11 +9,11 @@ import (
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/types"
 )
 
-// Reconcile performs a complete reconciliation cycle:
-// 1. Takes desired state as input
-// 2. Gets actual state from system
-// 3. Validates dependency consistency
-// 4. Shows actions needed
+// Reconcile performs a complete reconciliation cycle.
+// Currently it only shows the actions needed, but will eventually:
+// 1. Return structured actions that can be executed
+// 2. Support --dry-run vs execute modes
+// 3. Handle errors during execution
 func Reconcile(desiredState types.DesiredState) error {
 	desiredState = desired.GetDesired(desiredState)
 	actualState, err := actual.GetActual()
@@ -80,12 +80,12 @@ type commandOptions struct {
 //	 brew install --cask vlc
 func showActions(pkgs []types.Package, action actionType) {
 	if len(pkgs) > 0 {
-		fmt.Printf("✗ - %s casks/formulae:\n", action.state)
+		fmt.Printf("✗ - %s casks/formulae: (%d packages)\n", action.state, len(pkgs))
 		// Show individual commands first
 		showCommands(pkgs, action.verb, commandOptions{isCask: false, groupCommand: false})
 		showCommands(pkgs, action.verb, commandOptions{isCask: true, groupCommand: false})
 		// Then show grouped commands
-		fmt.Printf("\n  or all together:\n\n")
+		fmt.Printf("\n  or all together:\n")
 		showCommands(pkgs, action.verb, commandOptions{isCask: false, groupCommand: true})
 		showCommands(pkgs, action.verb, commandOptions{isCask: true, groupCommand: true})
 	} else {
