@@ -21,10 +21,10 @@ func main() {
 
 	// Desired asdf plugins and versions - TODO: move to config file
 	desiredVersions := map[string][]string{
-		"nodejs": {"lts", "21", "21.7.1", "latest"}, // Latest LTS version
-		"python": {"3.12", "3.11"},                  // Multiple versions, latest patch
-		"deno":   {"latest"},                        // Latest stable
-		"bun":    {"latest"},                        // Latest stable
+		"nodejs": {"lts", "21", "22"}, // Latest LTS version
+		"python": {"3.12", "3.11"},    // Multiple versions, latest patch
+		"deno":   {"latest"},          // Latest stable
+		"bun":    {"latest"},          // Latest stable
 	}
 
 	// Show global flags and config
