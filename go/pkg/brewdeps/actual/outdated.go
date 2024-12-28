@@ -37,7 +37,7 @@ func CheckOutdated() (bool, error) {
 
 	hasUpdates := len(response.Formulae) > 0 || len(response.Casks) > 0
 	if !hasUpdates {
-		fmt.Printf("✓ - No updates available\n")
+		fmt.Printf("✓ - All formulae and casks are up to date\n")
 		return false, nil
 	}
 
