@@ -105,6 +105,7 @@ formulae:
 casks:
   - 1password-cli
   - calibre
+  - ghostty
   - google-drive
   # - macvim
   - pearcleaner

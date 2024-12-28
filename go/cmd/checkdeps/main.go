@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 
+	"github.com/daneroo/dotfiles/go/pkg/asdf"
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/actual"
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/desired"
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/reconcile"
@@ -17,6 +18,14 @@ func main() {
 
 	// Set global execution mode
 	config.Global.Verbose = f.verbose
+
+	// Desired asdf plugins and versions - TODO: move to config file
+	desiredVersions := map[string][]string{
+		"nodejs": {"lts", "21", "21.7.1", "latest"}, // Latest LTS version
+		"python": {"3.12", "3.11"},                  // Multiple versions, latest patch
+		"deno":   {"latest"},                        // Latest stable
+		"bun":    {"latest"},                        // Latest stable
+	}
 
 	// Show global flags and config
 	fmt.Printf("Global Flags:\n")
@@ -39,6 +48,12 @@ func main() {
 	err = reconcile.Reconcile(desiredState)
 	if err != nil {
 		handleError(err)
+	}
+
+	// Handle asdf plugins and versions
+	if err := asdf.Reconcile(desiredVersions); err != nil {
+		fmt.Printf("✗ - %v\n", err)
+		os.Exit(1)
 	}
 }
 
