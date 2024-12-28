@@ -10,6 +10,12 @@ echo
 echo
 echo "-=-= Brew deps (mine)"
 go run ./go/cmd/checkdeps/main.go
+code=$?
+echo "Debug: raw exit code: ${code}"
+if [ $code -ne 0 ]; then
+    echo "Exiting: checkdeps failed with error code: ${code}"
+    exit "${code}"
+fi
 
 function update_asdf_plugins() {
   if ! command -v asdf &>/dev/null; then
