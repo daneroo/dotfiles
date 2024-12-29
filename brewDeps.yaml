@@ -20,6 +20,7 @@ formulae:
     # azure/functions/azure-functions-core-tools@3
     - bash
     - bash-completion
+    - btop
     # bun is now managed by asdf
     # bun, oven-sh/bun/
     - caddy
@@ -33,8 +34,8 @@ formulae:
     # docker-compose-completion has been disabled because it has no upstream support for v2
     # docker-compose-completion
     # docker-slim's project has been renamed to slimtoolkit
-    - docker-slim
-    - doctl
+    # - docker-slim
+    # - doctl
     # Elixir: To get proper :observer.start to work
     # brew reinstall --build-from-source wxwidgets
     - elixir
@@ -44,13 +45,13 @@ formulae:
     - fio
     - gh
     - git
-    - glances
+    # - glances
     - gnu-tar
     - go
     - gum
     # heroku/brew/heroku
     # heroku/brew/heroku-node
-    - helm
+    # - helm
     - hey
     - htop
     - hyperfine
@@ -62,14 +63,14 @@ formulae:
     - jhead
     - jq
     - just
-    - k6
-    - kind
-    - kompose
-    - kube-ps1
-    - kubectx
-    - int128/kubelogin/kubelogin
-    - kubernetes-cli
-    - kustomize
+    # - k6
+    # - kind
+    # - kompose
+    # - kube-ps1
+    # - kubectx
+    # - int128/kubelogin/kubelogin
+    # - kubernetes-cli
+    # - kustomize
     - libpq
     - nats-io/nats-tools/nats
     # - neovim
@@ -78,12 +79,12 @@ formulae:
     - pulumi
     - rsync
     # rustup
-    - skaffold
+    # - skaffold
     - sops
     - teamookla/speedtest/speedtest
     - sqlite
     - starship
-    - stern
+    # - stern
     - supabase/tap/supabase
     - syncthing
     - tree

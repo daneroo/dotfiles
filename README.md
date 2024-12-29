@@ -10,49 +10,49 @@ This repo is for managing:
 ### Current State
 
 - Entry point: `check.sh`
-  - Orchestrates the entire reconciliation process
-  - Provides status reporting with ✓/✗ indicators
-  - Manages dotfiles via `installDotLinks.sh`
+  - Minimal bootstrap checks (brew, go installation)
+  - Orchestrates the reconciliation process
+  - Manages dotfiles via `installDotLinks.sh` (last bash holdout)
     - Maintains and validates symlinks for bash configuration files
-  - Manages Homebrew packages via `checkBrew.go`
-    - Validates installed packages against required dependencies
+  - Delegates all dependency management to Go implementation
+
+- Core functionality (Go implementation `go/cmd/checkdeps/main.go`):
+  - Manages Homebrew packages
+    - Validates installed formulae and casks against desired state
     - Detects missing packages
     - Identifies extraneous packages
     - Ensures transitive dependencies are maintained
-    - Handles both formulae and casks
   - Manages runtime versions via asdf
-    - Manages asdf plugins: currently Node.js, Python, Deno, Bun
+    - Manages plugins: Node.js, Python, Deno, Bun
     - For each plugin:
       - Automatic installation of desired versions
       - Global version management
       - Detection of extraneous versions
-      - Plugin updates and maintenance
-  - Manages npm *global* state
+      - Plugin updates
+  - Manages npm global packages
     - Desired packages: corepack, eslint, json, turbo, nx, etc.
     - Maintains shell completions
     - Reports outdated packages
     - Proposes upgrades
     - Handles pnpm via corepack
+  - Common features across all reconcilers:
+    - Consistent ✓/✗ status reporting
+    - Idempotent reconciliation pattern
+    - New implementation (1,677 lines of Go <--> 255 lines of bash)
 
 ### Desired State and Migration Plan
 
 - Code Modernization
-  - [x] Enhance `checkBrew.go` to separate formulae and casks
-    - [x] Enhance brewDeps text file format to jsonc or yaml
-    - [ ] Detect and propose removing unused taps
-  - [ ] Migrate bash scripts to Go
-    - [ ] ensure brew outdated / brew upgrade is executed before deps part
-    - [ ] Determine file structure (one file may no longer be enough)
-    - [ ] Port `installDotLinks.sh` to Go
-    - [ ] Create a unified configuration system
-  - [ ] Implement proper UX (logging, progress and error reporting)
-
-- Configuration Enhancement
-  - [ ] Implement formula and cask separation
-  - [ ] Per machine specialization
-  - [ ] Enhance Starship prompt configuration
-    - [ ] Configure fonts
-    - [ ] Test alternative font options
+  - [x] Successfully bloated (6.5x) a 255-line bash script into 1,677 lines of Go. Because type safety. 🎉
+  - [ ] (not now) Port `installDotLinks.sh` to Go (last bash holdout)
+  - [ ] (feature) Detect and propose removing unused taps
+  - [ ] Improve Go implementation
+    - [ ] Better abstractions for reconciliation loop
+    - [ ] More tests, but be practical
+  - [ ] Implement proper UX
+    - [ ] Progress indicators for long-running operations
+    - [ ] Better error reporting and recovery
+    - [ ] Proper logging levels (debug, info, warn, error)
 
 - Consider a compatible equivalent implementation in Deno/Typescript
 - Documentation and Testing
@@ -72,12 +72,11 @@ Regular maintenance (*idempotent*):
 
 ## TODO
 
-- go implementation
-  - [ ] move config (not under brewdeps)
-  - [ ] main.go should just call `reconcile.Reconcile`
-    - Reconcile should received desired as data structure
+- Configuration Enhancement
+  - [ ] Move config out of brewdeps package, add asdf, npm sections
+  - [ ] Per machine specialization
 - [ ] update python tooling, after move to uv/ruff
-- [ ] Starship prompt: add colors and fonts?
+- [ ] Ghostty/Starship prompt: add colors and fonts?
   - Default VSCode font: 'MesloLGS Nerd Font Mono', Menlo, Monaco, 'Courier New', monospace
   - Consider installing 'JetBrains Mono' and 'FiraCode Nerd Font Mono'
 

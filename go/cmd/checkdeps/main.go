@@ -11,6 +11,7 @@ import (
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/desired"
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/reconcile"
 	"github.com/daneroo/dotfiles/go/pkg/config"
+	"github.com/daneroo/dotfiles/go/pkg/npm"
 )
 
 func main() {
@@ -31,8 +32,8 @@ func main() {
 	fmt.Printf("Global Flags:\n")
 	fmt.Printf(" - verbose: %v\n", config.Global.Verbose)
 	fmt.Printf("Config: %s\n", f.configFile)
-	fmt.Printf("\n")
 
+	fmt.Printf("\n## Brew Section\n\n")
 	// Check for updates first
 	hasUpdates, err := actual.CheckOutdated()
 	if err != nil {
@@ -50,8 +51,31 @@ func main() {
 		handleError(err)
 	}
 
+	fmt.Printf("\n## ASDF Section\n\n")
 	// Handle asdf plugins and versions
 	if err := asdf.Reconcile(desiredVersions); err != nil {
+		fmt.Printf("✗ - %v\n", err)
+		os.Exit(1)
+	}
+
+	// Desired npm global packages
+	npmGlobalPackages := []string{
+		"corepack",
+		"eslint",
+		"json",
+		// "turbo",
+		"nx",
+		"pino-pretty",
+		"serve",
+		"standard",
+		"typescript",
+		"vercel",
+		"npm",
+	}
+
+	fmt.Printf("\n## NPM Globals Section\n\n")
+	// Handle npm global packages
+	if err := npm.Reconcile(npmGlobalPackages); err != nil {
 		fmt.Printf("✗ - %v\n", err)
 		os.Exit(1)
 	}

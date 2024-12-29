@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-echo "-= Installing dotfiles"
+echo "## Installing dotfiles"
 
 DOTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOTFILES="bash_profile profile bashrc"
@@ -45,7 +45,7 @@ safesymlink () {
 
 showBadlinks(){
     echo
-    echo "Checking for broken links..."
+    echo "### Checking for broken links..."
     local badLines=`find -L $HOME -maxdepth 1 -name .\* -type l -ls | wc -l`
     if [ $badLines -eq 0 ]; then
         echo "✓ - No broken links"

@@ -28,7 +28,6 @@ func Reconcile(desiredState types.DesiredState) error {
 	// TODO: This will evolve into proper Actions that can be shown/executed
 	showActions(missing, installAction)
 	showActions(extra, uninstallAction)
-	fmt.Printf("---\n") // Separator after all actions
 
 	return nil
 }
