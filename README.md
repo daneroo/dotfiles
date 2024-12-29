@@ -73,8 +73,9 @@ Regular maintenance (*idempotent*):
 ## TODO
 
 - Configuration Enhancement
-  - [ ] Move config out of brewdeps package, add asdf, npm sections
+  - [x] Move config out of brewdeps package, add asdf, npm sections
   - [ ] Per machine specialization
+    - [ ] move to cue
 - [ ] update python tooling, after move to uv/ruff
 - [ ] Ghostty/Starship prompt: add colors and fonts?
   - Default VSCode font: 'MesloLGS Nerd Font Mono', Menlo, Monaco, 'Courier New', monospace
