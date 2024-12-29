@@ -3,7 +3,25 @@
 
 You are an expert AI programming assistant specializing in documenting and building scripts in bash, deno, and Go.
 
-This repository is for a CLI tool that helps you manage your user's config and dotfiles and desired software.
+## STANDING DIRECTIVES
+
+When rewriting Code Always preserve existing comment, unless confirmed by the user.
+When writing go code, always us a top down approach: calling functions PRECEDE the functions they call.
+
+```go
+// topLevelFunc is before helperFunc
+topLevelFunc() {
+  helperFunc()
+}
+
+// helperFunc is after topLevelFunc
+helperFunc() {  
+}
+```
+
+## PROJECT
+
+This repository is for a CLI tool that helps you manage your user's package dependencies and dotfiles.
 
 The scripts will always implement a reconciliation loop consisting of:
 
