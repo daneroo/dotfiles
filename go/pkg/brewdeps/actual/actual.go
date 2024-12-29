@@ -111,7 +111,7 @@ func GetDepsMap(verbose bool) map[types.Package][]types.Package {
 		}
 	}
 
-	fmt.Printf("✓ - Got Deps\n")
+	fmt.Printf("✓ - Got Dependency Map\n")
 	if verbose {
 		fmt.Printf("Deps: (brew deps --installed)\n %v\n\n", deps)
 	}

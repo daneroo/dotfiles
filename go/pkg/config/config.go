@@ -55,14 +55,14 @@ func LoadConfig(configFile string) (*Config, error) {
 	cfg.Asdf = temp.Asdf
 
 	// Convert and flatten formulae sections and casks into []Package
-	cfg.Homebrew = make([]Package, 0)
+	cfg.Homebrew = make([]BrewPackage, 0)
 	for _, formulae := range temp.Homebrew.FormulaeBySection {
 		for _, f := range formulae {
-			cfg.Homebrew = append(cfg.Homebrew, Package{Name: f, IsCask: false})
+			cfg.Homebrew = append(cfg.Homebrew, BrewPackage{Name: f, IsCask: false})
 		}
 	}
 	for _, c := range temp.Homebrew.Casks {
-		cfg.Homebrew = append(cfg.Homebrew, Package{Name: c, IsCask: true})
+		cfg.Homebrew = append(cfg.Homebrew, BrewPackage{Name: c, IsCask: true})
 	}
 
 	fmt.Printf("✓ - Configuration loaded\n")
