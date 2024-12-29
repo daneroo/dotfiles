@@ -5,7 +5,6 @@ import (
 	"strings"
 
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/actual"
-	"github.com/daneroo/dotfiles/go/pkg/brewdeps/desired"
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/types"
 )
 
@@ -14,16 +13,16 @@ import (
 // 1. Return structured actions that can be executed
 // 2. Support --dry-run vs execute modes
 // 3. Handle errors during execution
-func Reconcile(desiredState types.DesiredState) error {
-	desiredState = desired.GetDesired(desiredState)
+func Reconcile(desired []types.Package) error {
+	// Get actual state
 	actualState, err := actual.GetActual()
 	if err != nil {
 		return err
 	}
 	fmt.Printf("✓ - Dependency map is consistent\n")
 
-	missing := CheckMissing(desiredState.Packages, actualState.Packages)
-	extra := Extraneous(desiredState.Packages, actualState.Packages, actualState.DepsMap)
+	missing := CheckMissing(desired, actualState.Packages)
+	extra := Extraneous(desired, actualState.Packages, actualState.DepsMap)
 
 	// TODO: This will evolve into proper Actions that can be shown/executed
 	showActions(missing, installAction)

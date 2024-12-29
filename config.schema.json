@@ -1,0 +1,44 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "required": ["homebrew", "asdf", "npm"],
+  "properties": {
+    "homebrew": {
+      "type": "object",
+      "required": ["formulae", "casks"],
+      "properties": {
+        "formulae": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^([^/]+|[^/]+/[^/]+/[^/]+)$"
+            }
+          }
+        },
+        "casks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "asdf": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    },
+    "npm": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
