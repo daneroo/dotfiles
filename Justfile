@@ -9,10 +9,13 @@ default:
 
 # Run all Go tests with verbose output
 test:
-    go test -v ./go/...
+    go test  ./go/...
+
+test-pretty:
+    go test -v ./go/... | grep -E "(--- PASS|--- FAIL)"
 
 # Run tests with coverage
-test-cover:
-    go test -cover ./go/...
-    # For HTML coverage report:
-    # go test -coverprofile=coverage.out ./go/... && go tool cover -html=coverage.out
+# test-cover:
+#     go test -cover ./go/...
+#     # For HTML coverage report:
+#     # go test -coverprofile=coverage.out ./go/... && go tool cover -html=coverage.out
