@@ -55,6 +55,7 @@ This repo is for managing:
     - [ ] Proper logging levels (debug, info, warn, error)
 
 - Consider a compatible equivalent implementation in Deno/Typescript
+- Consider a compatible equivalent implementation in Elixir/Gleam
 - Documentation and Testing
   - [ ] Add succinct but complete documentation
   - [ ] Create automated tests if possible
@@ -72,6 +73,7 @@ Regular maintenance (*idempotent*):
 
 ## TODO
 
+- Rename the executable to: reconfig
 - Configuration Enhancement
   - [x] Move config out of brewdeps package, add asdf, npm sections
   - [ ] Per machine specialization
