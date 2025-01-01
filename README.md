@@ -63,24 +63,6 @@ This repo is for managing:
 
 ## Multi-host configuration Validation
 
-- [x] Instead of just "must be sorted", we could show:
-  - Which elements are out of order
-  - What the correct order would be
-- Validation of *no* extra properties on root,hosts,shared
-  - [x] top level rejects any other property than host,shared
-  - [x] host and shared named sections both reject other than homebrew/asdf/npm
-  - [x] homebrew: other than formulae,casks
-- Validation of referenced shared configs:
-  - [x] Ensure all use: [] entries actually exist in shared
-  - [x] Fail early with clear error messages
-- Duplication detection at two levels:
-  - [x] Schema-level: e.g., duplicate entries in a single array
-  - [ ] Merged config: e.g., same package coming from different shared configs
-- Un-patterned Matches
-  - [x] shared: use identifierPattern
-  - [x] hosts: use identifierPattern
-  - [x] asdf: No, they have their own constraints
-  - [x] npm: No, they have their own constraints
 - Merging shared into host:
   - [ ] Follow the merge order (base → other shared → host specific)
   - [ ] Handle all package types (homebrew, asdf, npm)
