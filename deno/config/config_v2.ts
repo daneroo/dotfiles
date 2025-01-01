@@ -1,3 +1,40 @@
+/**
+ * Configuration Schema and Validation
+ *
+ * Example with validation rules:
+ * {
+ *   hosts: {
+ *     // Host names must be identifiers: [a-zA-Z][a-zA-Z0-9_-]*
+ *     galois: {
+ *       // Referenced shared configs must exist
+ *       use: ["base", "node-dev"],  // Sorted, no duplicates
+ *       homebrew: {
+ *         // All arrays are sorted by basename and contain no duplicates
+ *         formulae: ["deno"],
+ *         casks: ["docker", "visual-studio-code"]
+ *       }
+ *     }
+ *   },
+ *   shared: {
+ *     // Shared names must be identifiers: [a-zA-Z][a-zA-Z0-9_-]*
+ *     base: {
+ *       homebrew: {
+ *         formulae: ["git", "go"],  // Must match pattern: name or org/repo/name
+ *         casks: ["1password"]
+ *       }
+ *     },
+ *     "node-dev": {
+ *       asdf: {
+ *         nodejs: ["20.0.0", "lts"]  // "latest", "lts", or X[.Y[.Z]], order preserved
+ *       },
+ *       npm: ["ts-node", "typescript"]  // Sorted, no duplicates
+ *     }
+ *   }
+ * }
+ *
+ * Note: All sections use strict validation (no extra properties)
+ */
+
 import { parse } from "@std/yaml";
 import { z } from "zod";
 
