@@ -34,34 +34,33 @@ const PackageConfig = z
   .object({
     homebrew: z
       .object({
-        formulae: sortedStringArray(brewPackagePattern).optional(),
-        casks: sortedStringArray(brewPackagePattern).optional(),
+        formulae: sortedStringArray(brewPackagePattern).default([]),
+        casks: sortedStringArray(brewPackagePattern).default([]),
       })
       .strict()
-      .optional(),
-    asdf: z.record(z.array(z.string().regex(asdfVersionPattern))).optional(),
-    npm: sortedStringArray().optional(),
+      .default({}),
+    asdf: z.record(z.array(z.string().regex(asdfVersionPattern))).default({}),
+    npm: sortedStringArray().default([]),
   })
   .strict();
 
 // Host configuration with 'use' directive
 const HostConfig = PackageConfig.extend({
-  use: z.array(z.string()).optional(),
+  use: z.array(z.string()).default([]),
 }).strict();
 
 // Complete configuration schema
 export const ConfigSchema = z
   .object({
-    hosts: z.record(HostConfig).optional(),
-    shared: z.record(PackageConfig).optional(),
+    hosts: z.record(HostConfig).default({}),
+    shared: z.record(PackageConfig).default({}),
   })
   .strict()
   .superRefine((config, ctx) => {
     // Check that all referenced shared configs exist
-    for (const [hostName, host] of Object.entries(config.hosts ?? {})) {
-      if (!host.use) continue;
+    for (const [hostName, host] of Object.entries(config.hosts)) {
       for (const sharedName of host.use) {
-        if (!config.shared?.[sharedName]) {
+        if (!config.shared[sharedName]) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: `Host "${hostName}" references non-existent shared config "${sharedName}"`,

@@ -9,13 +9,13 @@ Deno.test("parseConfig() v2 parses proposed-host-config.yaml", async () => {
   const config = parseConfig(yaml);
 
   // Verify basic structure
-  assertEquals(Object.keys(config.hosts ?? {}).sort(), [
+  assertEquals(Object.keys(config.hosts).sort(), [
     "davinci",
     "dirac",
     "galois",
     "shannon",
   ]);
-  assertEquals(Object.keys(config.shared ?? {}).sort(), [
+  assertEquals(Object.keys(config.shared).sort(), [
     "base",
     "media-tools",
     "node-dev",
@@ -23,10 +23,10 @@ Deno.test("parseConfig() v2 parses proposed-host-config.yaml", async () => {
   ]);
 
   // Verify a specific host configuration
-  const galois = config.hosts?.galois;
-  assertEquals(galois?.use, ["base", "node-dev", "rust-dev"]);
-  assertEquals(galois?.homebrew?.formulae, ["deno"]);
-  assertEquals(galois?.homebrew?.casks, ["docker", "visual-studio-code"]);
+  const galois = config.hosts.galois;
+  assertEquals(galois.use, ["base", "node-dev", "rust-dev"]);
+  assertEquals(galois.homebrew.formulae, ["deno"]);
+  assertEquals(galois.homebrew.casks, ["docker", "visual-studio-code"]);
 });
 
 // Validation counter-examples
