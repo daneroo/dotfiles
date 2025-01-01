@@ -1,0 +1,108 @@
+# Configuration for reconfig
+#
+# This file defines the package dependencies for multiple hosts.
+# It uses a composition pattern with:
+#
+# 1. shared/ - reusable configurations
+#    - base: common to all hosts
+#    - node-dev: node.js development
+#    - rust-dev: rust development
+#    - media-tools: media processing
+#
+# 2. hosts/ - host specific configurations
+#    Each host:
+#    - uses one or more shared configurations
+#    - can add its own specific packages
+#
+# The configuration is merged in this order:
+# 1. shared/base (if used)
+# 2. other shared configurations (in order of use: [])
+# 3. host specific configurations
+#
+# Arrays of packages are merged and sorted
+#
+# Validation rules:
+# 1. All shared configs referenced in use: [] must exist
+#    BAD: use: ["base", "missing"]  # Error: missing not found in shared
+#
+# 2. No duplicate packages after merging for each host
+#    OK:  typescript in both base and node-dev shared configs
+#    BAD: use: ["base", "node-dev"]   # Error: duplicate typescript in merged npm packages
+
+# Host-specific configurations
+hosts:
+  # Mac mini M2 Pro 32GB (2023)
+  galois:
+    use: ["base", "node-dev", "rust-dev"]
+    homebrew:
+      formulae:
+        - deno
+      casks:
+        - docker
+        - visual-studio-code
+
+  # Mac mini Intel i7 16GB (Late 2012)
+  dirac:
+    use: ["base", "rust-dev"]
+    homebrew:
+      casks:
+        - firefox
+
+  # M2 Pro (Virtual) - née 2012 iMac
+  shannon:
+    use: ["base"]
+    homebrew:
+      formulae:
+        - nginx
+        - postgresql@14
+      casks:
+        - docker
+
+  # iMac M1 16GB (2021)
+  davinci:
+    use: ["base", "node-dev", "media-tools"]
+    homebrew:
+      formulae:
+        - deno
+      casks:
+        - docker
+        - visual-studio-code
+
+# Reusable shared configurations
+shared:
+  base:
+    homebrew:
+      formulae:
+        - git
+        - go
+      casks:
+        - 1password
+    asdf:
+      nodejs: ["lts"]
+    npm:
+      - typescript
+
+  node-dev:
+    asdf:
+      nodejs: ["20.0.0", "lts"]
+      deno: ["latest"]
+    npm:
+      - ts-node
+      - typescript
+
+  rust-dev:
+    homebrew:
+      formulae:
+        - cargo-edit
+        - cargo-watch
+        - rust
+
+  media-tools:
+    homebrew:
+      formulae:
+        - ffmpeg
+        - imagemagick
+        - yt-dlp
+      casks:
+        - handbrake
+        - obs
