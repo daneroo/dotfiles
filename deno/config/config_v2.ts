@@ -2,10 +2,16 @@ import { parse } from "@std/yaml";
 import { z } from "zod";
 
 // Matches either "name" or "org/repo/name" pattern
+// Used in: homebrew.formulae, homebrew.casks
 const brewPackagePattern = /^([^/]+|[^/]+\/[^/]+\/[^/]+)$/;
 
 // Matches "latest", "lts", or semantic version (X[.Y[.Z]])
+// Used in: asdf plugin versions
 const asdfVersionPattern = /^(latest|lts|\d+(\.\d+){0,2})$/;
+
+// Matches identifier-like names: letters, numbers, underscore, hyphen, but must start with a letter
+// Used in: hosts and shared section names
+const identifierPattern = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
 
 // Package manager configurations
 const PackageConfig = z
@@ -30,8 +36,28 @@ const HostConfig = PackageConfig.extend({
 // Complete configuration schema
 export const ConfigSchema = z
   .object({
-    hosts: z.record(HostConfig).default({}),
-    shared: z.record(PackageConfig).default({}),
+    hosts: z
+      .record(
+        z
+          .string()
+          .regex(
+            identifierPattern,
+            "Invalid identifier: must start with a letter and contain only letters, numbers, underscore, hyphen"
+          ),
+        HostConfig
+      )
+      .default({}),
+    shared: z
+      .record(
+        z
+          .string()
+          .regex(
+            identifierPattern,
+            "Invalid identifier: must start with a letter and contain only letters, numbers, underscore, hyphen"
+          ),
+        PackageConfig
+      )
+      .default({}),
   })
   .strict()
   .superRefine((config, ctx) => {

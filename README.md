@@ -81,10 +81,10 @@ This repo is for managing:
   - [ ] Handle all package types (homebrew, asdf, npm)
   - [ ] Preserve type safety through the merge
 - Un-patterned Matches
-  - [ ] asdf: ?should we have a pattern for plugins?
-  - [ ] npm: ?should we have a pattern for packages?
-  - [ ] use: ?should we have a pattern for section names
-  - [ ] hosts: ? should we have a patter for hosts' names
+  - [x] shared: use identifierPattern
+  - [x] hosts: use identifierPattern
+  - [x] asdf: No, they have their own constraints
+  - [x] npm: No, they have their own constraints
 
 ## Operating
 

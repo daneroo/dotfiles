@@ -148,6 +148,17 @@ const validationCounterExamples = [
     packages: ["same-package", "same-package"],
     msgIncludes: "must not contain duplicates",
   }),
+  // Identifier validation
+  ...allIdentifierCases({
+    namePrefix: "name with space",
+    identifier: "name with space",
+    msgIncludes: "Invalid identifier",
+  }),
+  ...allIdentifierCases({
+    namePrefix: "name starting with number",
+    identifier: "2identifier",
+    msgIncludes: "Invalid identifier",
+  }),
 ] as const;
 
 // Test validation rules
@@ -233,6 +244,24 @@ function allNpmCases(testCase: {
         nameOfHostOrShared: {
           npm: testCase.packages,
         },
+      },
+    }),
+    msgIncludes: testCase.msgIncludes,
+  }));
+}
+
+// Helper to generate test cases for identifier validation in hosts and shared
+function allIdentifierCases(testCase: {
+  namePrefix: string;
+  identifier: string;
+  msgIncludes: string;
+}) {
+  const locations = ["hosts", "shared"] as const;
+  return locations.map((where) => ({
+    name: `${testCase.namePrefix} in ${where} (${testCase.identifier})`,
+    yaml: JSON.stringify({
+      [where]: {
+        [testCase.identifier]: {},
       },
     }),
     msgIncludes: testCase.msgIncludes,
