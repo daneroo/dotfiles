@@ -1,0 +1,15 @@
+{
+  "version": "0.1.0",
+  "tasks": {
+    "start": "deno run --allow-read --allow-env reconfig.ts",
+    "test": "deno test --allow-read",
+    "test:watch": "deno test --allow-read --watch",
+    "outdated": "deno outdated"
+  },
+  "imports": {
+    "@std/assert": "jsr:@std/assert@^1.0.10",
+    "@std/yaml": "jsr:@std/yaml@^1.0.5",
+    "yargs": "npm:yargs@^17.7.2",
+    "zod": "npm:zod@^3.24.1"
+  }
+}

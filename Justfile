@@ -7,15 +7,22 @@
 default:
     @just --list
 
-# Run all Go tests with verbose output
-test:
-    go test  ./go/...
+# Run all tests (Go and Deno)
+test: test-go test-deno
 
-test-pretty:
+# Run Go tests
+test-go:
+    go test ./go/...
+
+# Run Deno tests
+test-deno:
+    cd deno && deno task test
+
+test-go-pretty:
     go test -v ./go/... | grep -E "(--- PASS|--- FAIL)"
 
 # Run tests with coverage
-# test-cover:
+# test-go-cover:
 #     go test -cover ./go/...
 #     # For HTML coverage report:
 #     # go test -coverprofile=coverage.out ./go/... && go tool cover -html=coverage.out
