@@ -32,6 +32,7 @@ Deno.test("parseConfig() v2 parses proposed-host-config.yaml", async () => {
 // Validation counter-examples
 // Test generators can be abused, but this has allowed us to get better systematic coverage,
 // while keeping our testing table readable, and the test output speaks for itself.
+//  it also allows us to confirm the schema is correct, not just that it's constituents are valid.
 // as JSON is valid YAML, we can write a JS Object literal, and stringify it to make valid yaml
 const validationCounterExamples = [
   // BrewPattern validation
@@ -72,6 +73,65 @@ const validationCounterExamples = [
     packages: ["zzz", "aaa"],
     msgIncludes: "must be sorted",
   }),
+  // Extra properties validation
+  {
+    name: "extra property at root level",
+    yaml: JSON.stringify({
+      extra: "should not be here",
+    }),
+    msgIncludes: "Unrecognized key",
+  },
+  {
+    name: "extra property in hosts section",
+    yaml: JSON.stringify({
+      hosts: {
+        galois: {
+          extra: "should not be here",
+        },
+      },
+    }),
+    msgIncludes: "Unrecognized key",
+  },
+  {
+    name: "extra property in homebrew section",
+    yaml: JSON.stringify({
+      hosts: {
+        galois: {
+          homebrew: {
+            extra: "should not be here",
+          },
+        },
+      },
+    }),
+    msgIncludes: "Unrecognized key",
+  },
+  // Shared config validation
+  {
+    name: "reference to non-existent shared config",
+    yaml: JSON.stringify({
+      hosts: {
+        galois: {
+          use: ["missing-config"],
+        },
+      },
+      shared: {},
+    }),
+    msgIncludes:
+      'Host "galois" references non-existent shared config "missing-config"',
+  },
+  {
+    name: "reference to multiple non-existent shared configs",
+    yaml: JSON.stringify({
+      hosts: {
+        galois: {
+          use: ["missing1", "missing2"],
+        },
+      },
+      shared: {},
+    }),
+    msgIncludes:
+      'Host "galois" references non-existent shared config "missing1", Host "galois" references non-existent shared config "missing2"',
+  },
 ] as const;
 
 // Test validation rules

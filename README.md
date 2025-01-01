@@ -61,6 +61,28 @@ This repo is for managing:
   - [ ] Create automated tests if possible
   - [ ] Document bootstrap process
 
+## Multi-host configuration Validation
+
+- Validation of *no* extra properties on root,hosts,shared
+  - [x] top level rejects any other property than host,shared
+  - [x] host and shared named sections both reject other than homebrew/asdf/npm
+  - [x] homebrew: other than formulae,casks
+- Validation of referenced shared configs:
+  - [ ] Ensure all use: [] entries actually exist in shared
+  - [ ] Fail early with clear error messages
+- Merging shared into host:
+  - [ ] Follow the merge order (base → other shared → host specific)
+  - [ ] Handle all package types (homebrew, asdf, npm)
+  - [ ] Preserve type safety through the merge
+- Duplication detection at two levels:
+  - [ ] Schema-level: e.g., duplicate entries in a single array
+  - [ ] Merged config: e.g., same package coming from different shared configs
+- Un-patterned Matches
+  - [ ] asdf: ?should we have a pattern for plugins?
+  - [ ] npm: ?should we have a pattern for packages?
+  - [ ] use: ?should we have a pattern for section names
+  - [ ] hosts: ? should we have a patter for hosts' names
+
 ## Operating
 
 *Systems under control:* `galois, davinci, shannon, dirac, goedel, feynman`

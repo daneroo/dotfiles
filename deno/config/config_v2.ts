@@ -30,27 +30,47 @@ const sortedStringArray = (pattern?: RegExp) => {
 };
 
 // Package manager configurations
-const PackageConfig = z.object({
-  homebrew: z
-    .object({
-      formulae: sortedStringArray(brewPackagePattern).optional(),
-      casks: sortedStringArray(brewPackagePattern).optional(),
-    })
-    .optional(),
-  asdf: z.record(z.array(z.string().regex(asdfVersionPattern))).optional(),
-  npm: sortedStringArray().optional(),
-});
+const PackageConfig = z
+  .object({
+    homebrew: z
+      .object({
+        formulae: sortedStringArray(brewPackagePattern).optional(),
+        casks: sortedStringArray(brewPackagePattern).optional(),
+      })
+      .strict()
+      .optional(),
+    asdf: z.record(z.array(z.string().regex(asdfVersionPattern))).optional(),
+    npm: sortedStringArray().optional(),
+  })
+  .strict();
 
 // Host configuration with 'use' directive
 const HostConfig = PackageConfig.extend({
   use: z.array(z.string()).optional(),
-});
+}).strict();
 
 // Complete configuration schema
-export const ConfigSchema = z.object({
-  hosts: z.record(HostConfig).optional(),
-  shared: z.record(PackageConfig).optional(),
-});
+export const ConfigSchema = z
+  .object({
+    hosts: z.record(HostConfig).optional(),
+    shared: z.record(PackageConfig).optional(),
+  })
+  .strict()
+  .superRefine((config, ctx) => {
+    // Check that all referenced shared configs exist
+    for (const [hostName, host] of Object.entries(config.hosts ?? {})) {
+      if (!host.use) continue;
+      for (const sharedName of host.use) {
+        if (!config.shared?.[sharedName]) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Host "${hostName}" references non-existent shared config "${sharedName}"`,
+            path: ["hosts", hostName, "use"],
+          });
+        }
+      }
+    }
+  });
 
 // Infer the type from the schema
 export type Config = z.infer<typeof ConfigSchema>;
@@ -58,8 +78,16 @@ export type Config = z.infer<typeof ConfigSchema>;
 // Parse YAML string to Config
 export function parseConfig(yaml: string): Config {
   const data = parse(yaml);
-  const config = ConfigSchema.parse(data);
-  return config;
+  try {
+    return ConfigSchema.parse(data);
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      // Format the error messages
+      const messages = e.errors.map((err) => err.message);
+      throw new Error(messages.join(", "));
+    }
+    throw e;
+  }
 }
 
 // Load and parse config from file
