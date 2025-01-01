@@ -104,9 +104,21 @@ export async function loadConfig(path: string): Promise<Config> {
 
 // Helper for sorted unique string arrays
 function sortedUniqueStringArray(pattern?: RegExp) {
-  return uniqueStringArray(pattern).refine(isSorted, (arr) => ({
-    message: `Array must be sorted, got: [${arr.join(", ")}]`,
-  }));
+  return uniqueStringArray(pattern).refine(isSorted, (arr) => {
+    // Create a sorted copy to show the expected order
+    const expected = [...arr].sort((a, b) =>
+      compareByBasename(a, b) ? -1 : 1
+    );
+    // Find first out-of-order term
+    const firstOutOfOrder = arr.find(
+      (v, i) => i > 0 && !compareByBasename(arr[i - 1], v)
+    );
+    return {
+      message: `Array must be sorted. Expected: [${expected.join(", ")}]${
+        firstOutOfOrder ? ` (first out of order: ${firstOutOfOrder})` : ""
+      }`,
+    };
+  });
 }
 
 // Helper for unique string arrays (no sorting)
