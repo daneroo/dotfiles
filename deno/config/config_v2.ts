@@ -7,46 +7,24 @@ const brewPackagePattern = /^([^/]+|[^/]+\/[^/]+\/[^/]+)$/;
 // Matches "latest", "lts", or semantic version (X[.Y[.Z]])
 const asdfVersionPattern = /^(latest|lts|\d+(\.\d+){0,2})$/;
 
-// Helper to check if array is sorted
-const compareByBasename = (i: string, j: string): boolean => {
-  const iBase = i.split("/").pop() ?? i;
-  const jBase = j.split("/").pop() ?? j;
-  if (iBase === jBase) {
-    return i < j; // Use full path as tiebreaker
-  }
-  return iBase < jBase;
-};
-
-const isSorted = (arr: string[]) => {
-  return arr.every((v, i) => i === 0 || compareByBasename(arr[i - 1], v));
-};
-
-// Helper for sorted string arrays
-const sortedStringArray = (pattern?: RegExp) => {
-  const baseSchema = pattern ? z.string().regex(pattern) : z.string();
-  return z.array(baseSchema).refine(isSorted, (arr) => ({
-    message: `Array must be sorted, got: [${arr.join(", ")}]`,
-  }));
-};
-
 // Package manager configurations
 const PackageConfig = z
   .object({
     homebrew: z
       .object({
-        formulae: sortedStringArray(brewPackagePattern).default([]),
-        casks: sortedStringArray(brewPackagePattern).default([]),
+        formulae: sortedUniqueStringArray(brewPackagePattern).default([]),
+        casks: sortedUniqueStringArray(brewPackagePattern).default([]),
       })
       .strict()
       .default({}),
-    asdf: z.record(z.array(z.string().regex(asdfVersionPattern))).default({}),
-    npm: sortedStringArray().default([]),
+    asdf: z.record(uniqueStringArray(asdfVersionPattern)).default({}),
+    npm: sortedUniqueStringArray().default([]),
   })
   .strict();
 
 // Host configuration with 'use' directive
 const HostConfig = PackageConfig.extend({
-  use: z.array(z.string()).default([]),
+  use: sortedUniqueStringArray().default([]),
 }).strict();
 
 // Complete configuration schema
@@ -93,4 +71,42 @@ export function parseConfig(yaml: string): Config {
 export async function loadConfig(path: string): Promise<Config> {
   const text = await Deno.readTextFile(path);
   return parseConfig(text);
+}
+
+// Below are helper functions in top-down calling order
+// Each function is defined after the functions it calls
+
+// Helper for sorted unique string arrays
+function sortedUniqueStringArray(pattern?: RegExp) {
+  return uniqueStringArray(pattern).refine(isSorted, (arr) => ({
+    message: `Array must be sorted, got: [${arr.join(", ")}]`,
+  }));
+}
+
+// Helper for unique string arrays (no sorting)
+function uniqueStringArray(pattern?: RegExp) {
+  const baseSchema = pattern ? z.string().regex(pattern) : z.string();
+  return z.array(baseSchema).refine(uniqueArray, (arr) => ({
+    message: `Array must not contain duplicates, got: [${arr.join(", ")}]`,
+  }));
+}
+
+// Base unique array refinement
+function uniqueArray<T>(arr: T[]): boolean {
+  return arr.every((v, i) => arr.indexOf(v) === i);
+}
+
+// Check if array is sorted
+function isSorted(arr: string[]): boolean {
+  return arr.every((v, i) => i === 0 || compareByBasename(arr[i - 1], v));
+}
+
+// Compare strings by basename
+function compareByBasename(i: string, j: string): boolean {
+  const iBase = i.split("/").pop() ?? i;
+  const jBase = j.split("/").pop() ?? j;
+  if (iBase === jBase) {
+    return i < j; // Use full path as tiebreaker
+  }
+  return iBase < jBase;
 }

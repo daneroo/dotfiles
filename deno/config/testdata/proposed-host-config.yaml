@@ -60,7 +60,7 @@ hosts:
 
   # iMac M1 16GB (2021)
   davinci:
-    use: ["base", "node-dev", "media-tools"]
+    use: ["base", "media-tools", "node-dev"]
     homebrew:
       formulae:
         - deno

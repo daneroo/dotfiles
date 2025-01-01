@@ -73,13 +73,13 @@ This repo is for managing:
 - Validation of referenced shared configs:
   - [x] Ensure all use: [] entries actually exist in shared
   - [x] Fail early with clear error messages
+- Duplication detection at two levels:
+  - [x] Schema-level: e.g., duplicate entries in a single array
+  - [ ] Merged config: e.g., same package coming from different shared configs
 - Merging shared into host:
   - [ ] Follow the merge order (base → other shared → host specific)
   - [ ] Handle all package types (homebrew, asdf, npm)
   - [ ] Preserve type safety through the merge
-- Duplication detection at two levels:
-  - [ ] Schema-level: e.g., duplicate entries in a single array
-  - [ ] Merged config: e.g., same package coming from different shared configs
 - Un-patterned Matches
   - [ ] asdf: ?should we have a pattern for plugins?
   - [ ] npm: ?should we have a pattern for packages?

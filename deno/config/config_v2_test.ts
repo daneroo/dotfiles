@@ -44,12 +44,12 @@ const validationCounterExamples = [
   // asdf Version validation
   ...allAsdfCases({
     namePrefix: "bad asdfVersionPattern",
-    badVersion: "not-a-version",
+    versions: ["not-a-version"],
     msgIncludes: "Invalid",
   }),
   ...allAsdfCases({
     namePrefix: "bad asdfVersionPattern",
-    badVersion: "1.2.3.4",
+    versions: ["1.2.3.4"],
     msgIncludes: "Invalid",
   }),
   // Sorting validation
@@ -132,6 +132,22 @@ const validationCounterExamples = [
     msgIncludes:
       'Host "galois" references non-existent shared config "missing1", Host "galois" references non-existent shared config "missing2"',
   },
+  // Duplicate validation
+  ...allBrewPackageCases({
+    namePrefix: "duplicate package",
+    packages: ["same-package", "same-package"],
+    msgIncludes: "must not contain duplicates",
+  }),
+  ...allAsdfCases({
+    namePrefix: "duplicate version",
+    versions: ["lts", "lts"],
+    msgIncludes: "must not contain duplicates",
+  }),
+  ...allNpmCases({
+    namePrefix: "duplicate package",
+    packages: ["same-package", "same-package"],
+    msgIncludes: "must not contain duplicates",
+  }),
 ] as const;
 
 // Test validation rules
@@ -180,17 +196,19 @@ function allBrewPackageCases(testCase: {
 // Helper to generate 2 test cases for ASDF version pattern in host and shared
 function allAsdfCases(testCase: {
   namePrefix: string;
-  badVersion: string;
+  versions: string[];
   msgIncludes: string;
 }) {
   const locations = ["hosts", "shared"];
   return locations.map((where) => ({
-    name: `${testCase.namePrefix} in ${where} (${testCase.badVersion})`,
+    name: `${testCase.namePrefix} in ${where} (${testCase.versions.join(
+      ", "
+    )})`,
     yaml: JSON.stringify({
       [where]: {
         nameOfHostOrShared: {
           asdf: {
-            nodejs: [testCase.badVersion],
+            nodejs: testCase.versions,
           },
         },
       },
