@@ -136,6 +136,80 @@ const validationCounterExamples = [
     }),
     msgIncludes: "Invalid",
   },
+  {
+    name: "unsorted formulae in host (zzz, aaa)",
+    yaml: JSON.stringify({
+      hosts: {
+        galois: {
+          homebrew: {
+            formulae: ["zzz", "aaa"],
+          },
+        },
+      },
+    }),
+    msgIncludes: "must be sorted",
+  },
+  {
+    name: "unsorted casks in host (zzz, aaa)",
+    yaml: JSON.stringify({
+      hosts: {
+        galois: {
+          homebrew: {
+            casks: ["zzz", "aaa"],
+          },
+        },
+      },
+    }),
+    msgIncludes: "must be sorted",
+  },
+  {
+    name: "unsorted formulae in shared (zzz, aaa)",
+    yaml: JSON.stringify({
+      shared: {
+        base: {
+          homebrew: {
+            formulae: ["zzz", "aaa"],
+          },
+        },
+      },
+    }),
+    msgIncludes: "must be sorted",
+  },
+  {
+    name: "unsorted casks in shared (zzz, aaa)",
+    yaml: JSON.stringify({
+      shared: {
+        base: {
+          homebrew: {
+            casks: ["zzz", "aaa"],
+          },
+        },
+      },
+    }),
+    msgIncludes: "must be sorted",
+  },
+  {
+    name: "unsorted npm packages in host (zzz, aaa)",
+    yaml: JSON.stringify({
+      hosts: {
+        galois: {
+          npm: ["zzz", "aaa"],
+        },
+      },
+    }),
+    msgIncludes: "must be sorted",
+  },
+  {
+    name: "unsorted npm packages in shared (zzz, aaa)",
+    yaml: JSON.stringify({
+      shared: {
+        base: {
+          npm: ["zzz", "aaa"],
+        },
+      },
+    }),
+    msgIncludes: "must be sorted",
+  },
 ] as const;
 
 // Test validation rules
