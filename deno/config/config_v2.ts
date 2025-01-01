@@ -8,8 +8,17 @@ const brewPackagePattern = /^([^/]+|[^/]+\/[^/]+\/[^/]+)$/;
 const asdfVersionPattern = /^(latest|lts|\d+(\.\d+){0,2})$/;
 
 // Helper to check if array is sorted
+const compareByBasename = (i: string, j: string): boolean => {
+  const iBase = i.split("/").pop() ?? i;
+  const jBase = j.split("/").pop() ?? j;
+  if (iBase === jBase) {
+    return i < j; // Use full path as tiebreaker
+  }
+  return iBase < jBase;
+};
+
 const isSorted = (arr: string[]) => {
-  return arr.every((v, i) => i === 0 || arr[i - 1] <= v);
+  return arr.every((v, i) => i === 0 || compareByBasename(arr[i - 1], v));
 };
 
 // Helper for sorted string arrays

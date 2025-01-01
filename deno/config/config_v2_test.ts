@@ -210,6 +210,32 @@ const validationCounterExamples = [
     }),
     msgIncludes: "must be sorted",
   },
+  {
+    name: "unsorted formulae in host (same basename, full path tiebreaker)",
+    yaml: JSON.stringify({
+      hosts: {
+        galois: {
+          homebrew: {
+            formulae: ["org2/repo2/name", "org1/repo1/name"],
+          },
+        },
+      },
+    }),
+    msgIncludes: "must be sorted",
+  },
+  {
+    name: "unsorted formulae in host (basename: bbb > aaa)",
+    yaml: JSON.stringify({
+      hosts: {
+        galois: {
+          homebrew: {
+            formulae: ["bbb", "org/repo/aaa"],
+          },
+        },
+      },
+    }),
+    msgIncludes: "must be sorted",
+  },
 ] as const;
 
 // Test validation rules
