@@ -19,13 +19,17 @@ Deno.test("parseConfig() v2 parses proposed-host-config.yaml", async () => {
     "base",
     "media-tools",
     "node-dev",
-    "rust-dev",
   ]);
 
   // Verify a specific host configuration
   const galois = config.hosts.galois;
-  assertEquals(galois.use, ["base", "node-dev", "rust-dev"]);
-  assertEquals(galois.homebrew.formulae, ["deno"]);
+  assertEquals(galois.use, ["base", "node-dev"]);
+  assertEquals(galois.homebrew.formulae, [
+    "elixir",
+    "sops",
+    "teamookla/speedtest/speedtest",
+    "sqlite",
+  ]);
   assertEquals(galois.homebrew.casks, ["docker", "visual-studio-code"]);
 });
 

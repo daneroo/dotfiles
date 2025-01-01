@@ -1,108 +1,69 @@
 # Configuration for reconfig
 #
 # This file defines the package dependencies for multiple hosts.
-# It uses a composition pattern with:
-#
-# 1. shared/ - reusable configurations
-#    - base: common to all hosts
-#    - node-dev: node.js development
-#    - rust-dev: rust development
-#    - media-tools: media processing
-#
-# 2. hosts/ - host specific configurations
-#    Each host:
-#    - uses one or more shared configurations
-#    - can add its own specific packages
-#
-# The configuration is merged in this order:
-# 1. shared/base (if used)
-# 2. other shared configurations (in order of use: [])
-# 3. host specific configurations
-#
-# Arrays of packages are merged and sorted
-#
-# Validation rules:
-# 1. All shared configs referenced in use: [] must exist
-#    BAD: use: ["base", "missing"]  # Error: missing not found in shared
-#
-# 2. No duplicate packages after merging for each host
-#    OK:  typescript in both base and node-dev shared configs
-#    BAD: use: ["base", "node-dev"]   # Error: duplicate typescript in merged npm packages
+# It uses a composition pattern with: named shared sections
 
+# Validation Rules:
+# - Names (hosts and shared sections): must be identifiers [a-zA-Z][a-zA-Z0-9_-]*
+# - Package Names:
+#   - Homebrew: "name" or "org/repo/name"
+#   - ASDF: "latest", "lts", or X[.Y[.Z]]
+# - Arrays must be sorted (except ASDF versions) and contain no duplicates
+# - All referenced named shared configs must exist
+# - No extra properties allowed (strict validation)
+#
+# Example Configuration:
+#
 # Host-specific configurations
 hosts:
   # Mac mini M2 Pro 32GB (2023)
-  galois:
-    use: ["base", "node-dev", "rust-dev"]
+  galois: # identifier: must start with letter, no spaces
+    use: ["base", "node-dev"] # sorted array, no duplicates, must exist in shared
     homebrew:
-      formulae:
-        - deno
-      casks:
+      formulae: # sorted by basename
+        - elixir # e*
+        - sops # s*
+        - teamookla/speedtest/speedtest # basename: speedtest
+        - sqlite # s* but after speedtest
+      casks: # sorted array, no duplicates
         - docker
         - visual-studio-code
+    asdf:
+      python: ["3.12", "3.11.10"] # order preserved (last is global asdf default), X.Y.Z version allowed
 
   # Mac mini Intel i7 16GB (Late 2012)
   dirac:
-    use: ["base", "rust-dev"]
+    use: ["base"] # must exist in shared
     homebrew:
       casks:
-        - firefox
+        - daisydisk
 
   # M2 Pro (Virtual) - née 2012 iMac
   shannon:
-    use: ["base"]
+    use: ["base", "media-tools"] # sorted array, no duplicates, must exist in shared
     homebrew:
-      formulae:
-        - nginx
-        - postgresql@14
-      casks:
-        - docker
+      casks: ["calibre"]
 
   # iMac M1 16GB (2021)
   davinci:
-    use: ["base", "media-tools", "node-dev"]
-    homebrew:
-      formulae:
-        - deno
-      casks:
-        - docker
-        - visual-studio-code
+    use: ["base"] # must exist in shared
 
 # Reusable shared configurations
 shared:
-  base:
+  base: # identifier: must start with letter, no spaces
     homebrew:
-      formulae:
-        - git
-        - go
-      casks:
-        - 1password
+      formulae: ["asdf", "git", "go", "gum", "jq"] # sorted array, no duplicates
+      casks: ["1password", "brave-browser", "tailscale"] # sorted array, no duplicates
     asdf:
-      nodejs: ["lts"]
-    npm:
-      - typescript
+      nodejs: ["21.0.0", "lts"] # order preserved, valid versions: semver|lts|latest
+    npm: ["serve", "typescript"] # sorted array, no duplicates
 
-  node-dev:
+  node-dev: # identifier: '-' allowed
     asdf:
-      nodejs: ["20.0.0", "lts"]
-      deno: ["latest"]
-    npm:
-      - ts-node
-      - typescript
-
-  rust-dev:
-    homebrew:
-      formulae:
-        - cargo-edit
-        - cargo-watch
-        - rust
+      deno: ["latest"] # valid version: latest|lts|X.Y.Z
+    npm: ["pino-pretty", "standard", "turbo", "vercel"] # sorted array, no duplicates
 
   media-tools:
     homebrew:
-      formulae:
-        - ffmpeg
-        - imagemagick
-        - yt-dlp
-      casks:
-        - handbrake
-        - obs
+      formulae: ["ffmpeg"]
+      casks: ["handbrake", "obs"] # sorted array, no duplicates
