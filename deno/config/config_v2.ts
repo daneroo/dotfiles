@@ -50,17 +50,30 @@ const asdfVersionPattern = /^(latest|lts|\d+(\.\d+){0,2})$/;
 // Used in: hosts and shared section names
 const identifierPattern = /^[a-zA-Z][a-zA-Z0-9_-]*$/;
 
-// Package manager configurations
+// Schema for section names (hosts and shared)
+const IdentifierSchema = z
+  .string()
+  .regex(
+    identifierPattern,
+    "Invalid identifier: must start with a letter and contain only letters, numbers, underscore, hyphen"
+  );
+
+// Schema for homebrew packages
+const HomebrewSchema = z
+  .object({
+    formulae: sortedUniqueStringArray(brewPackagePattern).default([]),
+    casks: sortedUniqueStringArray(brewPackagePattern).default([]),
+  })
+  .strict();
+
+// Schema for asdf versions
+const AsdfSchema = z.record(uniqueStringArray(asdfVersionPattern)).default({});
+
+// Package manager configurations: {homebrew, asdf, npm}
 const PackageConfig = z
   .object({
-    homebrew: z
-      .object({
-        formulae: sortedUniqueStringArray(brewPackagePattern).default([]),
-        casks: sortedUniqueStringArray(brewPackagePattern).default([]),
-      })
-      .strict()
-      .default({}),
-    asdf: z.record(uniqueStringArray(asdfVersionPattern)).default({}),
+    homebrew: HomebrewSchema.default({}),
+    asdf: AsdfSchema,
     npm: sortedUniqueStringArray().default([]),
   })
   .strict();
@@ -73,28 +86,8 @@ const HostConfig = PackageConfig.extend({
 // Complete configuration schema
 export const ConfigSchema = z
   .object({
-    hosts: z
-      .record(
-        z
-          .string()
-          .regex(
-            identifierPattern,
-            "Invalid identifier: must start with a letter and contain only letters, numbers, underscore, hyphen"
-          ),
-        HostConfig
-      )
-      .default({}),
-    shared: z
-      .record(
-        z
-          .string()
-          .regex(
-            identifierPattern,
-            "Invalid identifier: must start with a letter and contain only letters, numbers, underscore, hyphen"
-          ),
-        PackageConfig
-      )
-      .default({}),
+    hosts: z.record(IdentifierSchema, HostConfig).default({}),
+    shared: z.record(IdentifierSchema, PackageConfig).default({}),
   })
   .strict()
   .superRefine((config, ctx) => {
@@ -112,10 +105,33 @@ export const ConfigSchema = z
     }
   });
 
-// Infer the type from the schema
+// Export types inferred from schemas
+/** Complete configuration with hosts and shared sections */
 export type Config = z.infer<typeof ConfigSchema>;
 
-// Parse YAML string to Config
+/** Core package configuration: homebrew, asdf, npm */
+export type PackageConfig = z.infer<typeof PackageConfig>;
+
+/** Host configuration extends PackageConfig with 'use' array referencing shared configs */
+export type HostConfig = z.infer<typeof HostConfig>;
+
+/** Homebrew configuration with sorted formulae and casks (org/repo/name pattern) */
+export type HomebrewConfig = z.infer<typeof HomebrewSchema>;
+
+/** ASDF configuration mapping plugin names to version arrays (order preserved) */
+export type AsdfConfig = z.infer<typeof AsdfSchema>;
+
+/** Valid identifier: must start with letter, allows letters, numbers, underscore, hyphen */
+export type Identifier = z.infer<typeof IdentifierSchema>;
+
+// Type aliases for configurations after merging shared dependencies
+/** A host's complete package configuration after merging shared dependencies */
+export type SingleHostConfig = PackageConfig; // No 'use' array
+
+/** All hosts' package configurations after merging shared dependencies */
+export type MultiHostConfig = Record<Identifier, PackageConfig>;
+
+/** Parse YAML string into a validated Config */
 export function parseConfig(yaml: string): Config {
   const data = parse(yaml);
   try {
@@ -130,7 +146,7 @@ export function parseConfig(yaml: string): Config {
   }
 }
 
-// Load and parse config from file
+/** Load and parse config from file */
 export async function loadConfig(path: string): Promise<Config> {
   const text = await Deno.readTextFile(path);
   return parseConfig(text);
@@ -139,7 +155,7 @@ export async function loadConfig(path: string): Promise<Config> {
 // Below are helper functions in top-down calling order
 // Each function is defined after the functions it calls
 
-// Helper for sorted unique string arrays
+/** Helper for sorted unique string arrays with optional pattern validation */
 function sortedUniqueStringArray(pattern?: RegExp) {
   return uniqueStringArray(pattern).refine(isSorted, (arr) => {
     // Create a sorted copy to show the expected order
@@ -158,7 +174,7 @@ function sortedUniqueStringArray(pattern?: RegExp) {
   });
 }
 
-// Helper for unique string arrays (no sorting)
+/** Helper for unique string arrays with optional pattern validation */
 function uniqueStringArray(pattern?: RegExp) {
   const baseSchema = pattern ? z.string().regex(pattern) : z.string();
   return z.array(baseSchema).refine(uniqueArray, (arr) => ({
@@ -166,17 +182,17 @@ function uniqueStringArray(pattern?: RegExp) {
   }));
 }
 
-// Base unique array refinement
+/** Check if array has no duplicate elements */
 function uniqueArray<T>(arr: T[]): boolean {
   return arr.every((v, i) => arr.indexOf(v) === i);
 }
 
-// Check if array is sorted
+/** Check if array is sorted by basename */
 function isSorted(arr: string[]): boolean {
   return arr.every((v, i) => i === 0 || compareByBasename(arr[i - 1], v));
 }
 
-// Compare strings by basename
+/** Compare strings by basename, using full path as tiebreaker */
 function compareByBasename(i: string, j: string): boolean {
   const iBase = i.split("/").pop() ?? i;
   const jBase = j.split("/").pop() ?? j;

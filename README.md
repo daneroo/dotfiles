@@ -64,9 +64,18 @@ This repo is for managing:
 ## Multi-host configuration Validation
 
 - Merging shared into host:
-  - [ ] Follow the merge order (base → other shared → host specific)
-  - [ ] Handle all package types (homebrew, asdf, npm)
-  - [ ] Preserve type safety through the merge
+  - [x] Type System Improvements:
+    - [x] Rename types to reflect multi-host vs single-host nature
+    - [x] Define types for flattened/merged configurations
+    - [x] Document type relationships and constraints
+  - [ ] Define Merging API:
+    - [ ] Parse/load multi-host config
+    - [ ] Flatten to single host
+    - [ ] Flatten all hosts
+  - [ ] Implement Merging:
+    - [ ] Validate ASDF plugin uniqueness (no merging)
+    - [ ] Merge sorted arrays (homebrew, npm)
+    - [ ] Preserve type safety through the merge
 
 ## Operating
 
