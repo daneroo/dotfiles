@@ -163,6 +163,53 @@ const validationCounterExamples = [
     identifier: "2identifier",
     msgIncludes: "Invalid identifier",
   }),
+  // ASDF plugin reuse validation
+  {
+    name: "same ASDF plugin in both host and shared config",
+    yaml: JSON.stringify({
+      hosts: {
+        galois: {
+          use: ["node-dev"],
+          asdf: {
+            nodejs: ["21.0.0"], // also defined in shared:node-dev
+          },
+        },
+      },
+      shared: {
+        "node-dev": {
+          asdf: {
+            nodejs: ["lts"], // also defined in host:galois
+          },
+        },
+      },
+    }),
+    msgIncludes:
+      "ASDF plugin cannot be merged nodejs: defined in host:galois, shared:node-dev",
+  },
+  {
+    name: "same ASDF plugin in multiple shared configs",
+    yaml: JSON.stringify({
+      hosts: {
+        galois: {
+          use: ["base", "node-dev"],
+        },
+      },
+      shared: {
+        base: {
+          asdf: {
+            nodejs: ["lts"], // also defined in shred:node-dev
+          },
+        },
+        "node-dev": {
+          asdf: {
+            nodejs: ["21.0.0"], // also defined in shared:base
+          },
+        },
+      },
+    }),
+    msgIncludes:
+      "ASDF plugin cannot be merged nodejs: defined in shared:base, shared:node-dev",
+  },
 ] as const;
 
 // Test validation rules

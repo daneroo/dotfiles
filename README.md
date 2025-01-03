@@ -73,7 +73,7 @@ This repo is for managing:
     - [ ] Flatten to single host
     - [ ] Flatten all hosts
   - [ ] Implement Merging:
-    - [ ] Validate ASDF plugin uniqueness (no merging)
+    - [x] Validate ASDF plugin uniqueness (no merging)
     - [ ] Merge sorted arrays (homebrew, npm)
     - [ ] Preserve type safety through the merge
 

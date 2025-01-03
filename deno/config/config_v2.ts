@@ -91,18 +91,10 @@ export const ConfigSchema = z
   })
   .strict()
   .superRefine((config, ctx) => {
-    // Check that all referenced shared configs exist
-    for (const [hostName, host] of Object.entries(config.hosts)) {
-      for (const sharedName of host.use) {
-        if (!config.shared[sharedName]) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: `Host "${hostName}" references non-existent shared config "${sharedName}"`,
-            path: ["hosts", hostName, "use"],
-          });
-        }
-      }
-    }
+    // Ensure all shared configs referenced in 'use' arrays exist
+    validateSharedUseExistence(config, ctx);
+    // Prevent ASDF plugin definitions in multiple places
+    validateAsdfPluginsUniqueness(config, ctx);
   });
 
 // Export types inferred from schemas
@@ -200,4 +192,60 @@ function compareByBasename(i: string, j: string): boolean {
     return i < j; // Use full path as tiebreaker
   }
   return iBase < jBase;
+}
+
+/** Validate that each ASDF plugin appears in *at most one* of host or any shared config */
+function validateAsdfPluginsUniqueness(config: Config, ctx: z.RefinementCtx) {
+  // For each host, collect all sources of all plugins
+  for (const [hostName, host] of Object.entries(config.hosts)) {
+    // Track plugin -> [where defined], e.g.:
+    // nodejs -> ["host:galois"]
+    // python -> ["shared:base"]
+    // deno -> ["shared:node-dev", "shared:base"]  // Error case
+    const pluginSources = new Map<string, string[]>();
+
+    // Collect plugins defined in host config
+    for (const plugin of Object.keys(host.asdf ?? {})) {
+      pluginSources.set(plugin, [`host:${hostName}`]);
+    }
+
+    // Collect plugins from all used shared configs
+    for (const sharedName of host.use) {
+      const shared = config.shared[sharedName];
+      if (!shared) continue; // Skip if shared config doesn't exist
+      for (const plugin of Object.keys(shared.asdf ?? {})) {
+        const sources = pluginSources.get(plugin) ?? [];
+        sources.push(`shared:${sharedName}`);
+        pluginSources.set(plugin, sources);
+      }
+    }
+
+    // Report any plugin with multiple sources
+    for (const [plugin, sources] of pluginSources) {
+      if (sources.length > 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `ASDF plugin cannot be merged ${plugin}: defined in ${sources.join(
+            ", "
+          )}`,
+          path: ["hosts", hostName, "use"],
+        });
+      }
+    }
+  }
+}
+
+/** Validate that all referenced shared configs exist */
+function validateSharedUseExistence(config: Config, ctx: z.RefinementCtx) {
+  for (const [hostName, host] of Object.entries(config.hosts)) {
+    for (const sharedName of host.use) {
+      if (!config.shared[sharedName]) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Host "${hostName}" references non-existent shared config "${sharedName}"`,
+          path: ["hosts", hostName, "use"],
+        });
+      }
+    }
+  }
 }
