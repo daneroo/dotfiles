@@ -90,6 +90,10 @@ Regular maintenance (*idempotent*):
 ## TODO
 
 - Rename the executable to: reconfig
+- [ ] ghostty config (actual dotfile directory?)
+  - [ ] copy-on-select=true
+  - [ ] remove ligatures
+  - [ ] starship new prompt with Nerd font test
 - Configuration Enhancement
   - [x] Move config out of brewdeps package, add asdf, npm sections
   - [ ] Per machine specialization
