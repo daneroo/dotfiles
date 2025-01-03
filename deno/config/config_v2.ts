@@ -123,6 +123,12 @@ export type SingleHostConfig = PackageConfig; // No 'use' array
 /** All hosts' package configurations after merging shared dependencies */
 export type MultiHostConfig = Record<Identifier, PackageConfig>;
 
+/** Load and parse config from file */
+export async function loadConfig(path: string): Promise<Config> {
+  const text = await Deno.readTextFile(path);
+  return parseConfig(text);
+}
+
 /** Parse YAML string into a validated Config */
 export function parseConfig(yaml: string): Config {
   const data = parse(yaml);
@@ -136,12 +142,6 @@ export function parseConfig(yaml: string): Config {
     }
     throw e;
   }
-}
-
-/** Load and parse config from file */
-export async function loadConfig(path: string): Promise<Config> {
-  const text = await Deno.readTextFile(path);
-  return parseConfig(text);
 }
 
 // Below are helper functions in top-down calling order
