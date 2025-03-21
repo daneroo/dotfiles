@@ -67,11 +67,12 @@ alias pp='pushd'
 alias po='popd'
 alias c='cursor'
 
-#export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home/
-
-# Put Homebrew's Python ahead in the path
-# TODO(daneroo) asdf'ify this too
-# export PATH="${HOMEBREW_PREFIX}/opt/python/libexec/bin:$PATH"
+# This is gum format's default theme
+# Set GUM theme to dark by default, light for Apple Terminal
+export GUM_FORMAT_THEME="dark"
+if [[ "${TERM_PROGRAM}" == "Apple_Terminal" ]]; then
+  export GUM_FORMAT_THEME="light"
+fi
 
 # for Go, without docker
 export GOPATH=$HOME/Code/Go
