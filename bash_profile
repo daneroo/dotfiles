@@ -65,6 +65,7 @@ export TIMEFORMAT="%Rs"
 alias ls='ls -sF'
 alias pp='pushd'
 alias po='popd'
+alias c='cursor'
 
 #export JAVA_HOME=/System/Library/Frameworks/JavaVM.framework/Home/
 
