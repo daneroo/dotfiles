@@ -8,7 +8,7 @@ import (
 
 // getActualPlugins returns the list of currently installed plugins
 func getActualPlugins() ([]string, error) {
-	out, err := exec.Command("asdf", "plugin-list").Output()
+	out, err := exec.Command("asdf", "plugin", "list").Output()
 	if err != nil {
 		return nil, fmt.Errorf("failed to list plugins: %w", err)
 	}
@@ -49,7 +49,7 @@ func performPluginActions(desiredVersions map[string][]string, missing, extra []
 	// Install missing plugins
 	for _, plugin := range missing {
 		fmt.Printf("✗ - asdf plugin %s is missing. Installing\n", plugin)
-		if err := exec.Command("asdf", "plugin-add", plugin).Run(); err != nil {
+		if err := exec.Command("asdf", "plugin", "add", plugin).Run(); err != nil {
 			return fmt.Errorf("failed to install plugin %s: %w", plugin, err)
 		}
 		fmt.Printf("✓ - asdf plugin %s is installed\n", plugin)
@@ -60,7 +60,7 @@ func performPluginActions(desiredVersions map[string][]string, missing, extra []
 	for plugin := range desiredVersions {
 		// There is no way to only "check for updates" for a plugin
 		// so we just update it and parse the output for status
-		updateOut, err := exec.Command("asdf", "plugin-update", plugin).CombinedOutput()
+		updateOut, err := exec.Command("asdf", "plugin", "update", plugin).CombinedOutput()
 		if err != nil {
 			return fmt.Errorf("failed to update plugin %s: %w", plugin, err)
 		}

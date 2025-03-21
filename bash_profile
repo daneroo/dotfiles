@@ -21,7 +21,14 @@ done
 [[ -r "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh" ]] && . "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh"
 
 # ASDF Setup
-[[ -r "${HOMEBREW_PREFIX}/opt/asdf/libexec/asdf.sh" ]] && . "${HOMEBREW_PREFIX}/opt/asdf/libexec/asdf.sh"
+ASDF_DATA_DIR=$HOME/.asdf
+# Add asdf shims to PATH
+export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
+# asdf completion
+# if asdf is installed, use its completion
+if command -v asdf &>/dev/null; then
+  . <(asdf completion bash)
+fi
 
 # NPM completion
 # This command is slow so was replaced by the file below, generated and checked in check.sh
@@ -81,7 +88,12 @@ export PATH=$PATH:$HOME/.deno/bin
 # For ngs NATS.io utility
 export PATH=$PATH:$HOME/.ngs/bin  #Add NGS utility to the path
 
-## `pnpm install-completion` genrated this
+## `pnpm install-completion` generated this
+## TODO(daneroo):Completion for pnpm v9 is incompatible with completion for older pnpm versions.
+# If you have already installed pnpm completion for a version older than v9,
+# you must uninstall it first to ensure that completion for v9 works properly. 
+# You can do this by removing the section of code that contains __tabtab in your dot files
+
 ##  It should be run on each host to create the target files in ~/.config/tabtab
 # tabtab source for packages
 # uninstall by removing these lines

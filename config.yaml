@@ -29,6 +29,8 @@ homebrew:
       # bun is now managed by asdf
       # bun, oven-sh/bun/
       - caddy
+      # cmake is for local whisper-cpp build
+      - cmake
       - coreutils
       - ctop
       - cue
@@ -92,7 +94,11 @@ homebrew:
       # - stern
       - supabase/tap/supabase
       - syncthing
+      # tinygo is for im-zone tinygo WASM build
+      - tinygo-org/tools/tinygo
       - tree
+      # wasm-pack is for im-zone rust WASM build
+      - wasm-pack
       - watch
       - wget
       - yq
@@ -106,6 +112,8 @@ homebrew:
       - ruff
       - uv
       - virtualenv
+      # extra brew version of whisper-cpp
+      - whisper-cpp
       # python@3.11 - moved to asdf
 
   casks:
@@ -119,7 +127,7 @@ homebrew:
     - vlc
 
 asdf:
-  nodejs: ["lts", "21", "22"] # Latest LTS version
+  nodejs: ["latest", "lts"] # Latest LTS version
   python: ["3.12", "3.11"] # Multiple versions, latest patch
   deno: ["latest"] # Latest stable
   bun: ["latest"] # Latest stable

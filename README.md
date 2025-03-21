@@ -1,5 +1,14 @@
 # dotfiles
 
+**Note:** asdf breaking changes, See <https://asdf-vm.com/guide/upgrading-to-v0-16.html#breaking-changes>
+
+To replace nvm/asdf, consider <https://volta.sh/>
+
+Also: we can use a default-npm-packages file to install npm packages after installing a Node.js version.
+
+Default npm Packages
+asdf-nodejs can automatically install a set of default set of npm package right after installing a Node.js version. To enable this feature, provide a $HOME/.default-npm-packages file that lists one package per line, for example:
+
 ## Current State and Plan
 
 This repo is for managing:
@@ -7,7 +16,7 @@ This repo is for managing:
 - personal config and dotfiles
 - required software installed by brew formulae and casks
 
-### Current State
+## Current State
 
 - Entry point: `check.sh`
   - Minimal bootstrap checks (brew, go installation)

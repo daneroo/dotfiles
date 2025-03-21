@@ -51,22 +51,24 @@ func reconcileVersionsForPlugin(plugin string, specs []string) error {
 		return err
 	}
 
-	// Set the last desired version as global
-	globalVersion := desired[len(desired)-1]
-	if err := exec.Command("asdf", "global", plugin, globalVersion).Run(); err != nil {
-		return fmt.Errorf("failed to set global %s version to %s: %w", plugin, globalVersion, err)
-	}
+	// Set the last desired version as --home (used to be called global)
+	if len(desired) > 0 {
+		globalVersion := desired[len(desired)-1]
+		if err := exec.Command("asdf", "set", "--home", plugin, globalVersion).Run(); err != nil {
+			return fmt.Errorf("failed to set home %s version to %s: %w", plugin, globalVersion, err)
+		}
 
-	// Verify global version was set
-	out, err := exec.Command("asdf", "current", plugin).Output()
-	if err != nil {
-		return fmt.Errorf("failed to get current %s version: %w", plugin, err)
-	}
-	current := strings.Fields(string(out))[1] // [plugin] [version] [source]
-	if current == globalVersion {
-		fmt.Printf("✓ - %s %s is set as the global version\n", plugin, globalVersion)
-	} else {
-		fmt.Printf("✗ - Failed to set %s %s as the global version\n", plugin, globalVersion)
+		// Verify --home version was set
+		out, err := exec.Command("asdf", "current", "--no-header", plugin).Output()
+		if err != nil {
+			return fmt.Errorf("failed to get current %s version: %w", plugin, err)
+		}
+		current := strings.Fields(string(out))[1] // [plugin] [version] [source]
+		if current == globalVersion {
+			fmt.Printf("✓ - %s %s is set as the home version\n", plugin, globalVersion)
+		} else {
+			fmt.Printf("✗ - Failed to set %s %s as the home version\n", plugin, globalVersion)
+		}
 	}
 
 	return nil
@@ -82,10 +84,11 @@ func reconcileVersionsForPlugin(plugin string, specs []string) error {
 //   - "3.12.0" -> exact version
 func resolveVersion(plugin, spec string) (string, error) {
 	switch {
+	//  BECAUSE: asdf list all nodejs: IS BROKEN, we will handle everything
+	case plugin == "nodejs":
+		return resolveNodeVersion(spec)
 	case spec == "latest":
 		return resolveLatest(plugin)
-	case plugin == "nodejs" && spec == "lts":
-		return resolveNodeLTS()
 	case isVersionPrefix(spec):
 		return resolveLatestPatch(plugin, spec)
 	default:
@@ -94,7 +97,7 @@ func resolveVersion(plugin, spec string) (string, error) {
 }
 
 // resolveLatest returns the latest stable version for a plugin
-// by running asdf latest <plugin>
+// by running asdf latest <plugin>; when not horribley broken
 func resolveLatest(plugin string) (string, error) {
 	cmd := exec.Command("asdf", "latest", plugin)
 	var stderr bytes.Buffer
@@ -102,15 +105,16 @@ func resolveLatest(plugin string) (string, error) {
 	out, err := cmd.Output() // Only captures stdout
 
 	if err != nil {
-		return "", fmt.Errorf("failed to get latest %s version: %w\nstderr: %s\nNote: Might be due to GitHub API rate limiting (60 requests/hour)", plugin, err, stderr.String())
+		return "", fmt.Errorf("failed to get latest %s version: %w\nstderr: %s\nNote: Might be due to GitHub API rate limiting (60 requests/hour)\nCommand:\nasdf latest %s", plugin, err, stderr.String(), plugin)
 	}
 	return strings.TrimSpace(string(out)), nil
 }
 
-// resolveNodeLTS returns the latest LTS version of Node.js
-// by querying the Node.js release API and finding the first version
-// where LTS is not false (i.e., has a codename)
-func resolveNodeLTS() (string, error) {
+// resolveNodeVersion returns the appropriate Node.js version based on the spec:
+// - "lts": returns the latest LTS version
+// - "latest": returns the latest version
+// - "X[.Y[.Z]]": returns the latest version matching the prefix
+func resolveNodeVersion(spec string) (string, error) {
 	out, err := exec.Command("curl", "-s", "https://nodejs.org/dist/index.json").Output()
 	if err != nil {
 		return "", fmt.Errorf("failed to get Node.js versions: %w", err)
@@ -124,17 +128,44 @@ func resolveNodeLTS() (string, error) {
 		return "", fmt.Errorf("failed to parse Node.js versions: %w", err)
 	}
 
+	// three cases:
+	// 1. lts
+	// 2. latest
+	// 3. version prefix
+	// You can safely assume the versions are list in descending order
 	for _, r := range releases {
-		if r.LTS != false {
-			return strings.TrimPrefix(r.Version, "v"), nil
+		version := strings.TrimPrefix(r.Version, "v")
+
+		switch {
+		case spec == "latest":
+			return version, nil // First version is latest
+		case spec == "lts":
+			// when this version is an active LTS version,
+			// the LTS field is a release codename like "jod" otherwise it is false
+			if r.LTS != false {
+				return version, nil
+			}
+		case isVersionPrefix(spec):
+			if strings.HasPrefix(version, spec) {
+				return version, nil
+			}
+		default:
+			return "", fmt.Errorf("unsupported Node.js version spec: %s", spec)
 		}
 	}
-	return "", fmt.Errorf("no LTS version found")
+
+	if spec == "lts" {
+		return "", fmt.Errorf("no LTS version found")
+	}
+	if isVersionPrefix(spec) {
+		return "", fmt.Errorf("no version found matching prefix %s", spec)
+	}
+	return "", fmt.Errorf("no matching version found for spec %s", spec)
 }
 
 // resolveLatestPatch finds the latest version matching a prefix (like "3.12" for python).
 // The process is:
-// 1. Get all available versions from asdf list-all
+// 1. Get all available versions from asdf list all
 // 2. Filter versions that match the prefix exactly followed by a patch number
 // 3. Sort the matches using version sort (-V)
 // 4. Return the last (highest) version
@@ -149,15 +180,19 @@ func resolveNodeLTS() (string, error) {
 // - We need proper version sorting for correct results
 // - The prefix is already validated by isVersionPrefix
 func resolveLatestPatch(plugin, prefix string) (string, error) {
-	out, err := exec.Command("asdf", "list-all", plugin).Output()
+	fmt.Printf("Resolving latest patch for %s: %s\n", plugin, prefix)
+	cmd := exec.Command("asdf", "list", "all", plugin)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	out, err := cmd.Output()
 	if err != nil {
-		return "", fmt.Errorf("failed to list %s versions: %w", plugin, err)
+		return "", fmt.Errorf("failed to list %s versions: %w\nstderr: %s\nCommand:\nasdf list all %s", plugin, err, stderr.String(), plugin)
 	}
 
 	versions := strings.Fields(string(out))
 	matches := filterAndSortVersions(versions, prefix)
 	if len(matches) == 0 {
-		return "", fmt.Errorf("no versions found matching %s for %s", prefix, plugin)
+		return "", fmt.Errorf("no versions found matching %s for %s\nCommand:\nasdf list all %s", prefix, plugin, plugin)
 	}
 
 	return matches[len(matches)-1], nil
@@ -249,9 +284,19 @@ func performVersionActions(plugin string, missing, extra []string) error {
 // - Example input:  "  21.7.3\n  22.12.0\n *22.12.0"
 // - Example output: ["21.7.3", "22.12.0", "22.12.0"]
 func getInstalledVersions(plugin string) ([]string, error) {
-	out, err := exec.Command("asdf", "list", plugin).Output()
+	// BECAUSE: asdf list <plugin> now writes "No compatible versions installed" to stderr
+	// when no versions are installed, we need to capture stderr to handle this case
+	cmd := exec.Command("asdf", "list", plugin)
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	out, err := cmd.Output() // Only captures stdout
+
 	if err != nil {
-		return nil, fmt.Errorf("failed to list %s versions: %w", plugin, err)
+		// If stderr contains "No compatible versions installed", return empty slice
+		if strings.Contains(stderr.String(), "No compatible versions installed") {
+			return []string{}, nil
+		}
+		return nil, fmt.Errorf("failed to list %s versions: %w\nstderr: %s", plugin, err, stderr.String())
 	}
 
 	// Clean up version strings:
