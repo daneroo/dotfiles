@@ -82,6 +82,7 @@ homebrew:
       - nats-io/nats-tools/nats
       # - neovim
       - netlify/netlifyctl/netlifyctl
+      - pnpm # using this instead of npm install -g pnpm
       - pstree
       - pulumi
       - rsync
@@ -127,13 +128,14 @@ homebrew:
     - vlc
 
 asdf:
-  nodejs: ["latest", "lts"] # Latest LTS version
+  # nodejs: ["latest", "lts"] # Latest and LTS version
+  nodejs: ["latest"] # Latest only: asdf broken again
   python: ["3.12", "3.11"] # Multiple versions, latest patch
   deno: ["latest"] # Latest stable
   bun: ["latest"] # Latest stable
 
 npm:
-  - corepack
+  # - corepack - deprecated
   - eslint
   - json
   - npm

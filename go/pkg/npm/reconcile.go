@@ -50,9 +50,9 @@ func Reconcile(desiredPackages []string) error {
 	if err := checkOutdated(); err != nil {
 		return err
 	}
-	//  prepareCorepackPnpm
+	//  deprecateCorepackPnpm
 	fmt.Printf("\n") // separator
-	if err := prepareCorepackPnpm(); err != nil {
+	if err := deprecateCorepackPnpm(); err != nil {
 		return err
 	}
 
@@ -174,21 +174,23 @@ func checkOutdated() error {
 	return nil
 }
 
-// prepareCorepackPnpm prepares corepack for pnpm
-func prepareCorepackPnpm() error {
-	// Enable corepack
-	if err := exec.Command("corepack", "enable").Run(); err != nil {
-		return fmt.Errorf("failed to enable corepack: %w", err)
-	}
+// deprecateCorepackPnpm prepares corepack for pnpm
+func deprecateCorepackPnpm() error {
+	fmt.Printf("△ - corepack - DEPRECATED - we now install pnpm with homebrew\n")
 
-	// Prepare pnpm
-	if err := exec.Command("corepack", "prepare", "pnpm@latest", "--activate").Run(); err != nil {
-		return fmt.Errorf("failed to prepare (corepack) pnpm: %w", err)
-	}
+	// // Enable corepack
+	// if err := exec.Command("corepack", "enable").Run(); err != nil {
+	// 	return fmt.Errorf("failed to enable corepack: %w", err)
+	// }
+
+	// // Prepare pnpm
+	// if err := exec.Command("corepack", "prepare", "pnpm@latest", "--activate").Run(); err != nil {
+	// 	return fmt.Errorf("failed to prepare (corepack) pnpm: %w", err)
+	// }
 
 	// Show version
 	if out, err := exec.Command("pnpm", "--version").Output(); err == nil {
-		fmt.Printf("✓ - pnpm version: %s (corepack)\n", strings.TrimSpace(string(out)))
+		fmt.Printf("✓ - pnpm version: %s (homebrew)\n", strings.TrimSpace(string(out)))
 		return nil
 	}
 
