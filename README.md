@@ -6,6 +6,8 @@ To replace nvm/asdf, consider <https://volta.sh/>
 
 Also: we can use a default-npm-packages file to install npm packages after installing a Node.js version.
 
+**E2E Testing**: Run end-to-end tests with `./e2e/run.sh` (uses `docker run --rm --platform linux/amd64 -it homebrew/brew`)
+
 Default npm Packages
 asdf-nodejs can automatically install a set of default set of npm package right after installing a Node.js version. To enable this feature, provide a $HOME/.default-npm-packages file that lists one package per line, for example:
 
