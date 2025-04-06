@@ -36,6 +36,10 @@ fi
 NPM_COMPLETION_FILE=~/.dotfiles/incl/npm_completion.sh
 [[ -r "${NPM_COMPLETION_FILE}" ]] && . "${NPM_COMPLETION_FILE}"
 
+# PNPM completion
+# * This replaces the old tabtab completion
+PNPM_COMPLETION_FILE=~/.dotfiles/incl/pnpm_completion.bash
+[[ -r "${PNPM_COMPLETION_FILE}" ]] && . "${PNPM_COMPLETION_FILE}"
 
 # Old .profile content
 # This is source'd from .bash_profile, since I installed rvm!
@@ -90,16 +94,6 @@ export PATH=$PATH:$HOME/.deno/bin
 # For ngs NATS.io utility
 export PATH=$PATH:$HOME/.ngs/bin  #Add NGS utility to the path
 
-## `pnpm install-completion` generated this
-## TODO(daneroo):Completion for pnpm v9 is incompatible with completion for older pnpm versions.
-# If you have already installed pnpm completion for a version older than v9,
-# you must uninstall it first to ensure that completion for v9 works properly. 
-# You can do this by removing the section of code that contains __tabtab in your dot files
-
-##  It should be run on each host to create the target files in ~/.config/tabtab
-# tabtab source for packages
-# uninstall by removing these lines
-[ -f ~/.config/tabtab/bash/__tabtab.bash ] && . ~/.config/tabtab/bash/__tabtab.bash || true
 
 # Starship prompt
 export STARSHIP_CONFIG=~/.dotfiles/starship.toml

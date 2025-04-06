@@ -61,6 +61,12 @@ func Reconcile(desiredPackages []string) error {
 	if err := updateNpmCompletions(); err != nil {
 		return err
 	}
+
+	// update pnpm completions
+	fmt.Printf("\n") // separator
+	if err := updatePnpmCompletions(); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -225,6 +231,38 @@ func updateNpmCompletions() error {
 		return fmt.Errorf("failed to write completion file: %w", err)
 	}
 	fmt.Printf("✓ - npm completions were updated (%s)\n", completionFile)
+
+	return nil
+}
+
+// updatePnpmCompletions updates the pnpm completion script if needed
+func updatePnpmCompletions() error {
+	completionFile := "./incl/pnpm_completion.bash"
+
+	// Get current completion text
+	out, err := exec.Command("pnpm", "completion", "bash").Output()
+	if err != nil {
+		return fmt.Errorf("failed to get pnpm completion: %w", err)
+	}
+	completionText := string(out)
+
+	// Create incl directory if it doesn't exist
+	if err := os.MkdirAll("./incl", 0755); err != nil {
+		return fmt.Errorf("failed to create incl directory: %w", err)
+	}
+
+	// Check if file exists and compare content
+	current, err := os.ReadFile(completionFile)
+	if err == nil && string(current) == completionText {
+		fmt.Printf("✓ - pnpm completions are up to date (%s)\n", completionFile)
+		return nil
+	}
+
+	// Write new completion file
+	if err := os.WriteFile(completionFile, []byte(completionText), 0644); err != nil {
+		return fmt.Errorf("failed to write completion file: %w", err)
+	}
+	fmt.Printf("✓ - pnpm completions were updated (%s)\n", completionFile)
 
 	return nil
 }
