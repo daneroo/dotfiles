@@ -95,6 +95,8 @@ homebrew:
       # - stern
       - supabase/tap/supabase
       - syncthing
+      # my new virtual machine manager - collima too?
+      - cirruslabs/cli/tart
       # tinygo is for im-zone tinygo WASM build
       - tinygo-org/tools/tinygo
       - tree
@@ -119,6 +121,7 @@ homebrew:
 
   casks:
     - 1password-cli
+    # - balenaetcher
     - calibre
     - ghostty
     - google-drive
@@ -129,7 +132,7 @@ homebrew:
 
 asdf:
   # nodejs: ["latest", "lts"] # Latest and LTS version
-  nodejs: ["latest"] # Latest only: asdf broken again
+  nodejs: ["23"] # 24 exists, but not available asdf broken again
   python: ["3.12", "3.11"] # Multiple versions, latest patch
   deno: ["latest"] # Latest stable
   bun: ["latest"] # Latest stable
