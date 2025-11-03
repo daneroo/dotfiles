@@ -23,6 +23,7 @@ homebrew:
       # azure-cli
       # azure/draft/draft
       # azure/functions/azure-functions-core-tools@3
+      - b3sum
       - bash
       - bash-completion
       - btop
@@ -37,6 +38,7 @@ homebrew:
       # deno is now managed by asdf
       # deno
       - difftastic
+      - direnv
       - docker-completion
       # docker-compose-completion has been disabled because it has no upstream support for v2
       # docker-compose-completion
@@ -82,6 +84,7 @@ homebrew:
       - nats-io/nats-tools/nats
       # - neovim
       - netlify/netlifyctl/netlifyctl
+      - ntfy
       - pnpm # using this instead of npm install -g pnpm
       - pstree
       - pulumi
@@ -121,12 +124,13 @@ homebrew:
 
   casks:
     - 1password-cli
-    # - balenaetcher
+    - balenaetcher
     - calibre
+    - claude-code
     - ghostty
     - google-drive
-    # - macvim
     - pearcleaner
+    - rustdesk
     - stats
     - vlc
 
@@ -140,6 +144,7 @@ asdf:
 npm:
   # - corepack - deprecated
   - eslint
+  - "@google/gemini-cli"
   - json
   - npm
   - nx
