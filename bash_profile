@@ -30,6 +30,12 @@ if command -v asdf &>/dev/null; then
   . <(asdf completion bash)
 fi
 
+# direnv hook - load environment from .envrc files
+# added for nix/flakes support
+if command -v direnv &>/dev/null; then
+  eval "$(direnv hook bash)"
+fi
+
 # NPM completion
 # This command is slow so was replaced by the file below, generated and checked in check.sh
 # command -v npm &>/dev/null && source <(npm completion)
