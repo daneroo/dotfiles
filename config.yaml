@@ -108,6 +108,7 @@ homebrew:
       - watch
       - wget
       - yq
+      - yt-dlp
 
     python:
       # Python stuff - TODO(daneroo): python is in asdf now
