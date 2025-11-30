@@ -125,6 +125,7 @@ homebrew:
 
   casks:
     - 1password-cli
+    - audacity
     - balenaetcher
     - calibre
     - claude-code
