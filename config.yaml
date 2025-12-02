@@ -121,6 +121,8 @@ homebrew:
       - virtualenv
       # extra brew version of whisper-cpp
       - whisper-cpp
+      # Distinct from whisper-cpp (As in MacWhisper)
+      - whisperkit-cli
       # python@3.11 - moved to asdf
 
   casks:
@@ -131,6 +133,7 @@ homebrew:
     - claude-code
     - ghostty
     - google-drive
+    - macwhisper
     - pearcleaner
     - rustdesk
     - stats
