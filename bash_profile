@@ -75,7 +75,10 @@ export TIMEFORMAT="%Rs"
 alias ls='ls -sF'
 alias pp='pushd'
 alias po='popd'
-alias c='cursor'
+# Whatever VSCode fork I am currently using!
+# alias c='code'
+# alias c='cursor'
+alias c='/Applications/Antigravity.app/Contents/Resources/app/bin/antigravity'
 
 # This is gum format's default theme
 # Set GUM theme to dark by default, light for Apple Terminal
@@ -111,3 +114,6 @@ eval "$(starship init bash)"
 # end_time=$(gdate +%s%N)  # End time in nanoseconds
 # elapsed_time=$((end_time - start_time))  # Elapsed time in nanoseconds
 # echo "bash_profile load time: $((elapsed_time / 1000000)) ms"
+
+# Added by Antigravity
+export PATH="/Users/daniel/.antigravity/antigravity/bin:$PATH"
