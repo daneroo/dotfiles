@@ -52,6 +52,7 @@ homebrew:
       - ffmpeg
       - findutils
       - fio
+      - gemini-cli
       - gh
       - git
       # - glances
@@ -119,20 +120,24 @@ homebrew:
       - ruff
       - uv
       - virtualenv
+      # python@3.11 - moved to asdf
+
+    whisper:
       # extra brew version of whisper-cpp
       - whisper-cpp
       # Distinct from whisper-cpp (As in MacWhisper)
       - whisperkit-cli
-      # python@3.11 - moved to asdf
 
   casks:
     - 1password-cli
+    - antigravity
     - audacity
     - balenaetcher
     - calibre
     - claude-code
     - ghostty
     - google-drive
+    - losslesscut
     - macwhisper
     - pearcleaner
     - rustdesk
@@ -149,7 +154,8 @@ asdf:
 npm:
   # - corepack - deprecated
   - eslint
-  - "@google/gemini-cli"
+  #  - moved to gemini-cli formula
+  # - "@google/gemini-cli"
   - json
   - npm
   - nx

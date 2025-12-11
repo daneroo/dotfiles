@@ -2,7 +2,7 @@
 
 **Note:** asdf breaking changes, See <https://asdf-vm.com/guide/upgrading-to-v0-16.html#breaking-changes>
 
-To replace nvm/asdf, consider <https://volta.sh/>
+To replace nvm/asdf, consider [mise](https://mise.jdx.dev/)
 
 Also: we can use a default-npm-packages file to install npm packages after installing a Node.js version.
 
