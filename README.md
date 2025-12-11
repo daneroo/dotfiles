@@ -1,5 +1,7 @@
 # dotfiles
 
+**Note:** Antigravity bug: use `just edit`; workspace symbolic link `~/dotfiles-edit`
+
 **Note:** asdf breaking changes, See <https://asdf-vm.com/guide/upgrading-to-v0-16.html#breaking-changes>
 
 To replace nvm/asdf, consider [mise](https://mise.jdx.dev/)
