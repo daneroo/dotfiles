@@ -52,7 +52,6 @@ homebrew:
       - ffmpeg
       - findutils
       - fio
-      - gemini-cli
       - gh
       - git
       # - glances
@@ -110,6 +109,11 @@ homebrew:
       - wget
       - yq
       - yt-dlp
+
+    ai:
+      - gemini-cli
+      # - opencode # use tap below instead - macOS and Linux (official brew formula, updated less)
+      - anomalyco/tap/opencode # macOS and Linux (recommended, always up to date)
 
     python:
       # Python stuff - TODO(daneroo): python is in asdf now
