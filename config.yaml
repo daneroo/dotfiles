@@ -157,8 +157,8 @@ asdf:
   bun: ["latest"] # Latest stable
 
 npm:
-  # opencode helper
-  - agentic-cli
+  # agentic opencode helper seems broken with npm/asdf - so I used bun
+  # - agentic-cli
   # - corepack - deprecated
   - eslint
   #  - moved to gemini-cli formula
