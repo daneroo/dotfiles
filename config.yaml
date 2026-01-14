@@ -157,6 +157,8 @@ asdf:
   bun: ["latest"] # Latest stable
 
 npm:
+  # opencode helper
+  - agentic-cli
   # - corepack - deprecated
   - eslint
   #  - moved to gemini-cli formula
@@ -164,6 +166,7 @@ npm:
   - json
   - npm
   - nx
+  - opencode-antigravity-auth
   - pino-pretty
   - serve
   - standard
