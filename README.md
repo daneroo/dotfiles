@@ -58,7 +58,6 @@ This repo is for managing:
 ## Current State
 
 - Entry point: `check.sh`
-
   - Minimal bootstrap checks (brew, go installation)
   - Orchestrates the reconciliation process
   - Manages dotfiles via `installDotLinks.sh` (last bash holdout)
@@ -92,7 +91,6 @@ This repo is for managing:
 ### Desired State and Migration Plan
 
 - Code Modernization
-
   - [x] Successfully bloated (6.5x) a 255-line bash script into 1,677 lines of Go. Because type safety. 🎉
   - [ ] (not now) Port `installDotLinks.sh` to Go (last bash holdout)
   - [ ] (feature) Detect and propose removing unused taps
@@ -139,6 +137,7 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
+- [ ] Consider [brew bundle](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
 - Rename the executable to: reconfig
 - [ ] ghostty config (actual dotfile directory?)
   - [ ] copy-on-select=true
