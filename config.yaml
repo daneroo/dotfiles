@@ -114,6 +114,9 @@ homebrew:
       - gemini-cli
       # - opencode # use tap below instead - macOS and Linux (official brew formula, updated less)
       - anomalyco/tap/opencode # macOS and Linux (recommended, always up to date)
+      - whisper-cpp
+      # Alternative to whisper-cpp (As in MacWhisper) - removed because it was causing monotonicity violations
+      # - whisperkit-cli
 
     python:
       # Python stuff - TODO(daneroo): python is in asdf now
@@ -126,12 +129,6 @@ homebrew:
       - virtualenv
       # python@3.11 - moved to asdf
 
-    whisper:
-      # extra brew version of whisper-cpp
-      - whisper-cpp
-      # Distinct from whisper-cpp (As in MacWhisper)
-      - whisperkit-cli
-
   casks:
     - 1password-cli
     - antigravity
@@ -140,10 +137,12 @@ homebrew:
     - calibre
     - claude-code
     - codex
+    - steipete/tap/codexbar
     - ghostty
     - google-drive
     - losslesscut
     - macwhisper
+    - opencode-desktop
     - pearcleaner
     - rustdesk
     - stats
