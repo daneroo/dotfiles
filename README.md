@@ -4,6 +4,8 @@
 
 **Note:** asdf breaking changes, See <https://asdf-vm.com/guide/upgrading-to-v0-16.html#breaking-changes>
 
+**Note:** NPM Globals are now in `~/.npm-global` as decraed in our dotfile managed [`.npmrc`](npmrc). (Yes, prefix=XX means global install go here)
+
 To replace nvm/asdf, consider [mise](https://mise.jdx.dev/)
 
 Also: we can use a default-npm-packages file to install npm packages after installing a Node.js version.

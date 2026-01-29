@@ -115,5 +115,7 @@ eval "$(starship init bash)"
 # elapsed_time=$((end_time - start_time))  # Elapsed time in nanoseconds
 # echo "bash_profile load time: $((elapsed_time / 1000000)) ms"
 
+# Where our npm globals go! ~/.npmrc
+export PATH="$HOME/.npm-global/bin:$PATH"
 # Added by Antigravity
 export PATH="/Users/daniel/.antigravity/antigravity/bin:$PATH"

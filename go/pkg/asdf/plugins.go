@@ -78,7 +78,7 @@ func performPluginActions(desiredVersions map[string][]string, missing, extra []
 	if len(extra) > 0 {
 		fmt.Printf("✗ - Extraneous plugins found:\n")
 		for _, plugin := range extra {
-			fmt.Printf("- To remove %s plugin:\n", plugin)
+			fmt.Printf("- To remove %s plugin (and all installed versions):\n", plugin)
 			fmt.Printf(" asdf plugin remove %s\n", plugin)
 		}
 	}
