@@ -18,6 +18,7 @@ homebrew:
       - act
       - asciinema
       - asdf
+      - asitop
       - aws-iam-authenticator
       - awscli
       # azure-cli
@@ -49,6 +50,7 @@ homebrew:
       # brew reinstall --build-from-source wxwidgets
       - elixir
       - exercism
+      - eza
       - ffmpeg
       - findutils
       - fio
@@ -68,7 +70,7 @@ homebrew:
       # should I keep iperf as well as iperf3?
       - iperf
       - iperf3
-      - ipfs
+      # - ipfs # renamed to kubo
       - jhead
       - jq
       - just
@@ -80,7 +82,9 @@ homebrew:
       # - int128/kubelogin/kubelogin
       # - kubernetes-cli
       # - kustomize
+      - kubo # the new ipfs
       - libpq
+      - mole
       - nats-io/nats-tools/nats
       # - neovim
       - netlify/netlifyctl/netlifyctl
@@ -115,6 +119,7 @@ homebrew:
     ai:
       - gemini-cli
       # - opencode # use tap below instead - macOS and Linux (official brew formula, updated less)
+      - openai-whisper
       - anomalyco/tap/opencode # macOS and Linux (recommended, always up to date)
       - whisper-cpp
       # Alternative to whisper-cpp (As in MacWhisper) - removed because it was causing monotonicity violations
@@ -139,6 +144,7 @@ homebrew:
     - calibre
     - claude-code
     - codex
+    - codex-app
     - steipete/tap/codexbar
     - ghostty
     - google-drive
