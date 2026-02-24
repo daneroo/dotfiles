@@ -139,6 +139,11 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
+- [ ] TERM for ghostty? + **XDG_CONFIG_HOME** else both are loaded if they exist
+  - `ghostty +show-config`
+  - added `clipboard-paste-protection = false` to `~/.config/ghostty/config`
+  - I had linked below biu removed it
+  - `/Users/daniel/Library/Application Support/com.mitchellh.ghostty/config@ -> /Users/daniel/.config/ghostty/config`
 - [ ] Consider [brew bundle](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
 - Rename the executable to: reconfig
 - [ ] ghostty config (actual dotfile directory?)
