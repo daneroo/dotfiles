@@ -139,6 +139,7 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
+- [ ] [Charm v2](https://charm.land/blog/v2/)
 - [ ] TERM for ghostty? + **XDG_CONFIG_HOME** else both are loaded if they exist
   - `ghostty +show-config`
   - added `clipboard-paste-protection = false` to `~/.config/ghostty/config`
