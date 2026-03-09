@@ -138,6 +138,8 @@ homebrew:
 
   casks:
     - 1password-cli
+    # For Gadgetbridge
+    - android-platform-tools
     - antigravity
     - audacity
     - balenaetcher
@@ -155,6 +157,8 @@ homebrew:
     - rustdesk
     - stats
     - vlc
+    # Previously Microsoft Remote Desktop
+    - windows-app
 
 asdf:
   # nodejs: moved back to brew
