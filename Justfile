@@ -7,7 +7,7 @@
 default:
     @just --list
 
-# Run all tests (Go and Deno)
+# Run all tests (Go and Deno - no e2e)
 test: test-go test-deno
 
 # Run Go tests
@@ -26,3 +26,8 @@ test-go-pretty:
 #     go test -cover ./go/...
 #     # For HTML coverage report:
 #     # go test -coverprofile=coverage.out ./go/... && go tool cover -html=coverage.out
+
+
+# Run end-to-end tests (in Docker)
+test-e2e:
+    ./e2e/run.sh
