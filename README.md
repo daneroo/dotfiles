@@ -142,7 +142,7 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
-- [ ] Put `~/.config/ghostty/config` under stow control
+- [x] Put `~/.config/ghostty/config` under stow control
 - [ ] TERMxxx set on ssh out? (for ghostty)
 - [ ] [Charm v2](https://charm.land/blog/v2/)
 - [ ] Consider [brew bundle](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
