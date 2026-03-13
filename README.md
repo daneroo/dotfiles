@@ -1,7 +1,5 @@
 # dotfiles
 
-**Note:** Antigravity bug: use `just edit`; workspace symbolic link `~/dotfiles-edit`
-
 **Note:** asdf breaking changes, See <https://asdf-vm.com/guide/upgrading-to-v0-16.html#breaking-changes>
 
 **Note:** NPM Globals are now in `~/.npm-global` as decraed in our dotfile managed [`.npmrc`](npmrc). (Yes, prefix=XX means global install go here)
@@ -62,8 +60,11 @@ This repo is for managing:
 - Entry point: `check.sh`
   - Minimal bootstrap checks (brew, go installation)
   - Orchestrates the reconciliation process
-  - Manages dotfiles via `installDotLinks.sh` (last bash holdout)
-    - Maintains and validates symlinks for bash configuration files
+  - Manages dotfiles via `installDotLinks.sh`
+    - Uses **GNU Stow** to safely manage symlinks for bash configuration files.
+      - including ghostty, which reads from `~/.config/ghostty/config` and `/Users/daniel/Library/Application Support/com.mitchellh.ghostty/config` if **XDG_CONFIG_HOME** is not set (else both are loaded if they exist)
+      - `ghostty +show-config`
+      - added `clipboard-paste-protection = false` to `~/.config/ghostty/config`
   - Delegates all dependency management to Go implementation
 
 - Core functionality (Go implementation `go/cmd/checkdeps/main.go`):
@@ -94,7 +95,9 @@ This repo is for managing:
 
 - Code Modernization
   - [x] Successfully bloated (6.5x) a 255-line bash script into 1,677 lines of Go. Because type safety. 🎉
-  - [ ] (not now) Port `installDotLinks.sh` to Go (last bash holdout)
+  - [x] Port `installDotLinks.sh` to use GNU Stow (improved bash logic)
+  - [ ] (not now) Port `installDotLinks.sh` logic to Go
+  - [ ] (future) Migrate to **Chezmoi** for native secrets and templating support
   - [ ] (feature) Detect and propose removing unused taps
   - [ ] Improve Go implementation
     - [ ] Better abstractions for reconciliation loop
@@ -139,12 +142,9 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
+- [ ] Put `~/.config/ghostty/config` under stow control
+- [ ] TERMxxx set on ssh out? (for ghostty)
 - [ ] [Charm v2](https://charm.land/blog/v2/)
-- [ ] TERM for ghostty? + **XDG_CONFIG_HOME** else both are loaded if they exist
-  - `ghostty +show-config`
-  - added `clipboard-paste-protection = false` to `~/.config/ghostty/config`
-  - I had linked below biu removed it
-  - `/Users/daniel/Library/Application Support/com.mitchellh.ghostty/config@ -> /Users/daniel/.config/ghostty/config`
 - [ ] Consider [brew bundle](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
 - Rename the executable to: reconfig
 - [ ] ghostty config (actual dotfile directory?)
