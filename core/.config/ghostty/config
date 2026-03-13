@@ -26,6 +26,17 @@
 # Just for example:
 # resize-overlay-duration = 4s 200ms
 #
+# Shift+Enter sends ESC+CR, allowing multi-line input in apps like Claude Code
 keybind = shift+enter=text:\x1b\r
-# 2026-02-20
+# 2026-02-20 - avoid needless confirmations
 clipboard-paste-protection = false
+# DL-2026-03-13: Looking for a workable workflow to preserve current work,
+# which is tightly coupled to open shells.
+window-save-state = always
+
+# DL-2026-03-13: Fix TERM compatibility when SSHing to remote hosts
+# Remote servers typically don't have xterm-ghostty terminfo installed.
+# ssh-env auto-converts TERM to xterm-256color and propagates COLORTERM, etc.
+# Defaults: cursor, no-sudo, title, no-ssh-env, no-ssh-terminfo, path
+# We enable: ssh-env (fix SSH), sudo (preserve terminfo with sudo)
+shell-integration-features = cursor,sudo,title,ssh-env

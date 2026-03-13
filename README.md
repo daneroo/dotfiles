@@ -103,8 +103,6 @@ Regular maintenance (_idempotent_):
 ## TODO
 
 - [ ] `incl/npm_completion.sh` should it move?
-- [ ] ghostty window-save-state = always : get a list of terminal windows/tabs/cwd's
-- [ ] TERMxxx set on ssh out? (for ghostty)
 - [ ] [Charm v2](https://charm.land/blog/v2/)
 - [ ] Consider [brew bundle](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
 - Rename the executable to: reconfig
