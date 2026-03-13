@@ -102,7 +102,6 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
-- [ ] `incl/npm_completion.sh` should it move?
 - [ ] [Charm v2](https://charm.land/blog/v2/)
 - [ ] Consider [brew bundle](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
 - Rename the executable to: reconfig

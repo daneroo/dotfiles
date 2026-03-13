@@ -26,10 +26,13 @@
 # Just for example:
 # resize-overlay-duration = 4s 200ms
 #
+
 # Shift+Enter sends ESC+CR, allowing multi-line input in apps like Claude Code
 keybind = shift+enter=text:\x1b\r
+
 # 2026-02-20 - avoid needless confirmations
 clipboard-paste-protection = false
+
 # DL-2026-03-13: Looking for a workable workflow to preserve current work,
 # which is tightly coupled to open shells.
 window-save-state = always
