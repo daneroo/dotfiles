@@ -10,41 +10,6 @@ Also: we can use a default-npm-packages file to install npm packages after insta
 
 **E2E Testing**: Run end-to-end tests with `./e2e/run.sh` (uses `docker run --rm --platform linux/amd64 -it homebrew/brew`)
 
-## Bad Git user
-
-_2025-06-03 - 2025-12-09_: my e2e test script corrupted my global git config which caused many repos to commit with the wrong user ("Test User"/test@example.com)
-
-Check that it is fixed: `git config --global --list`.
-
-```bash
-# find all the commit by Test User
-find /Users/daniel/Code -name ".git" -type d 2>/dev/null | while read gitdir; do
-  repo=$(dirname "$gitdir")
-  count=$(git -C "$repo" log --author="Test User" --oneline 2>/dev/null | wc -l | tr -d ' ')
-  if [ "$count" -gt 0 ]; then
-    echo "$count commits: $repo"
-  fi
-done | sort -rn
-```
-
-Found 7 affected repos with a total of 171 commits by "Test User":
-
-| Commits | Repository                                 |
-| ------- | ------------------------------------------ |
-| 94      | ~/Code/iMetrical/nix-garden                |
-| 44      | ~/Code/iMetrical/nx-audiobook              |
-| 13      | ~/Code/iMetrical/ai-garden                 |
-| 9       | ~/Code/iMetrical/wifidan                   |
-| 6       | ~/Code/iMetrical/scrobbleCast              |
-| 3       | ~/Code/iMetrical/chromebook-asus-flip-C436 |
-| 2       | ~/Code/iMetrical/im-qcic                   |
-
-Also, don't forget this repo (`~/.dotfiles`) itself.
-
-```bash
-git -C ~/.dotfiles log --author="Test User" --oneline
-```
-
 Default npm Packages
 asdf-nodejs can automatically install a set of default set of npm package right after installing a Node.js version. To enable this feature, provide a $HOME/.default-npm-packages file that lists one package per line, for example:
 
