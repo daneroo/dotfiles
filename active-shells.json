@@ -34,9 +34,8 @@
   {
     "tabs": [
       {
-        "title": "openclaw - dizzy",
-        "cwd": "~/Code/iMetrical/ai-garden/agents/openclaw",
-        "setup": ["ssh dizzy", "cd ~/Code/iMetrical/ai-garden/agents/openclaw"]
+        "title": "daniel@dizzy: ~",
+        "cwd": "/Users/daniel/Code/iMetrical/ai-garden/agents/openclaw"
       },
       {
         "title": "openclaw - nix e2e",

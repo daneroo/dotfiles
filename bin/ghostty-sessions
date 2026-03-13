@@ -74,12 +74,9 @@ cmd_restore() {
         exit 1
     fi
 
-    # Build list of tabs: "title | cwd" or "title | setup"
+    # Build list of session titles
     local choices
-    choices=$(jq -r '
-        .[] | .tabs[] |
-        "\(.title) | \(.setup // "cd \(.cwd)")"
-    ' "$file")
+    choices=$(jq -r '.[] | .tabs[] | .title' "$file")
 
     if [[ -z "$choices" ]]; then
         echo "No sessions found in $file"
@@ -87,41 +84,46 @@ cmd_restore() {
     fi
 
     # Use gum to select
-    local selected
-    selected=$(echo "$choices" | gum choose --header "Select session to restore:")
+    local selected_title
+    selected_title=$(echo "$choices" | gum choose --header "Select session to restore:")
 
-    if [[ -z "$selected" ]]; then
+    if [[ -z "$selected_title" ]]; then
         echo "No selection made"
         exit 0
     fi
 
-    # Extract the command (everything after " | ")
-    local cmd
-    cmd=$(echo "$selected" | sed 's/^[^|]*| //')
+    # Get cwd for the selected title
+    local cwd
+    cwd=$(jq -r --arg title "$selected_title" '
+        .[] | .tabs[] | select(.title == $title) | .cwd
+    ' "$file" | head -1)
+
+    # Expand ~ to $HOME (Ghostty's --working-directory doesn't expand ~)
+    cwd="${cwd/#\~/$HOME}"
 
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-    echo "Selected: ${selected%% |*}"
-    echo "Command:  $cmd"
+    echo "Selected: $selected_title"
+    echo "Directory: $cwd"
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     echo ""
 
-    # Confirm and execute or just show
-    if gum confirm "Open new Ghostty window and execute?"; then
-        # Open new Ghostty window with the command
-        osascript -l JavaScript <<EOF
-const app = Application('Ghostty');
-app.activate();
-const se = Application('System Events');
-se.keystroke('n', { using: 'command down' });  // Cmd+N for new window
-delay(0.5);
-se.keystroke('$cmd');
-se.keyCode(36);  // Enter
-EOF
+    # Ask user to confirm before opening (prevents accidental window spawning)
+    if gum confirm "Open new Ghostty window?"; then
+        # Open new Ghostty window
+        # -n spawns new instance (macOS limitation: no IPC to existing Ghostty for new window with args)
+        local cwd_basename
+        cwd_basename=$(basename "$cwd")
+        if [[ "$selected_title" != "$cwd" && "$selected_title" != "$cwd_basename" ]]; then
+            open -na Ghostty.app --args --working-directory="$cwd" --title="$selected_title"
+        else
+            open -na Ghostty.app --args --working-directory="$cwd"
+        fi
         echo "Opened new window"
     else
+        # User declined - provide command to copy manually as fallback
         echo ""
         echo "Copy and paste:"
-        echo "  $cmd"
+        echo "  cd $cwd"
     fi
 }
 
