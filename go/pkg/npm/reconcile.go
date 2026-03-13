@@ -204,8 +204,9 @@ func deprecateCorepackPnpm() error {
 }
 
 // updateNpmCompletions updates the npm completion script if needed
+// Written to stow-managed directory so changes are git-tracked
 func updateNpmCompletions() error {
-	completionFile := "./incl/npm_completion.sh"
+	completionFile := "./core/.config/bash_includes/npm_completion.sh"
 
 	// Get current completion text
 	out, err := exec.Command("npm", "completion").Output()
@@ -214,9 +215,9 @@ func updateNpmCompletions() error {
 	}
 	completionText := string(out)
 
-	// Create incl directory if it doesn't exist
-	if err := os.MkdirAll("./incl", 0755); err != nil {
-		return fmt.Errorf("failed to create incl directory: %w", err)
+	// Create bash_includes directory if it doesn't exist
+	if err := os.MkdirAll("./core/.config/bash_includes", 0755); err != nil {
+		return fmt.Errorf("failed to create bash_includes directory: %w", err)
 	}
 
 	// Check if file exists and compare content
@@ -236,8 +237,9 @@ func updateNpmCompletions() error {
 }
 
 // updatePnpmCompletions updates the pnpm completion script if needed
+// Written to stow-managed directory so changes are git-tracked
 func updatePnpmCompletions() error {
-	completionFile := "./incl/pnpm_completion.bash"
+	completionFile := "./core/.config/bash_includes/pnpm_completion.bash"
 
 	// Get current completion text
 	out, err := exec.Command("pnpm", "completion", "bash").Output()
@@ -246,9 +248,9 @@ func updatePnpmCompletions() error {
 	}
 	completionText := string(out)
 
-	// Create incl directory if it doesn't exist
-	if err := os.MkdirAll("./incl", 0755); err != nil {
-		return fmt.Errorf("failed to create incl directory: %w", err)
+	// Create bash_includes directory if it doesn't exist
+	if err := os.MkdirAll("./core/.config/bash_includes", 0755); err != nil {
+		return fmt.Errorf("failed to create bash_includes directory: %w", err)
 	}
 
 	// Check if file exists and compare content

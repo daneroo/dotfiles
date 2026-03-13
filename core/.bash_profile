@@ -37,14 +37,13 @@ if command -v direnv &>/dev/null; then
 fi
 
 # NPM completion
-# This command is slow so was replaced by the file below, generated and checked in check.sh
-# command -v npm &>/dev/null && source <(npm completion)
-NPM_COMPLETION_FILE=~/.dotfiles/incl/npm_completion.sh
+# Generated during reconcile, cached in stow-managed directory for fast shell startup
+NPM_COMPLETION_FILE=~/.config/bash_includes/npm_completion.sh
 [[ -r "${NPM_COMPLETION_FILE}" ]] && . "${NPM_COMPLETION_FILE}"
 
 # PNPM completion
-# * This replaces the old tabtab completion
-PNPM_COMPLETION_FILE=~/.dotfiles/incl/pnpm_completion.bash
+# Generated during reconcile, cached in stow-managed directory for fast shell startup
+PNPM_COMPLETION_FILE=~/.config/bash_includes/pnpm_completion.bash
 [[ -r "${PNPM_COMPLETION_FILE}" ]] && . "${PNPM_COMPLETION_FILE}"
 
 # Old .profile content
