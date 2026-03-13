@@ -1,5 +1,11 @@
 # This is the configuration file for Ghostty.
 #
+
+# I moved this file from `/Users/daniel/Library/Application Support/com.mitchellh.ghostty/config`
+# to GNU stow managed `~/.config/ghostty/config`
+# if **XDG_CONFIG_HOME** is not set, both are loaded if they exist
+
+# DL-2026-03-13: Overrode and moved to GNU Stow
 # This template file has been automatically created at the following
 # path since Ghostty couldn't find any existing config files on your system:
 #
@@ -14,33 +20,12 @@
 #
 # Additionally, each config option is also explained in detail
 # on Ghostty's website, at https://ghostty.org/docs/config.
-
-# Config syntax crash course
-# ==========================
-# # The config file consists of simple key-value pairs,
-# # separated by equals signs.
-# font-family = Iosevka
-# window-padding-x = 2
 #
-# # Spacing around the equals sign does not matter.
-# # All of these are identical:
-# key=value
-# key= value
-# key =value
-# key = value
-#
-# # Any line beginning with a # is a comment. It's not possible to put
-# # a comment after a config option, since it would be interpreted as a
-# # part of the value. For example, this will have a value of "#123abc":
-# background = #123abc
-#
-# # Empty values are used to reset config keys to default.
-# key =
-#
-# # Some config options have unique syntaxes for their value,
-# # which is explained in the docs for that config option.
-# # Just for example:
+# Some config options have unique syntaxes for their value,
+# which is explained in the docs for that config option.
+# Just for example:
 # resize-overlay-duration = 4s 200ms
+#
 keybind = shift+enter=text:\x1b\r
 # 2026-02-20
 clipboard-paste-protection = false

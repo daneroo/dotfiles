@@ -25,9 +25,6 @@ This repo is for managing:
   - Orchestrates the reconciliation process
   - Manages dotfiles via `installDotLinks.sh`
     - Uses **GNU Stow** to safely manage symlinks for bash configuration files.
-      - including ghostty, which reads from `~/.config/ghostty/config` and `/Users/daniel/Library/Application Support/com.mitchellh.ghostty/config` if **XDG_CONFIG_HOME** is not set (else both are loaded if they exist)
-      - `ghostty +show-config`
-      - added `clipboard-paste-protection = false` to `~/.config/ghostty/config`
   - Delegates all dependency management to Go implementation
 
 - Core functionality (Go implementation `go/cmd/checkdeps/main.go`):
@@ -105,7 +102,8 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
-- [x] Put `~/.config/ghostty/config` under stow control
+- [ ] `incl/npm_completion.sh` should it move?
+- [ ] ghostty window-save-state = always : get a list of terminal windows/tabs/cwd's
 - [ ] TERMxxx set on ssh out? (for ghostty)
 - [ ] [Charm v2](https://charm.land/blog/v2/)
 - [ ] Consider [brew bundle](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
