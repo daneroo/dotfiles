@@ -16,8 +16,10 @@ echo "Homebrew version: $(brew --version | head -1)"
 echo "Bash version: ${BASH_VERSION}"
 
 # Set up git config for testing
-git config --global user.name "Test User"
-git config --global user.email "test@example.com"
+# reusing real values, becaus of earlier global git pollution in failed test
+# These values are isolated, but they escaped in the past
+git config --global user.name "Daniel Lauzon"
+git config --global user.email "daniel.lauzon@gmail.com"
 
 # Document the current state before any modifications
 echo "Capturing initial state..."
