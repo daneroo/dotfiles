@@ -2,7 +2,7 @@
 
 import { homedir } from "node:os";
 
-const DEFAULT_CWD = homedir();
+const DEFAULT_CWD = `${homedir()}/Code`;
 const DEFAULT_TIMEOUT_MS = 30_000;
 const APP_NAME = "Ghostty";
 
@@ -18,7 +18,7 @@ if (import.meta.main) {
 
 // MAIN
 async function main(): Promise<void> {
-  await newWindowOnSingleGhosttyInstance(`${DEFAULT_CWD}/Code`);
+  await newWindowOnSingleGhosttyInstance();
 }
 
 // THROWS: timeout/failure error if Ghostty cannot be ensured/opened.
