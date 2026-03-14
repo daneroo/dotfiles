@@ -4,9 +4,10 @@
 
 import { $ } from "bun";
 import { homedir } from "os";
-import { basename } from "path";
 
 const DEFAULT_FILE = `${homedir()}/.dotfiles/active-shells.json`;
+const DEFAULT_TIMEOUT_MS = 30_000;
+const APP_NAME = "Ghostty";
 
 interface Tab {
   title: string;
@@ -103,25 +104,14 @@ async function cmdRestore(file: string) {
     return;
   }
 
-  // Open new Ghostty window
-  // -n spawns new instance (macOS limitation: no IPC to existing Ghostty for new window with args)
-  const cwdBasename = basename(cwd);
-  const args = [
-    "open",
-    "-na",
-    "Ghostty.app",
-    "--args",
-    `--working-directory=${cwd}`,
-  ];
-  if (selectedTitle !== cwd && selectedTitle !== cwdBasename) {
-    args.push(`--title=${selectedTitle}`);
-  }
-  Bun.spawnSync(args);
+  // Open new Ghostty window in existing instance via AppleScript
+  await ensureGhosttyRunning(DEFAULT_TIMEOUT_MS);
+  await newGhosttyWindowWithCwd(cwd, DEFAULT_TIMEOUT_MS);
   console.log("Opened new window");
 }
 
 function usage() {
-  console.log(`Usage: ghostty-sessions <command> [file]
+  console.log(`Usage: ghostty-sessions.ts <command> [file]
 
 Commands:
   show           Show current Ghostty sessions
@@ -129,9 +119,9 @@ Commands:
   restore [file] Select and restore a session from JSON
 
 Examples:
-  ghostty-sessions show
-  ghostty-sessions save
-  ghostty-sessions restore`);
+  ghostty-sessions.ts show
+  ghostty-sessions.ts save
+  ghostty-sessions.ts restore`);
 }
 
 // Main
@@ -156,4 +146,67 @@ switch (cmd) {
   default:
     usage();
     process.exit(1);
+}
+
+// --- Ghostty AppleScript helpers (from ghostty-new.ts) ---
+
+// Ensure Ghostty is running, then create new window with cwd
+async function ensureGhosttyRunning(timeoutMs: number): Promise<number> {
+  const script = `
+    const app = Application("${APP_NAME}");
+    app.launch();
+
+    const systemEvents = Application("System Events");
+    const process = systemEvents.applicationProcesses.byName("${APP_NAME}");
+    while (!process.exists()) {
+      delay(0.1);
+    }
+    process.windows().length;
+  `;
+
+  const rawCount = await runOsaScriptStdout(script, timeoutMs);
+  const windowCount = Number.parseInt(rawCount, 10);
+  if (!Number.isFinite(windowCount) || windowCount < 0) {
+    throw new Error("Unable to find/launch Ghostty");
+  }
+  return windowCount;
+}
+
+// Create a new window in the existing Ghostty instance
+async function newGhosttyWindowWithCwd(
+  cwd: string,
+  timeoutMs: number,
+): Promise<void> {
+  const cwdLiteral = JSON.stringify(cwd);
+  const script = `
+    const app = Application("${APP_NAME}");
+    const config = app.newSurfaceConfiguration();
+    config.initialWorkingDirectory = ${cwdLiteral};
+    app.newWindow({ withConfiguration: config });
+  `;
+  await runOsaScriptStdout(script, timeoutMs);
+}
+
+// Run JXA script and return trimmed stdout
+async function runOsaScriptStdout(
+  script: string,
+  timeoutMs: number,
+): Promise<string> {
+  const { exitCode, stdout, stderr } = Bun.spawnSync({
+    cmd: ["osascript", "-l", "JavaScript", "-e", script],
+    stdout: "pipe",
+    stderr: "pipe",
+    timeout: timeoutMs,
+  });
+
+  if (exitCode !== 0) {
+    throw new Error("Unable to find/launch Ghostty");
+  }
+
+  const stderrText = stderr.toString().trim();
+  if (stderrText) {
+    throw new Error("Unable to find/launch Ghostty");
+  }
+
+  return stdout.toString().trim();
 }
