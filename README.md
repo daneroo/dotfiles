@@ -102,21 +102,19 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
-- [ ] [Charm v2](https://charm.land/blog/v2/)
-- [ ] Consider [brew bundle](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
-- Rename the executable to: reconfig
-- [ ] ghostty config (actual dotfile directory?)
-  - [ ] copy-on-select=true
+- [ ] Ghostty/Starship prompt: add colors and fonts?
   - [ ] remove ligatures
   - [ ] starship new prompt with Nerd font test
-- Configuration Enhancement
-  - [x] Move config out of brewdeps package, add asdf, npm sections
-  - [ ] Per machine specialization
-    - [x] CUE has been declared a disaster area
-- [ ] update python tooling, after move to uv/ruff
-- [ ] Ghostty/Starship prompt: add colors and fonts?
-  - Default VSCode font: 'MesloLGS Nerd Font Mono', Menlo, Monaco, 'Courier New', monospace
-  - Consider installing 'JetBrains Mono' and 'FiraCode Nerd Font Mono'
+    - Default VSCode font: 'MesloLGS Nerd Font Mono', Menlo, Monaco, 'Courier New', monospace
+    - Consider installing 'JetBrains Mono' and 'FiraCode Nerd Font Mono'
+- [ ] replace asdf with mise
+- [ ] Per machine specialization
+  - deno - multi config - not necessary - per host file: config.host.yaml - or...
+  - [x] CUE has been declared a disaster area
+- [ ] config content: update python tooling, after move to uv/ruff
+- [ ] Rename the executable to: reconfig
+- [ ] [Charm v2](https://charm.land/blog/v2/)
+- [ ] Consider [brew bundle](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
 
 ## Bootstrap
 
