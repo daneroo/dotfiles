@@ -2,15 +2,15 @@
   {
     "tabs": [
       {
-        "title": "prepare for migration to dirac",
+        "title": "prepare ted1k for migration to dirac",
         "cwd": "~/Code/iMetrical/go-ted1k/"
-      }
-    ]
-  },
-  {
-    "tabs": [
+      },
       {
-        "title": "xattr tests",
+        "title": "im-qcic - continue UniFi-Journey-2025 / giga-router",
+        "cwd": "~/Code/iMetrical/im-qcic/network/"
+      },
+      {
+        "title": "nx-audiobookxattr tests",
         "cwd": "~/Code/iMetrical/nx-audiobook/xattr-test/"
       }
     ]
@@ -20,19 +20,7 @@
       {
         "title": "Promote AI experiments",
         "cwd": "~/Code/iMetrical/ai-garden/experiments/"
-      }
-    ]
-  },
-  {
-    "tabs": [
-      {
-        "title": "im-qcic - continue UniFi-Journey-2025 / giga-router",
-        "cwd": "~/Code/iMetrical/im-qcic/network/"
-      }
-    ]
-  },
-  {
-    "tabs": [
+      },
       {
         "title": "daniel@dizzy: ~",
         "cwd": "/Users/daniel/Code/iMetrical/ai-garden/agents/openclaw"
