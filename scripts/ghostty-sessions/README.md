@@ -11,14 +11,18 @@ Capture and restore Ghostty terminal sessions via AppleScript/JXA.
 Usage: ghostty-sessions.ts <command> [file]
 
 Commands:
-  show           Show current Ghostty sessions
-  save [file]    Save current sessions to JSON (default: active-shells.json)
-  restore [file] Select and restore a session from JSON
+  show               Capture current Ghostty sessions as JSON
+  save [file]        Save current sessions to file
+  restore [file]     Select and restore one tab
+  restore-all [file] Restore all windows and tabs
+
+Default file: ./active-shells.json (relative to script)
 
 Examples:
   ghostty-sessions.ts show
   ghostty-sessions.ts save
   ghostty-sessions.ts restore
+  ghostty-sessions.ts restore-all
 ```
 
 ## Ghostty AppleScript Learnings

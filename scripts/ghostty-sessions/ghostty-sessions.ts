@@ -110,18 +110,75 @@ async function cmdRestore(file: string) {
   console.log("Opened new window");
 }
 
+// Restore all windows and their tabs from JSON
+async function cmdRestoreAll(file: string) {
+  const content = await Bun.file(file).text();
+  const windows: Window[] = JSON.parse(content);
+
+  if (windows.length === 0) {
+    console.log("No windows found");
+    return;
+  }
+
+  // Show what will be restored as a tree
+  console.log(`Restoring ${windows.length} window(s):\n`);
+  for (let i = 0; i < windows.length; i++) {
+    const win = windows[i];
+    const isLast = i === windows.length - 1;
+    const prefix = isLast ? "└─" : "├─";
+    const childPrefix = isLast ? "   " : "│  ";
+
+    if (win.tabs.length === 1) {
+      console.log(`${prefix} ${win.tabs[0].title}`);
+    } else {
+      console.log(`${prefix} window (${win.tabs.length} tabs)`);
+      for (let j = 0; j < win.tabs.length; j++) {
+        const tab = win.tabs[j];
+        const tabIsLast = j === win.tabs.length - 1;
+        const tabPrefix = tabIsLast ? "└─" : "├─";
+        console.log(`${childPrefix}${tabPrefix} ${tab.title}`);
+      }
+    }
+  }
+  console.log();
+
+  // Confirm
+  const confirm = Bun.spawnSync(["gum", "confirm", "Restore all windows?"], {
+    stdin: "inherit",
+    stdout: "inherit",
+    stderr: "inherit",
+  });
+  if (confirm.exitCode !== 0) {
+    console.log("Cancelled");
+    return;
+  }
+
+  await ensureGhosttyRunning(DEFAULT_TIMEOUT_MS);
+
+  // Create each window with its tabs
+  for (const win of windows) {
+    const cwds = win.tabs.map((t) => t.cwd.replace(/^~/, homedir()));
+    await newGhosttyWindowWithTabs(cwds, DEFAULT_TIMEOUT_MS);
+  }
+  console.log(`Opened ${windows.length} window(s)`);
+}
+
 function usage() {
   console.log(`Usage: ghostty-sessions.ts <command> [file]
 
 Commands:
-  show           Show current Ghostty sessions
-  save [file]    Save current sessions to JSON (default: ${DEFAULT_FILE})
-  restore [file] Select and restore a session from JSON
+  show               Capture current Ghostty sessions as JSON
+  save [file]        Save current sessions to file
+  restore [file]     Select and restore one tab
+  restore-all [file] Restore all windows and tabs
+
+Default file: ${DEFAULT_FILE}
 
 Examples:
   ghostty-sessions.ts show
   ghostty-sessions.ts save
-  ghostty-sessions.ts restore`);
+  ghostty-sessions.ts restore
+  ghostty-sessions.ts restore-all`);
 }
 
 // Main
@@ -137,6 +194,9 @@ switch (cmd) {
     break;
   case "restore":
     await cmdRestore(targetFile);
+    break;
+  case "restore-all":
+    await cmdRestoreAll(targetFile);
     break;
   case "-h":
   case "--help":
@@ -183,6 +243,32 @@ async function newGhosttyWindowWithCwd(
     const config = app.newSurfaceConfiguration();
     config.initialWorkingDirectory = ${cwdLiteral};
     app.newWindow({ withConfiguration: config });
+  `;
+  await runOsaScriptStdout(script, timeoutMs);
+}
+
+// Create a window with multiple tabs (first cwd becomes window, rest become tabs)
+async function newGhosttyWindowWithTabs(
+  cwds: string[],
+  timeoutMs: number,
+): Promise<void> {
+  if (cwds.length === 0) return;
+  const cwdsLiteral = JSON.stringify(cwds);
+  const script = `
+    const app = Application("${APP_NAME}");
+    const cwds = ${cwdsLiteral};
+
+    // First tab creates the window
+    const config = app.newSurfaceConfiguration();
+    config.initialWorkingDirectory = cwds[0];
+    const win = app.newWindow({ withConfiguration: config });
+
+    // Remaining tabs
+    for (let i = 1; i < cwds.length; i++) {
+      const tabConfig = app.newSurfaceConfiguration();
+      tabConfig.initialWorkingDirectory = cwds[i];
+      app.newTab({ in: win, withConfiguration: tabConfig });
+    }
   `;
   await runOsaScriptStdout(script, timeoutMs);
 }
