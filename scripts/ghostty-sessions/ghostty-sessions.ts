@@ -5,7 +5,7 @@
 import { $ } from "bun";
 import { homedir } from "os";
 
-const DEFAULT_FILE = `${homedir()}/.dotfiles/active-shells.json`;
+const DEFAULT_FILE = `${import.meta.dir}/active-shells.json`;
 const DEFAULT_TIMEOUT_MS = 30_000;
 const APP_NAME = "Ghostty";
 
