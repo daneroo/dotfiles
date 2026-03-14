@@ -102,6 +102,7 @@ homebrew:
       - sqlite
       - starship
       # - stern
+      - stow
       - supabase/tap/supabase
       - syncthing
       # my new virtual machine manager - collima too?
