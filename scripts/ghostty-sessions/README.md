@@ -2,6 +2,8 @@
 
 Capture and restore Ghostty terminal sessions via AppleScript/JXA.
 
+**Ghotty 1.3.1 new features** see <https://github.com/ghostty-org/ghostty/issues/11316>
+
 **Status: Experiment.** The real goal is to integrate a tasking system
 (when we build one) with terminal sessions - mapping tasks to tabs/cwds/titles.
 
