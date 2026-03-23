@@ -2,32 +2,40 @@
   {
     "tabs": [
       {
-        "title": "prepare ted1k for migration to dirac",
-        "cwd": "~/Code/iMetrical/go-ted1k/"
+        "title": "./scripts/ghostty-sessions/ghostty-sessions.ts save",
+        "cwd": "/Users/daniel/.dotfiles"
       },
       {
-        "title": "im-qcic - continue UniFi-Journey-2025 / giga-router",
-        "cwd": "~/Code/iMetrical/im-qcic/network/"
-      },
-      {
-        "title": "nx-audiobookxattr tests",
-        "cwd": "~/Code/iMetrical/nx-audiobook/xattr-test/"
+        "title": "brew upgrade && brew cleanup",
+        "cwd": "/Users/daniel/.dotfiles"
       }
     ]
   },
   {
     "tabs": [
       {
-        "title": "Promote AI experiments",
-        "cwd": "~/Code/iMetrical/ai-garden/experiments/"
+        "title": "~/Code/iMetrical/nx-audiobook/xattr-test",
+        "cwd": "/Users/daniel/Code/iMetrical/nx-audiobook/xattr-test"
       },
       {
-        "title": "daniel@dizzy: ~",
+        "title": "~/Code/iMetrical/im-qcic/network",
+        "cwd": "/Users/daniel/Code/iMetrical/im-qcic/network"
+      },
+      {
+        "title": "~/Code/iMetrical/ai-garden/experiments",
+        "cwd": "/Users/daniel/Code/iMetrical/ai-garden/experiments"
+      },
+      {
+        "title": "openclaw",
         "cwd": "/Users/daniel/Code/iMetrical/ai-garden/agents/openclaw"
       },
       {
-        "title": "openclaw - nix e2e",
-        "cwd": "~/Code/iMetrical/nix-garden/e2e/ubuntu"
+        "title": "daniel@dizzy: ~/.openclaw/workspace",
+        "cwd": "/Users/daniel/Code/iMetrical/nix-garden/e2e/ubuntu"
+      },
+      {
+        "title": "~/Code/iMetrical/go-ted1k",
+        "cwd": "/Users/daniel/Code/iMetrical/go-ted1k"
       }
     ]
   }
