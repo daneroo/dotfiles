@@ -148,12 +148,15 @@ homebrew:
     - claude-code
     - codex
     - codex-app
+    # codexbar: prefer OpenUsage.app
     - steipete/tap/codexbar
     - ghostty
     - google-drive
     - losslesscut
     - macwhisper
     - opencode-desktop
+    # same as codexbar - with less bugs!
+    - openusage
     - pearcleaner
     - rustdesk
     - stats
