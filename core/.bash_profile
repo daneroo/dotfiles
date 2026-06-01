@@ -77,7 +77,7 @@ alias po='popd'
 # Whatever VSCode fork I am currently using!
 # alias c='code'
 # alias c='cursor'
-alias c='agy'
+alias c='agy-ide'
 
 # This is gum format's default theme
 # Set GUM theme to dark by default, light for Apple Terminal
@@ -116,5 +116,8 @@ eval "$(starship init bash)"
 
 # Where our npm globals go! ~/.npmrc
 export PATH="$HOME/.npm-global/bin:$PATH"
-# Added by Antigravity
-export PATH="/Users/daniel/.antigravity/antigravity/bin:$PATH"
+
+# OMG - what garbage - custom path for bin
+# Added by Antigravity IDE
+export PATH="$HOME/.antigravity-ide/antigravity-ide/bin:$PATH"
+
