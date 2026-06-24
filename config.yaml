@@ -116,6 +116,7 @@ homebrew:
 
     ai:
       - gemini-cli
+      - llmfit
       # - opencode # use tap below instead - macOS and Linux (official brew formula, updated less)
       - openai-whisper
       - anomalyco/tap/opencode # macOS and Linux (recommended, always up to date)
@@ -136,8 +137,8 @@ homebrew:
 
   casks:
     - 1password-cli
-    # For Gadgetbridge
-    - android-platform-tools
+    # For Gadgetbridge - removing until I get back to it!
+    # - android-platform-tools
     - antigravity
     - audacity
     - balenaetcher
@@ -157,6 +158,7 @@ homebrew:
     - pearcleaner
     - rustdesk
     - stats
+    - supacode
     - vlc
     # Previously Microsoft Remote Desktop
     - windows-app
