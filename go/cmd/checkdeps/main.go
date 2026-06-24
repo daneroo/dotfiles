@@ -9,6 +9,7 @@ import (
 	"github.com/daneroo/dotfiles/go/pkg/asdf"
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/actual"
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/reconcile"
+	"github.com/daneroo/dotfiles/go/pkg/completions"
 	"github.com/daneroo/dotfiles/go/pkg/config"
 	"github.com/daneroo/dotfiles/go/pkg/npm"
 )
@@ -60,6 +61,20 @@ func main() {
 	if err := npm.Reconcile(cfg.Npm); err != nil {
 		fmt.Printf("✗ - %v\n", err)
 		os.Exit(1)
+	}
+
+	fmt.Printf("\n## CLI Completions Section\n\n")
+	// Cache bash completions to files (avoids slow `source <(cmd completion bash)` at shell startup)
+	completionSpecs := []completions.CompletionSpec{
+		{Name: "npm", Command: "npm", Args: []string{"completion"}, OutputFile: "./core/.config/bash_includes/npm_completion.sh"},
+		{Name: "pnpm", Command: "pnpm", Args: []string{"completion", "bash"}, OutputFile: "./core/.config/bash_includes/pnpm_completion.bash"},
+		{Name: "docker", Command: "docker", Args: []string{"completion", "bash"}, OutputFile: "./core/.config/bash_includes/docker_completion.bash"},
+	}
+	for _, spec := range completionSpecs {
+		if err := completions.UpdateCachedCompletion(spec); err != nil {
+			fmt.Printf("✗ - %v\n", err)
+			os.Exit(1)
+		}
 	}
 }
 

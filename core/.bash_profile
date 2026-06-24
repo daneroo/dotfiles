@@ -46,6 +46,11 @@ NPM_COMPLETION_FILE=~/.config/bash_includes/npm_completion.sh
 PNPM_COMPLETION_FILE=~/.config/bash_includes/pnpm_completion.bash
 [[ -r "${PNPM_COMPLETION_FILE}" ]] && . "${PNPM_COMPLETION_FILE}"
 
+# Docker completion
+# Generated during reconcile, cached in stow-managed directory for fast shell startup
+DOCKER_COMPLETION_FILE=~/.config/bash_includes/docker_completion.bash
+[[ -r "${DOCKER_COMPLETION_FILE}" ]] && . "${DOCKER_COMPLETION_FILE}"
+
 # Old .profile content
 # This is source'd from .bash_profile, since I installed rvm!
 

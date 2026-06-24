@@ -3,7 +3,6 @@ package npm
 import (
 	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
 	"slices"
 	"sort"
@@ -56,17 +55,6 @@ func Reconcile(desiredPackages []string) error {
 		return err
 	}
 
-	// update npm completions (this is really more a=of a config file...)
-	fmt.Printf("\n") // separator
-	if err := updateNpmCompletions(); err != nil {
-		return err
-	}
-
-	// update pnpm completions
-	fmt.Printf("\n") // separator
-	if err := updatePnpmCompletions(); err != nil {
-		return err
-	}
 	return nil
 }
 
@@ -203,68 +191,3 @@ func deprecateCorepackPnpm() error {
 	return fmt.Errorf("pnpm not working after corepack preparation")
 }
 
-// updateNpmCompletions updates the npm completion script if needed
-// Written to stow-managed directory so changes are git-tracked
-func updateNpmCompletions() error {
-	completionFile := "./core/.config/bash_includes/npm_completion.sh"
-
-	// Get current completion text
-	out, err := exec.Command("npm", "completion").Output()
-	if err != nil {
-		return fmt.Errorf("failed to get npm completion: %w", err)
-	}
-	completionText := string(out)
-
-	// Create bash_includes directory if it doesn't exist
-	if err := os.MkdirAll("./core/.config/bash_includes", 0755); err != nil {
-		return fmt.Errorf("failed to create bash_includes directory: %w", err)
-	}
-
-	// Check if file exists and compare content
-	current, err := os.ReadFile(completionFile)
-	if err == nil && string(current) == completionText {
-		fmt.Printf("✓ - npm completions are up to date (%s)\n", completionFile)
-		return nil
-	}
-
-	// Write new completion file
-	if err := os.WriteFile(completionFile, []byte(completionText), 0644); err != nil {
-		return fmt.Errorf("failed to write completion file: %w", err)
-	}
-	fmt.Printf("✓ - npm completions were updated (%s)\n", completionFile)
-
-	return nil
-}
-
-// updatePnpmCompletions updates the pnpm completion script if needed
-// Written to stow-managed directory so changes are git-tracked
-func updatePnpmCompletions() error {
-	completionFile := "./core/.config/bash_includes/pnpm_completion.bash"
-
-	// Get current completion text
-	out, err := exec.Command("pnpm", "completion", "bash").Output()
-	if err != nil {
-		return fmt.Errorf("failed to get pnpm completion: %w", err)
-	}
-	completionText := string(out)
-
-	// Create bash_includes directory if it doesn't exist
-	if err := os.MkdirAll("./core/.config/bash_includes", 0755); err != nil {
-		return fmt.Errorf("failed to create bash_includes directory: %w", err)
-	}
-
-	// Check if file exists and compare content
-	current, err := os.ReadFile(completionFile)
-	if err == nil && string(current) == completionText {
-		fmt.Printf("✓ - pnpm completions are up to date (%s)\n", completionFile)
-		return nil
-	}
-
-	// Write new completion file
-	if err := os.WriteFile(completionFile, []byte(completionText), 0644); err != nil {
-		return fmt.Errorf("failed to write completion file: %w", err)
-	}
-	fmt.Printf("✓ - pnpm completions were updated (%s)\n", completionFile)
-
-	return nil
-}
