@@ -102,6 +102,7 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
+- [ ] Remove unused taps (use `brew tap-info --installed --json` to reconcile)
 - [ ] Ghostty/Starship prompt: add colors and fonts?
   - [ ] remove ligatures
   - [ ] starship new prompt with Nerd font test

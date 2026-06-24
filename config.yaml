@@ -103,7 +103,7 @@ homebrew:
       - supabase/tap/supabase
       - syncthing
       # my new virtual machine manager - collima too?
-      - cirruslabs/cli/tart
+      # cirruslabs/cli/tart - removed because unused and formula outdated
       # tinygo is for im-zone tinygo WASM build
       - tinygo-org/tools/tinygo
       - tree
