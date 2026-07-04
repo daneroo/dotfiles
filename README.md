@@ -102,6 +102,10 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
+- [ ] Add cursor as a cask?
+- [ ] bun completions
+  - Installed completions to /opt/homebrew/share/bash-completion/completions//bun.completion.bash
+  - Add a check?
 - [ ] Remove unused taps (use `brew tap-info --installed --json` to reconcile)
 - [ ] Ghostty/Starship prompt: add colors and fonts?
   - [ ] remove ligatures
