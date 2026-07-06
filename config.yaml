@@ -26,7 +26,7 @@ homebrew:
       # azure/functions/azure-functions-core-tools@3
       - b3sum
       - bash
-      - bash-completion
+      - bash-completion@2
       - btop
       # bun is now managed by asdf
       # bun, oven-sh/bun/
@@ -116,6 +116,7 @@ homebrew:
 
     ai:
       - gemini-cli
+      - herdr
       - llmfit
       # - opencode # use tap below instead - macOS and Linux (official brew formula, updated less)
       - openai-whisper
@@ -147,7 +148,7 @@ homebrew:
     - codex
     - codex-app
     # codexbar: prefer OpenUsage.app
-    - steipete/tap/codexbar
+    # - steipete/tap/codexbar
     - ghostty
     - google-drive
     - losslesscut
@@ -159,6 +160,8 @@ homebrew:
     - rustdesk
     - stats
     - supacode
+    # Theo's agent harness - not quite yet
+    # - t3-code
     - vlc
     # Previously Microsoft Remote Desktop
     - windows-app

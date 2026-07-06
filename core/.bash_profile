@@ -17,7 +17,7 @@ for homebrew_pfx in /usr/local /opt/homebrew; do
   fi
 done
 
-# brew's bash completion - assumes HOMEBREW_PREFIX is set
+# brew's bash completion - assumes HOMEBREW_PREFIX is set - works for v2
 [[ -r "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh" ]] && . "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh"
 
 # ASDF Setup
