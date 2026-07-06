@@ -76,6 +76,10 @@ func main() {
 			os.Exit(1)
 		}
 	}
+	if err := completions.UpdateGlobalBunCompletionAsASpecialSnowflake(); err != nil {
+		fmt.Printf("✗ - %v\n", err)
+		os.Exit(1)
+	}
 }
 
 // handleError handles both validation errors and unexpected errors
