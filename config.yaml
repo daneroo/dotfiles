@@ -140,7 +140,10 @@ homebrew:
     - 1password-cli
     # For Gadgetbridge - removing until I get back to it!
     # - android-platform-tools
-    - antigravity
+    - antigravity # The orchestrator
+    - antigravity-cli # The cli
+    - antigravity-ide # The VSCode-Fork
+
     - audacity
     - balenaetcher
     - calibre
