@@ -147,9 +147,9 @@ homebrew:
     - audacity
     - balenaetcher
     - calibre
+    - chatgpt # was codex-app
     - claude-code
     - codex
-    - codex-app
     # codexbar: prefer OpenUsage.app
     # - steipete/tap/codexbar
     - ghostty
