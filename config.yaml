@@ -162,7 +162,6 @@ homebrew:
     - pearcleaner
     - rustdesk
     - stats
-    - supacode
     # Theo's agent harness - not quite yet
     # - t3-code
     - vlc
