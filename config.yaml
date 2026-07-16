@@ -80,6 +80,7 @@ homebrew:
       # - kubernetes-cli
       # - kustomize
       - kubo # the new ipfs
+      - westpoint-io/lazyrsync/lazyrsync # discovered from homebrew tap naming convention
       - libpq
       - mole
       - nats-io/nats-tools/nats
@@ -147,9 +148,10 @@ homebrew:
     - audacity
     - balenaetcher
     - calibre
-    - chatgpt # was codex-app
-    - claude-code
-    - codex
+    - chatgpt # openai desktop - was codex-app
+    - claude # anthropic desktop
+    - claude-code # anthropic cli
+    - codex # openai cl1
     # codexbar: prefer OpenUsage.app
     # - steipete/tap/codexbar
     - ghostty
