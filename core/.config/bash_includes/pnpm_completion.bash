@@ -26,7 +26,7 @@ if type complete &>/dev/null; then
       __ltrim_colon_completions "${words[cword]}"
     fi
   }
-  complete -o default -F _pnpm_completion pnpm
+  complete -o default -F _pnpm_completion pnpm pn
 fi
 ###-end-pnpm-completion-###
 
