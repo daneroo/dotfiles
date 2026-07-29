@@ -58,6 +58,7 @@ homebrew:
       # heroku/brew/heroku-node
       # - helm
       # - ipfs # renamed to kubo
+      - hunk # tui git diff viewer
       - jhead
       - jq
       - just
@@ -70,6 +71,7 @@ homebrew:
       # - kubernetes-cli
       # - kustomize
       - kubo # the new ipfs
+      - lazygit
       - westpoint-io/lazyrsync/lazyrsync # discovered from homebrew tap naming convention
       - libpq
       - nats-io/nats-tools/nats
@@ -155,6 +157,7 @@ homebrew:
 
     - audacity
     - balenaetcher
+    - block-buzz
     - calibre
     - chatgpt # openai desktop - was codex-app
     - claude # anthropic desktop
@@ -164,6 +167,7 @@ homebrew:
     # - steipete/tap/codexbar
     - ghostty
     - google-drive
+    - livebook
     - losslesscut
     - macwhisper
     - opencode-desktop

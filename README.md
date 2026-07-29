@@ -111,6 +111,15 @@ Regular maintenance (_idempotent_):
 - [ ] Add AGENTS.md/CLAUDE.md - and make script usable by agent/skill - `/reconfig`?
 - [ ] Add cursor as a cask?
 - [ ] Remove unused taps (use `brew tap-info --installed --json` to reconcile)
+
+```bash
+for t in $(brew tap); do
+  brew list --formula --full-name | grep -q "^${t}/" || \
+  brew list --cask --full-name | grep -q "^${t}/" || \
+  echo "unused: $t"
+done
+```
+
 - [ ] Ghostty/Starship prompt: add colors and fonts?
   - [ ] remove ligatures
   - [ ] starship new prompt with Nerd font test
