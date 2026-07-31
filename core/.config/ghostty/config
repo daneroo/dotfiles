@@ -27,6 +27,9 @@
 # resize-overlay-duration = 4s 200ms
 #
 
+# DL-2026-0-31 Theme
+# theme = Catppuccin Macchiato
+theme = Catppuccin Mocha
 # Shift+Enter sends ESC+CR, allowing multi-line input in apps like Claude Code
 keybind = shift+enter=text:\x1b\r
 
