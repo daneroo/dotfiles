@@ -76,7 +76,7 @@ homebrew:
       - libpq
       - nats-io/nats-tools/nats
       # - neovim
-      - netlify/netlifyctl/netlifyctl
+      - netlify-cli
       # removed from asdf
       - node
       - ntfy
