@@ -123,7 +123,3 @@ eval "$(starship init bash)"
 # Where our npm globals go! ~/.npmrc
 export PATH="$HOME/.npm-global/bin:$PATH"
 
-# OMG - what garbage - custom path for bin
-# Added by Antigravity IDE
-export PATH="$HOME/.antigravity-ide/antigravity-ide/bin:$PATH"
-
