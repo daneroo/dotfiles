@@ -77,6 +77,10 @@ homebrew:
       - nats-io/nats-tools/nats
       # - neovim
       - netlify-cli
+      # Nix formatter (RFC 166 standard). From brew rather than a nix profile:
+      # VSCode's nix.formatterPath is editor-global, so it needs a binary that
+      # is always on PATH, not one scoped to a project devshell.
+      - nixfmt
       # removed from asdf
       - node
       - ntfy
@@ -151,10 +155,6 @@ homebrew:
     - 1password-cli
     # For Gadgetbridge - removing until I get back to it!
     # - android-platform-tools
-    - antigravity # The orchestrator
-    - antigravity-cli # The cli
-    - antigravity-ide # The VSCode-Fork
-
     - audacity
     - balenaetcher
     - block-buzz
