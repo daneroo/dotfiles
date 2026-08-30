@@ -2,51 +2,12 @@
 
 This documents my VSCode setup.
 
-**Cursor and Antigravity were both removed on 2026-08-30.** VSCode is the
-only editor now. Antigravity is available as a VSCode extension instead of
-a fork, which is what prompted the move back; Cursor was several versions
-stale and unused. Their extension lists live in git history if ever needed.
-
-VSCode is now installed as a Homebrew cask (`visual-studio-code` in
-`config.yaml`) rather than by hand, so a fresh machine reproduces it.
-
-Profiles are still worth considering, but with a single editor and a
-trimmed extension set the case is weaker than it was.
-
-## Migration
-
-```mermaid
-%%{init: {"theme":"base","themeVariables":{
-  "lineColor":"#8b8b93",
-  "edgeLabelBackground":"#4a4a52",
-  "textColor":"#e6e6e6",
-  "fontSize":"14px"
-}}}%%
-flowchart LR
-    Cursor["Cursor<br/>(removed)"]
-    AGY["Antigravity IDE<br/>(removed)"]
-    VSC["VSCode<br/>66 → 42 extensions"]
-
-    Cursor -- "settings imported<br/>extensions lost" --> AGY
-    AGY -- "11 already present" --> VSC
-    AGY -- "markdown-mermaid" --> VSC
-    AGY -. "clangd, pyrefly, ruby-lsp,<br/>phoenix, dead elixir-ls" .-x Trash
-
-    VSC --> Trim["trimmed: 24 cut<br/>stale, duplicated, or unused"]
-
-    linkStyle default stroke:#8b8b93,stroke-width:1.5px
-
-    classDef gone fill:#3a2a2a,stroke:#a55,color:#eee
-    classDef keep fill:#2a3a2a,stroke:#5a5,color:#eee
-    class Cursor,AGY,Trash gone
-    class VSC,Trim keep
-```
+**Cursor and Antigravity were both removed on 2026-08-30.**
 
 ## TODO
 
 - [x] Trim to a defensible set (66 -> 42), removing stale and duplicated extensions
 - [ ] Validate that each remaining extension does something I actually want
-- [ ] Decide whether the extension list belongs in `config.yaml` with a reconciler
 
 ## Ideas
 
@@ -99,6 +60,7 @@ firsttris.vscode-jest-runner
 github.codespaces
 github.vscode-pull-request-github
 golang.go
+google.google-antigravity
 jakebecker.elixir-ls
 jnoortheen.nix-ide
 khaeransori.json2csv
