@@ -114,7 +114,6 @@ Regular maintenance (_idempotent_):
     - [ ] [SynoCli Network Tools](https://docs.synocommunity.com/packages/synocli-net/)
     - [ ] [SynoCli Monitor Tools](https://docs.synocommunity.com/packages/synocli-monitor/)
 - [ ] Add AGENTS.md/CLAUDE.md - and make script usable by agent/skill - `/reconfig`?
-- [ ] Add cursor as a cask?
 - [ ] Remove unused taps (use `brew tap-info --installed --json` to reconcile)
 
 ```bash
