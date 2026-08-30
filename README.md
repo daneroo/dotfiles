@@ -103,11 +103,7 @@ Regular maintenance (_idempotent_):
 ## TODO
 
 - [ ] Update determinate-nix: `sudo determinate-nixd upgrade`
-  - Builds log `cache.flakehub.com ... HTTP error 401`. Expected: Determinate
-    configures FlakeHub as a substituter but I have never signed in, so there
-    are no credentials in `/nix/var/determinate/netrc`. Harmless - Nix just
-    falls back to cache.nixos.org. Only worth acting on if I start using
-    FlakeHub.
+  - flakehub 401 on builds is expected - never signed in, harmless
 - [ ] Get sanity on syno packages/config setup
 - [ ] lazyrsync - installed with discovered tap
   - [ ] how does it work with syno - and can we use a newer rsync
