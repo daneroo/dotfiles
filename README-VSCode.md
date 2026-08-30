@@ -6,6 +6,35 @@ When I Installed Antigravity, it imported my settings from Cursor, but failed to
 
 We should probably be using profiles, perhaps thos would be importable from clone to clone.
 
+## Migration
+
+```mermaid
+%%{init: {"theme":"base","themeVariables":{
+  "lineColor":"#8b8b93",
+  "edgeLabelBackground":"#4a4a52",
+  "textColor":"#e6e6e6",
+  "fontSize":"14px"
+}}}%%
+flowchart LR
+    Cursor["Cursor<br/>(abandoned)"]
+    AGY["Antigravity IDE<br/>17 extensions"]
+    VSC["VSCode<br/>65 extensions"]
+
+    Cursor -- "settings imported<br/>extensions lost" --> AGY
+    AGY -- "vet: 11 already present" --> VSC
+    AGY -- "markdown-mermaid" --> VSC
+    AGY -. "clangd, pyrefly, ruby-lsp,<br/>phoenix, dead elixir-ls" .-x Trash
+
+    VSC --> Trim["trim the 65"]
+
+    linkStyle default stroke:#8b8b93,stroke-width:1.5px
+
+    classDef gone fill:#3a2a2a,stroke:#a55,color:#eee
+    classDef keep fill:#2a3a2a,stroke:#5a5,color:#eee
+    class Cursor,AGY,Trash gone
+    class VSC,Trim keep
+```
+
 ## TODO
 
 - Remove all unknown extensions from antigravity as a starting point
