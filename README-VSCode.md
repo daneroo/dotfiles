@@ -18,14 +18,14 @@ We should probably be using profiles, perhaps thos would be importable from clon
 flowchart LR
     Cursor["Cursor<br/>(abandoned)"]
     AGY["Antigravity IDE<br/>17 extensions"]
-    VSC["VSCode<br/>65 extensions"]
+    VSC["VSCode<br/>66 → 45 extensions"]
 
     Cursor -- "settings imported<br/>extensions lost" --> AGY
-    AGY -- "vet: 11 already present" --> VSC
+    AGY -- "11 already present" --> VSC
     AGY -- "markdown-mermaid" --> VSC
     AGY -. "clangd, pyrefly, ruby-lsp,<br/>phoenix, dead elixir-ls" .-x Trash
 
-    VSC --> Trim["trim the 65"]
+    VSC --> Trim["trimmed: 21 cut<br/>stale, duplicated, or unused"]
 
     linkStyle default stroke:#8b8b93,stroke-width:1.5px
 
@@ -60,7 +60,7 @@ We added these to the Workspace recommendations: `.vscode/extensions.json`
 
 | Name               | Extension ID                          | Check |
 | ------------------ | ------------------------------------- | :---: |
-| Markdownlint       | davidanson.vscode-markdownlint        |   ✗   |
+| Markdownlint       | davidanson.vscode-markdownlint.       |   ✗   |
 | Prettier           | esbenp.prettier-vscode                |   ✗   |
 | Deno               | denoland.vscode-deno                  |   ✗   |
 | Code Spell Checker | streetsidesoftware.code-spell-checker |   ✗   |
@@ -69,7 +69,10 @@ We added these to the Workspace recommendations: `.vscode/extensions.json`
 
 Just lists for now, til we figure this out
 
-### Antigravity
+### Antigravity (removed 2026-08-30)
+
+Kept as a record of what the fork had installed. The fork is being
+uninstalled; Google now ships Antigravity as a VSCode extension.
 
 ```bash
 $ "/Applications/Antigravity IDE.app/Contents/Resources/app/bin/antigravity-ide" --list-extensions
@@ -147,48 +150,32 @@ unifiedjs.vscode-mdx
 $ code --list-extensions
 arrterian.nix-env-selector
 astro-build.astro-vscode
-b4dm4n.nixpkgs-fmt
-bbenoist.nix
+bierner.markdown-mermaid
 bradlc.vscode-tailwindcss
-brettm12345.nixfmt-vscode
 brody715.vscode-cuelang
 charliermarsh.ruff
 davidanson.vscode-markdownlint
 dbaeumer.vscode-eslint
 denoland.vscode-deno
 dnicolson.binary-plist
-docker.docker
-donjayamanne.python-environment-manager
 dotjoshjohnson.xml
 dozerg.tsimportsorter
 eamodio.gitlens
 esbenp.prettier-vscode
 evilz.vscode-reveal
-fcrespo82.markdown-table-formatter
 firsttris.vscode-jest-runner
 github.codespaces
 github.vscode-pull-request-github
 golang.go
-google.geminicodeassist
-heybourn.headwind
 jakebecker.elixir-ls
 jnoortheen.nix-ide
 khaeransori.json2csv
 mechatroner.rainbow-csv
-mhutchie.git-graph
 ms-azuretools.vscode-containers
-ms-azuretools.vscode-docker
-ms-python.black-formatter
 ms-python.debugpy
-ms-python.flake8
 ms-python.python
 ms-python.vscode-pylance
 ms-python.vscode-python-envs
-ms-toolsai.jupyter
-ms-toolsai.jupyter-keymap
-ms-toolsai.jupyter-renderers
-ms-toolsai.vscode-jupyter-cell-tags
-ms-toolsai.vscode-jupyter-slideshow
 ms-vscode-remote.remote-containers
 ms-vscode-remote.remote-ssh
 ms-vscode-remote.remote-ssh-edit
@@ -197,15 +184,11 @@ ms-vscode.remote-explorer
 ms-vscode.remote-server
 ms-vsliveshare.vsliveshare
 nefrob.vscode-just-syntax
-nrwl.angular-console
 pantajoe.vscode-elixir-credo
 phoenixframework.phoenix
-prisma.prisma
 redhat.vscode-yaml
 samuel-pordeus.elixir-test
-skellock.just
 streetsidesoftware.code-spell-checker
-umbo.vscode-velociraptor
 unifiedjs.vscode-mdx
 upboundio.upbound
 vitest.explorer
