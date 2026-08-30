@@ -18,14 +18,14 @@ We should probably be using profiles, perhaps thos would be importable from clon
 flowchart LR
     Cursor["Cursor<br/>(abandoned)"]
     AGY["Antigravity IDE<br/>17 extensions"]
-    VSC["VSCode<br/>66 → 45 extensions"]
+    VSC["VSCode<br/>66 → 42 extensions"]
 
     Cursor -- "settings imported<br/>extensions lost" --> AGY
     AGY -- "11 already present" --> VSC
     AGY -- "markdown-mermaid" --> VSC
     AGY -. "clangd, pyrefly, ruby-lsp,<br/>phoenix, dead elixir-ls" .-x Trash
 
-    VSC --> Trim["trimmed: 21 cut<br/>stale, duplicated, or unused"]
+    VSC --> Trim["trimmed: 24 cut<br/>stale, duplicated, or unused"]
 
     linkStyle default stroke:#8b8b93,stroke-width:1.5px
 
@@ -60,7 +60,7 @@ We added these to the Workspace recommendations: `.vscode/extensions.json`
 
 | Name               | Extension ID                          | Check |
 | ------------------ | ------------------------------------- | :---: |
-| Markdownlint       | davidanson.vscode-markdownlint.       |   ✗   |
+| Markdownlint       | davidanson.vscode-markdownlint        |   ✗   |
 | Prettier           | esbenp.prettier-vscode                |   ✗   |
 | Deno               | denoland.vscode-deno                  |   ✗   |
 | Code Spell Checker | streetsidesoftware.code-spell-checker |   ✗   |
@@ -158,8 +158,6 @@ davidanson.vscode-markdownlint
 dbaeumer.vscode-eslint
 denoland.vscode-deno
 dnicolson.binary-plist
-dotjoshjohnson.xml
-dozerg.tsimportsorter
 eamodio.gitlens
 esbenp.prettier-vscode
 evilz.vscode-reveal
@@ -190,7 +188,6 @@ redhat.vscode-yaml
 samuel-pordeus.elixir-test
 streetsidesoftware.code-spell-checker
 unifiedjs.vscode-mdx
-upboundio.upbound
 vitest.explorer
 yoavbls.pretty-ts-errors
 ```
