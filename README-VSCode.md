@@ -8,12 +8,7 @@ This documents my VSCode setup.
 
 - [x] Trim to a defensible set (66 -> 43), removing stale and duplicated extensions
 - [ ] Validate that each remaining extension does something I actually want
-- [ ] Retry **tode** (terminal-code) when it matures — real VS Code rendered in the
-      terminal via code-server + terminal-browser. Tried 2026-08-30, v0.3.4:
-      - works locally and over `--ssh` to Ubuntu; needs a kitty-graphics terminal
-      - `--ssh` fails on NixOS (Electron needs GTK/NSS; would want `nix-ld`)
-      - `--shutdown` orphans its ptyHost and terminal shells
-      - no brew/nixpkgs package yet; `--shortcut-setup` edits ghostty config
+- [ ] Retry [tode](https://terminal-code.com) - VSCode in the terminal. v0.3.4 too rough (2026-08-30)
 
 ## Ideas
 
