@@ -102,6 +102,11 @@ Regular maintenance (_idempotent_):
 
 ## TODO
 
+- [ ] Update determinate-nix: `sudo determinate-nixd upgrade`
+  - FlakeHub cache auth is failing as of 2026-08-30, so the binary cache is
+    silently unused on every build:
+    `warning: unable to download 'https://cache.flakehub.com/nix-cache-info': HTTP error 401`
+  - netrc is at `/nix/var/determinate/netrc` (set in `/etc/nix/nix.conf`)
 - [ ] Get sanity on syno packages/config setup
 - [ ] lazyrsync - installed with discovered tap
   - [ ] how does it work with syno - and can we use a newer rsync
