@@ -1,10 +1,17 @@
 # VSCode et al
 
-This is to document my VSCode and it's clones' setup.
+This documents my VSCode setup.
 
-When I Installed Antigravity, it imported my settings from Cursor, but failed to bring in my extensions. So I will now try to remediate that, by finally documenting a reasonale way to do it.
+**Cursor and Antigravity were both removed on 2026-08-30.** VSCode is the
+only editor now. Antigravity is available as a VSCode extension instead of
+a fork, which is what prompted the move back; Cursor was several versions
+stale and unused. Their extension lists live in git history if ever needed.
 
-We should probably be using profiles, perhaps thos would be importable from clone to clone.
+VSCode is now installed as a Homebrew cask (`visual-studio-code` in
+`config.yaml`) rather than by hand, so a fresh machine reproduces it.
+
+Profiles are still worth considering, but with a single editor and a
+trimmed extension set the case is weaker than it was.
 
 ## Migration
 
@@ -16,8 +23,8 @@ We should probably be using profiles, perhaps thos would be importable from clon
   "fontSize":"14px"
 }}}%%
 flowchart LR
-    Cursor["Cursor<br/>(abandoned)"]
-    AGY["Antigravity IDE<br/>17 extensions"]
+    Cursor["Cursor<br/>(removed)"]
+    AGY["Antigravity IDE<br/>(removed)"]
     VSC["VSCode<br/>66 → 42 extensions"]
 
     Cursor -- "settings imported<br/>extensions lost" --> AGY
@@ -37,8 +44,9 @@ flowchart LR
 
 ## TODO
 
-- Remove all unknown extensions from antigravity as a starting point
-- add known useful extensions, and document/validate functionality
+- [x] Trim to a defensible set (66 -> 42), removing stale and duplicated extensions
+- [ ] Validate that each remaining extension does something I actually want
+- [ ] Decide whether the extension list belongs in `config.yaml` with a reconciler
 
 ## Ideas
 
@@ -67,82 +75,8 @@ We added these to the Workspace recommendations: `.vscode/extensions.json`
 
 ## Extensions
 
-Just lists for now, til we figure this out
-
-### Antigravity (removed 2026-08-30)
-
-Kept as a record of what the fork had installed. The fork is being
-uninstalled; Google now ships Antigravity as a VSCode extension.
-
-```bash
-$ "/Applications/Antigravity IDE.app/Contents/Resources/app/bin/antigravity-ide" --list-extensions
-astro-build.astro-vscode
-bierner.markdown-mermaid
-bradlc.vscode-tailwindcss
-davidanson.vscode-markdownlint
-denoland.vscode-deno
-eamodio.gitlens
-elixir-lsp.elixir-ls
-esbenp.prettier-vscode
-golang.go
-llvm-vs-code-extensions.vscode-clangd
-meta.pyrefly
-ms-python.debugpy
-ms-python.python
-ms-python.vscode-python-envs
-shopify.ruby-lsp
-streetsidesoftware.code-spell-checker
-victorbjorklund.phoenix
-```
-
-### Cursor
-
-```bash
-$ cursor --list-extensions
-anysphere.cursorpyright
-anysphere.pyright
-arrterian.nix-env-selector
-astro-build.astro-vscode
-bradlc.vscode-tailwindcss
-brody715.vscode-cuelang
-catppuccin.catppuccin-vsc-pack
-charliermarsh.ruff
-davidanson.vscode-markdownlint
-dbaeumer.vscode-eslint
-denoland.vscode-deno
-donjayamanne.python-environment-manager
-eamodio.gitlens
-editorconfig.editorconfig
-esbenp.prettier-vscode
-evilz.vscode-reveal
-fcrespo82.markdown-table-formatter
-github.codespaces
-github.vscode-github-actions
-github.vscode-pull-request-github
-golang.go
-jnoortheen.nix-ide
-mhutchie.git-graph
-mkhl.direnv
-ms-azuretools.vscode-docker
-ms-python.debugpy
-ms-python.python
-ms-python.vscode-pylance
-ms-toolsai.jupyter
-ms-toolsai.jupyter-renderers
-ms-toolsai.vscode-jupyter-cell-tags
-ms-toolsai.vscode-jupyter-slideshow
-ms-vscode-remote.remote-containers
-ms-vscode-remote.vscode-remote-extensionpack
-ms-vsliveshare.vsliveshare
-nefrob.vscode-just-syntax
-nrwl.angular-console
-octref.vetur
-pinage404.nix-extension-pack
-redhat.vscode-yaml
-rust-lang.rust-analyzer
-streetsidesoftware.code-spell-checker
-unifiedjs.vscode-mdx
-```
+Current state. Cursor and Antigravity lists were removed with the editors;
+`git log -- README-VSCode.md` has them.
 
 ### VSCode
 
