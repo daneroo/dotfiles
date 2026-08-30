@@ -63,9 +63,10 @@ fi
 # brew install awscli / aws completion
 complete -C aws_completer aws
 
-# Path put /usr/local/bin ahead of /usr/bin
-# this is redundant if HOMEBREW_PREFIX is /usr/local
-export PATH="/usr/local/bin:/usr/local/sbin${PATH+:$PATH}";
+# /usr/local/bin is already supplied by /etc/paths via path_helper, so
+# prepending it here only served to push it ahead of ${HOMEBREW_PREFIX}/bin.
+# Removed so brew wins over hand-installed /usr/local binaries.
+# (/usr/local/sbin does not exist on this machine.)
 
 
 # Mac OSX color stuff
