@@ -178,6 +178,7 @@ homebrew:
     - stats
     # Theo's agent harness - not quite yet
     # - t3-code
+    - visual-studio-code
     - vlc
     # Previously Microsoft Remote Desktop
     - windows-app

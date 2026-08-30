@@ -80,9 +80,9 @@ alias ls='ls -sF'
 alias pp='pushd'
 alias po='popd'
 # Whatever VSCode fork I am currently using!
-# alias c='code'
+alias c='code'
 # alias c='cursor'
-alias c='agy-ide'
+# alias c='agy-ide'
 
 # This is gum format's default theme
 # Set GUM theme to dark by default, light for Apple Terminal
