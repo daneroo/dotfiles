@@ -43,26 +43,24 @@ Just lists for now, til we figure this out
 ### Antigravity
 
 ```bash
-$ /Applications/Antigravity.app/Contents/Resources/app/bin/antigravity --list-extensions
+$ "/Applications/Antigravity IDE.app/Contents/Resources/app/bin/antigravity-ide" --list-extensions
+astro-build.astro-vscode
+bierner.markdown-mermaid
+bradlc.vscode-tailwindcss
 davidanson.vscode-markdownlint
-devsense.composer-php-vscode
-devsense.intelli-php-vscode
-devsense.phptools-vscode
-devsense.profiler-php-vscode
+denoland.vscode-deno
+eamodio.gitlens
+elixir-lsp.elixir-ls
+esbenp.prettier-vscode
 golang.go
 llvm-vs-code-extensions.vscode-clangd
 meta.pyrefly
 ms-python.debugpy
 ms-python.python
 ms-python.vscode-python-envs
-redhat.java
 shopify.ruby-lsp
-vscjava.vscode-gradle
-vscjava.vscode-java-debug
-vscjava.vscode-java-dependency
-vscjava.vscode-java-pack
-vscjava.vscode-java-test
-vscjava.vscode-maven
+streetsidesoftware.code-spell-checker
+victorbjorklund.phoenix
 ```
 
 ### Cursor
@@ -140,8 +138,6 @@ evilz.vscode-reveal
 fcrespo82.markdown-table-formatter
 firsttris.vscode-jest-runner
 github.codespaces
-github.copilot
-github.copilot-chat
 github.vscode-pull-request-github
 golang.go
 google.geminicodeassist
