@@ -38,6 +38,53 @@ Moonlight from `galois` to `omoxy` is working at 1080p/60 with Super-key input.
 - [ ] Do not remove encryption or change LUKS key slots until VM 103 has a
       verified backup and recovery procedure.
 
+### Options (keep LUKS)
+
+The preferred path is to add a Proxmox virtual TPM 2.0 to VM 103 and enroll a
+TPM2 token in the existing LUKS2 container. This adds an unlock method; it does
+not replace the current passphrase or decrypt the disk. Keep the current
+passphrase and add a separately stored LUKS recovery key. If TPM unlock cannot
+be used, systemd should fall back to a passphrase/recovery key at the console.
+
+The important Proxmox caveat is that a vTPM is an emulated device. Its state is
+stored as a normal VM volume, so it improves convenience and protects against
+someone possessing only the encrypted guest disk, but it is not protection
+against a compromised Proxmox host. A snapshot/backup is only complete for
+this boot arrangement if it includes the VM disk, `efidisk0`, and the TPM state
+disk. Restoring the encrypted disk without its matching TPM state should still
+be recoverable with the manual LUKS passphrase/recovery key; restoring all
+three preserves automatic TPM unlock. We must test both cases before relying
+on unattended boot.
+
+Other LUKS-preserving choices:
+
+- Remote initramfs unlock (for example, SSH/dropbear): encryption remains
+  strong, but a person still types the passphrase remotely. Tailscale cannot
+  be assumed before the root filesystem is unlocked.
+- FIDO2 security key: strong additional factor, but it requires the key/touch
+  at boot and is not unattended. It also introduces USB availability and
+  passthrough considerations.
+- Tang/Clevis network-bound unlock: can unlock automatically when a trusted
+  on-LAN Tang server is reachable, but adds a boot-time network/service
+  dependency. Tailscale is generally too late in the boot sequence for this.
+- A host-injected keyfile or QEMU secret: fully unattended, but the Proxmox
+  host can obtain the key. This is the weakest separation and is not the
+  recommended default.
+
+Staged plan: take and verify a fresh backup; record the current LUKS header and
+confirm the existing passphrase; add `tpmstate0` version 2.0; verify the guest
+TPM device; enroll TPM2 plus a recovery key without removing the old slot;
+test clean boot, VM stop/start, host reboot, manual recovery, and backup
+restore with and without TPM state; only then consider VM autostart/headless
+operation. The recurring `/dev/mapper/root` resume warning is separate from
+LUKS unlock and remains an investigation item.
+
+Reference documentation:
+
+- <https://www.freedesktop.org/software/systemd/man/250/crypttab.html>
+- <https://man7.org/linux/man-pages/man1/systemd-cryptenroll.1.html>
+- <https://github.com/proxmox/pve-docs/blob/master/qm.adoc>
+
 ## Goal
 
 - Run Omarchy 4.0.3 as VM 103 (`omoxy`) on `hilbert`.
@@ -168,15 +215,15 @@ Passwords and account credentials are deliberately not recorded here.
 
 ## Network identity and DNS
 
-| Scope | Name/address |
-| --- | --- |
-| VM NIC MAC | `76:43:FF:F0:9B:AF` |
-| Current LAN lease | `192.168.2.69` |
-| Intended LAN name | `omoxy.imetrical.com` |
-| Tailnet MagicDNS suffix | `tail62209.ts.net` |
-| MagicDNS name | `omoxy.tail62209.ts.net` |
-| Tailscale IPv4 | `100.124.82.116` |
-| Tailnet alias | `omoxy.ts.imetrical.com` |
+| Scope                   | Name/address             |
+| ----------------------- | ------------------------ |
+| VM NIC MAC              | `76:43:FF:F0:9B:AF`      |
+| Current LAN lease       | `192.168.2.69`           |
+| Intended LAN name       | `omoxy.imetrical.com`    |
+| Tailnet MagicDNS suffix | `tail62209.ts.net`       |
+| MagicDNS name           | `omoxy.tail62209.ts.net` |
+| Tailscale IPv4          | `100.124.82.116`         |
+| Tailnet alias           | `omoxy.ts.imetrical.com` |
 
 The LAN gateway and DHCP server is the Bell Home Hub/Giga Hub at
 `192.168.2.1`. Reserve the existing address by opening **My Devices**, locating
@@ -216,15 +263,15 @@ machine is re-enrolled because its address can change.
 VM 103 is included in the enabled daily Proxmox backup job
 `backup-11e05820-469e`:
 
-| Setting | Value |
-| --- | --- |
-| Schedule | Daily at 21:00 |
-| Storage | `pve-storage_backups-isos` |
-| Mode | Snapshot |
-| Compression | Zstandard |
-| Notification | Always |
-| Included VMs | `101, 102, 103, 120, 121` |
-| Retention | 10 last, 10 daily, 4 weekly, 12 monthly, 5 yearly |
+| Setting      | Value                                             |
+| ------------ | ------------------------------------------------- |
+| Schedule     | Daily at 21:00                                    |
+| Storage      | `pve-storage_backups-isos`                        |
+| Mode         | Snapshot                                          |
+| Compression  | Zstandard                                         |
+| Notification | Always                                            |
+| Included VMs | `101, 102, 103, 120, 121`                         |
+| Retention    | 10 last, 10 daily, 4 weekly, 12 monthly, 5 yearly |
 
 Snapshot mode provides a live backup with low downtime. `qemu-guest-agent` is
 installed and running inside `omoxy`, so Proxmox can freeze and thaw its
@@ -299,10 +346,10 @@ client on `galois`. Moonlight 6.1.0 is already installed on `galois`.
 
 Validation is deliberately split into two stages:
 
-| Stage | VM display | What it proves |
-| --- | --- | --- |
-| Baseline | VirtIO/noVNC | Pairing, capture, firewall, LAN/Tailscale path, audio, and remote input |
-| Performance | RX 570 passthrough | AMD VA-API hardware encoding and usable streaming latency/quality |
+| Stage       | VM display         | What it proves                                                          |
+| ----------- | ------------------ | ----------------------------------------------------------------------- |
+| Baseline    | VirtIO/noVNC       | Pairing, capture, firewall, LAN/Tailscale path, audio, and remote input |
+| Performance | RX 570 passthrough | AMD VA-API hardware encoding and usable streaming latency/quality       |
 
 The VirtIO baseline is not expected to prove hardware-encoding performance.
 Pairing and the Tailscale transport succeeded, but the first Desktop stream was
@@ -417,38 +464,38 @@ GPU-only/headless mode the default, choose one of these recovery paths:
    the Radeon as a secondary/render GPU.
 3. Use the physical KVM plus GPU and USB-controller passthrough to unlock LUKS.
 
-1. Finish Omarchy installation using the VirtIO/noVNC console.
-2. Confirm the guest hostname is `omoxy`, then install and enable SSH plus
+4. Finish Omarchy installation using the VirtIO/noVNC console.
+5. Confirm the guest hostname is `omoxy`, then install and enable SSH plus
    `qemu-guest-agent` in the guest.
-3. Install and connect Tailscale, then install and sign in to 1Password. Do
+6. Install and connect Tailscale, then install and sign in to 1Password. Do
    this while the Proxmox recovery console is still available.
-4. Install Sunshine using the native Arch package:
+7. Install Sunshine using the native Arch package:
 
    ```bash
    sudo pacman -S sunshine
    ```
 
-5. Run Sunshine inside the Hyprland user session so it inherits the Wayland
+8. Run Sunshine inside the Hyprland user session so it inherits the Wayland
    environment. Pair Moonlight before removing the recovery display.
-6. Shut down the VM and select the GPU-only profile.
-7. Verify the AMD render node and VA-API encoder in the guest:
+9. Shut down the VM and select the GPU-only profile.
+10. Verify the AMD render node and VA-API encoder in the guest:
 
-   ```bash
-   ls /dev/dri/renderD*
-   vainfo --display drm --device /dev/dri/renderD128
-   ```
+    ```bash
+    ls /dev/dri/renderD*
+    vainfo --display drm --device /dev/dri/renderD128
+    ```
 
-8. Confirm Sunshine is using AMD hardware encoding rather than software
-   encoding.
-9. If the Radeon has no active physical monitor, use Hyprland's headless output
-   support. A simple initial test is:
+11. Confirm Sunshine is using AMD hardware encoding rather than software
+    encoding.
+12. If the Radeon has no active physical monitor, use Hyprland's headless output
+    support. A simple initial test is:
 
-   ```bash
-   hyprctl output create headless sunshine
-   ```
+    ```bash
+    hyprctl output create headless sunshine
+    ```
 
-   Make the selected resolution and refresh rate persistent only after the
-   dynamic test works. An HDMI dummy plug remains a useful fallback.
+    Make the selected resolution and refresh rate persistent only after the
+    dynamic test works. An HDMI dummy plug remains a useful fallback.
 
 Moonlight transports keyboard, mouse, controller, video, and audio over the
 network, so physical USB passthrough is unnecessary for normal remote use.
