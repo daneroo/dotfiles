@@ -3,7 +3,7 @@
 Living runbook for installing Omarchy on `hilbert` and using it remotely from
 `galois` with Sunshine/Moonlight.
 
-Last updated: 2026-09-10
+Last updated: 2026-09-11
 
 ## Daily quick reminders
 
@@ -18,21 +18,67 @@ Moonlight from `galois` to `omoxy` is working at 1080p/60 with Super-key input.
 - To quit the stream: **Control–Option–Shift–Q**.
 - `Control–Option–Shift–D` (minimize) is unreliable in this Borderless-windowed
   setup; it briefly shrinks and immediately returns.
-- If `omoxy` reboots (including after a host restart or power loss), open its
-  Proxmox noVNC console and enter the LUKS passphrase. Until then, Linux has
-  not started, so SSH and Moonlight cannot connect.
+- `omoxy` now unlocks LUKS automatically through its restored/tested vTPM.
+  Keep noVNC plus the original passphrase and 1Password recovery key as the
+  manual fallback.
 
-## Remaining work
+## Remaining work (authoritative)
 
 - [x] Implement automatic LUKS unlock without removing encryption.
 - [x] Prove VM-level backup/restore with and without the matching TPM state.
-- [ ] Test the direct physical setup: HDMI plus keyboard/mouse/microphone
-      through the KVM/USB path.
-- [ ] Prove Moonlight remains usable after the physical passthrough test.
+- [x] Prove RX 580 HDMI output plus all four Greathtek socket mappings and
+      guest-side USB hotplug/disconnect through the physical KVM.
+- [x] Prove the physical SF-558 microphone end-to-end: Voxtype successfully
+      converted live speech to text inside Omarchy.
+- [x] Confirm physical keyboard/mouse control in the Omarchy desktop.
+- [ ] Complete the active Display and mirror setup checklist below, including
+      boot visibility, Sunshine capture selection, and keyboard mapping.
+- [ ] Prove Moonlight still works after the final four-path USB configuration.
+- [ ] Investigate the recurring nonfatal boot message `Unable to resume from
+      device /dev/mapper/root`.
+- [ ] Schedule a Proxmox host reboot and prove unattended TPM unlock afterward;
+      this affects the other guests and must not be done implicitly.
+- [ ] After the host-reboot proof, decide whether to enable VM 103 autostart.
+- [ ] At the end, consolidate this living log into a concise end-state runbook.
 
-The recurring post-unlock message `Unable to resume from device
-/dev/mapper/root` remains a separate investigation item. It predates GPU
-passthrough and does not currently prevent a normal boot.
+Deferred/outside this experiment: the UCG Fibre LAN/DNS migration, upgrading
+Hilbert sequentially from Proxmox VE 7 to 8 to 9, a clean-install vTPM test,
+and alternative GPU-only/headless/Titan-Ridge profiles.
+
+## Display and mirror setup — active checklist
+
+Goal: one Omarchy desktop presented consistently through the physical RX 580,
+VirtIO/noVNC, and (once verified) Moonlight.
+
+### Resolution and Hyprland
+
+- [x] Identify the two guest outputs: RX 580 `HDMI-A-2` and VirtIO `Virtual-1`.
+- [x] Persist both at `1920x1080@60`, with `Virtual-1` mirroring `HDMI-A-2`.
+- [x] Reboot VM 103 and verify the mirror configuration is applied at startup.
+- [ ] After the shared-display behavior is settled, evaluate native
+      `2560x1440` with scaling or the common `2048x1152` mode.
+
+### Proxmox display and passthrough
+
+- [x] Retain `vga: virtio` so the Proxmox noVNC console remains available.
+- [x] Retain RX 580 PCI passthrough for physical HDMI and Radeon encoding.
+- [x] Retain the four physical Greathtek socket-path mappings for KVM input.
+- [ ] Verify Moonlight's actual Sunshine capture output after mirroring.
+
+### Boot sequence and stated preference
+
+- [x] Confirm the OVMF/Proxmox boot-options screen appears on both outputs.
+- [x] Confirm Limine/early Linux output currently appears through VirtIO/noVNC;
+      the RX 580 becomes visible when the graphical desktop starts.
+- [ ] Determine whether stock Limine can show its graphical menu on both
+      independent GOP framebuffers, or whether a custom boot-stage solution is
+      required.
+- [ ] Determine whether early Linux boot/status output can also be presented on
+      both outputs; Hyprland mirroring is too late for this stage.
+
+Preferred end state: Limine and useful boot visibility on both outputs, followed
+by one mirrored desktop. Fallback end state: preserve noVNC as the authoritative
+boot/recovery display if dual-output Limine is not achievable.
 
 ## LUKS implementation checklist
 
@@ -76,7 +122,8 @@ passthrough and does not currently prevent a normal boot.
       active, graphical boot completed in 20.228 seconds, and Moonlight still
       streamed the desktop successfully.
 - [x] Test a clean cold VM shutdown/start with unattended TPM unlock.
-- [ ] Test a Proxmox host reboot with unattended TPM unlock.
+- Host-level reboot proof remains intentionally deferred and is tracked in the
+  authoritative checklist above.
 - [x] Restore the post-LUKS backup as VM 203 with its matching EFI and TPM
       state disks: automatic unlock, exact HEARTBEAT timestamp/hash, encrypted
       root, SSH, qemu-guest-agent, Tailscale, and Moonlight all passed.
@@ -87,11 +134,11 @@ passthrough and does not currently prevent a normal boot.
       directly with `cryptsetup --test-passphrase`.
 - [x] Complete both VM 103 → VM 203 recovery paths: automatic unlock with the
       matching restored TPM state and manual unlock without TPM state.
-- [ ] Only after these tests, consider VM autostart/headless operation.
-- [ ] Optional follow-up: install a new disposable Omarchy VM with a vTPM
-      already attached and observe whether the installer configures TPM-backed
-      LUKS automatically. Consider running Codex inside that guest so its
-      bundled Omarchy skills are available.
+- VM autostart remains intentionally deferred and is tracked above.
+- Optional future experiment: install a disposable Omarchy VM with a vTPM
+  already attached and observe whether the installer configures TPM-backed
+  LUKS automatically. Consider running Codex inside that guest so its bundled
+  Omarchy skills are available.
 
 Implemented state: VM 103 has a Proxmox vTPM 2.0 state disk. LUKS slot 0 is
 the original passphrase, slot 1 is the tested recovery key stored in 1Password,
@@ -176,8 +223,8 @@ Reference documentation:
 - [x] Complete the initial Omarchy system update; `checkupdates` reports no
       pending packages.
 - [x] Establish LAN access and SSH-key login to the guest.
-- [ ] Optional: create `omoxy.imetrical.com` once the UCG Fibre gateway is in
-      service and its DHCP/DNS behavior is known.
+- Deferred outside this experiment: create `omoxy.imetrical.com` after the UCG
+  Fibre gateway migration.
 - [x] Install and connect Tailscale.
 - [x] Create and validate `omoxy.ts.imetrical.com` for tailnet access.
 - [x] Install and sign in to 1Password using QR-code enrollment.
@@ -200,10 +247,16 @@ Reference documentation:
 - [x] Make the Radeon Hyprland's primary renderer while retaining VirtIO as a
       secondary recovery output; Moonlight then displays a usable desktop.
 - [x] Enable Moonlight's system-key capture so Omarchy Super shortcuts work.
-- [x] Validate 1920x1080 at 60 FPS and make the guest resolution persistent.
+- [x] Persist a single 1920x1080@60 Hyprland desktop on both outputs by
+      mirroring VirtIO `Virtual-1` from RX 580 `HDMI-A-2`; reboot verification
+      confirmed the configuration is applied at startup.
 - [x] Restore VM 103's pre-LUKS backup as VM 203 and verify encrypted disk,
       heartbeat, hostname, SSH, qemu-guest-agent, Tailscale, and Moonlight.
 - [x] Confirm the RX 580 HDMI output works through the physical KVM.
+- [x] Reboot VM 103 and confirm unattended TPM unlock plus return of the
+      persistent mirrored display configuration.
+- [x] Confirm retaining `vga: virtio` preserves the Proxmox noVNC boot console,
+      including Limine snapshot selection and recovery control.
 - [x] Dedicate the convenient lower blue rear USB port for the KVM upstream
       cable and identify its parent hub as `1-7.3` on PCH controller `00:14.0`.
 - [x] Prove the four Greathtek socket paths: general USB 2 ports `1-7.3.1` and
@@ -213,11 +266,14 @@ Reference documentation:
 - [x] Map all four stable Greathtek socket paths to VM 103:
       `usb0=1-7.3.1`, `usb1=1-7.3.4.1`, `usb2=1-7.3.4.2`, and
       `usb3=1-7.3.2`.
-- [ ] Test disconnect/reconnect by switching the KVM between `galois` and
-      `omoxy`; verify keyboard, mouse, and microphone inside the guest.
-- [ ] Optional: evaluate GPU-only passthrough after the physical/KVM test.
-- [ ] Optional: configure a reliable headless Hyprland output.
-- [ ] Optional: add Titan Ridge USB-controller passthrough.
+- [x] Test KVM disconnect/reconnect from inside `omoxy`: the illuminated
+      keyboard, Logitech receiver/mouse, and SF-558 microphone appeared through
+      the guest XHCI controller and disconnected cleanly on switch-back.
+- [x] Prove the passed-through SF-558 microphone at application level with
+      successful Voxtype speech-to-text input.
+
+GPU-only, headless Hyprland, and Titan Ridge controller passthrough remain
+unneeded alternative profiles rather than unfinished current-profile work.
 
 ## Host inventory
 
@@ -256,8 +312,9 @@ The VM was created from Omarchy's documented Proxmox shape, adjusted for
 | Autostart            | Disabled                                                 |
 | Guest agent          | Enabled in Proxmox; must also be installed in Omarchy    |
 
-Current profile: **hybrid encoding test** (plain `vga: virtio` retained for
-noVNC/LUKS recovery, with the RX 570 attached as a secondary PCIe device).
+Current profile: **hybrid physical/remote** (plain `vga: virtio` retained for
+the noVNC boot/recovery console, with the RX 580 attached for physical HDMI and
+Radeon-encoded Sunshine streaming).
 
 Useful checks:
 
@@ -325,13 +382,25 @@ through the VirtIO/noVNC display. Every boot since installation has displayed
 `Unable to resume from device /dev/mapper/root` after LUKS unlock, but startup
 continues normally. This predates PCI passthrough. The kernel command line
 contains `resume=/dev/mapper/root resume_offset=1614914`, and the active swap
-devices are an encrypted-root Btrfs swapfile plus zram. Leave this unchanged
-for now and investigate it together with unattended LUKS unlock.
+devices are an encrypted-root Btrfs swapfile plus zram. TPM-backed unattended
+LUKS unlock is complete; investigate this resume warning separately.
 
-Proxmox noVNC from macOS does not reliably forward the Super/Command key, which
-blocks many default Hyprland shortcuts. Use noVNC for LUKS unlock and visual
-recovery, but run administrative commands over SSH. Moonlight should carry the
-remote keyboard more naturally once Sunshine is working.
+Retaining VirtIO was revalidated. During a guest reboot, the Proxmox/OVMF boot
+options screen appeared on both the physical RX 580 output and noVNC. After
+that screen, the physical output went blank until the Omarchy desktop returned,
+while noVNC continued to show the normal Omarchy/Arch boot path, including the
+Limine snapshot selector. This is the observed behavior; the likely explanation
+is that OVMF initializes both GOP outputs but Limine continues on the VirtIO
+framebuffer. Preserve noVNC for Limine selection and recovery control.
+
+After Hyprland starts, the two outputs are now one mirrored 1920x1080@60
+desktop. The persistent rules are in `~/.config/hypr/monitors.lua` and were
+verified after a clean Proxmox-managed VM reboot:
+
+```lua
+hl.monitor({ output = "HDMI-A-2", mode = "1920x1080@60", position = "0x0", scale = 1 })
+hl.monitor({ output = "Virtual-1", mode = "1920x1080@60", position = "0x0", scale = 1, mirror = "HDMI-A-2" })
+```
 
 Installer account choices confirmed:
 
@@ -583,23 +652,11 @@ Command combinations such as the Raycast shortcut instead of forwarding the
 GUI/Meta key as Linux Super.
 
 `galois` is a Mac mini and therefore has no built-in native display resolution.
-Its current macOS desktop workspace is 2048x1152. The guest's VirtIO
-`Virtual-1` advertises 1920x1080@60 and 2048x1152@60 among its available modes.
-For the first quality increase, `Virtual-1` was tested dynamically at
-1920x1080@60 with scale 1:
-
-```bash
-hyprctl eval 'hl.monitor({ output = "Virtual-1", mode = "1920x1080@60", position = "0x0", scale = 1 })'
-```
-
-Moonlight was then validated successfully at 1080p and 60 FPS. The equivalent
-rule is now persistent in `~/.config/hypr/monitors.lua`:
-
-```lua
-hl.monitor({ output = "Virtual-1", mode = "1920x1080@60", position = "0x0", scale = 1 })
-```
-
-Later, test 2048x1152 as a custom client resolution if desired.
+The initial shared-display target is deliberately 1920x1080@60: both guest
+outputs support it, and the physical RX 580 and VirtIO/noVNC views now show the
+same desktop after reboot. Native 2560x1440 plus scaling, and the common
+2048x1152 mode, are deferred until the shared-display behavior and Moonlight
+capture path are fully settled.
 
 For the first GPU experiment, `vga: virtio` and noVNC remain available for
 LUKS/recovery, while the RX 570 is attached as a secondary PCI device for
