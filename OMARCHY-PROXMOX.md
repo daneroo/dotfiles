@@ -22,21 +22,91 @@ Moonlight from `galois` to `omoxy` is working at 1080p/60 with Super-key input.
   Proxmox noVNC console and enter the LUKS passphrase. Until then, Linux has
   not started, so SSH and Moonlight cannot connect.
 
-## Top TODO: unattended LUKS unlock
+## Remaining work
 
-- [ ] Make `omoxy` capable of rebooting without someone entering the LUKS
-      passphrase in the Proxmox console.
-- [ ] Evaluate binding the encrypted volume to a Proxmox virtual TPM while
-      retaining a tested recovery key.
-- [ ] If TPM-backed unlock is unsuitable on Proxmox VE 7.4, compare other safe
-      unattended-unlock approaches with reinstalling the disposable VM without
-      disk encryption.
-- [ ] Investigate the recurring post-unlock message
-      `Unable to resume from device /dev/mapper/root`. It predates GPU
-      passthrough, does not prevent a normal boot, and may be relevant when
-      designing LUKS unlock and hibernation behavior.
-- [ ] Do not remove encryption or change LUKS key slots until VM 103 has a
-      verified backup and recovery procedure.
+- [x] Implement automatic LUKS unlock without removing encryption.
+- [x] Prove VM-level backup/restore with and without the matching TPM state.
+- [ ] Test the direct physical setup: HDMI plus keyboard/mouse/microphone
+      through the KVM/USB path.
+- [ ] Prove Moonlight remains usable after the physical passthrough test.
+
+The recurring post-unlock message `Unable to resume from device
+/dev/mapper/root` remains a separate investigation item. It predates GPU
+passthrough and does not currently prevent a normal boot.
+
+## LUKS implementation checklist
+
+- [x] Take a fresh pre-LUKS Proxmox backup and verify it is readable
+      (`vzdump-qemu-103-2026_09_10-23_50_30.vma.zst`, note
+      `omoxy - pre-luks baseline`, Proxmox task `TASK OK`). VM 103 restarted
+      successfully and was left stopped.
+- [x] Establish a pre-LUKS restore baseline (VM 203 restored from the
+      2026-09-10 backup):
+      - create `~/HEARTBEAT.md` containing `I was created/updated at
+        <ISO-8601 timestamp>`;
+      - take a snapshot/backup of VM 103;
+      - shut down VM 103 and restore that point-in-time backup as VM 203;
+      - boot VM 203 and assert the expected disk state, the exact
+        `HEARTBEAT.md` content/timestamp, hostname/guest identity, SSH access,
+        qemu-guest-agent operation, and successful Moonlight streaming;
+      - remove or power off VM 203 after the proof, without modifying VM 100.
+- [x] Confirm the existing LUKS passphrase and record the current slot/header
+      state (without recording secrets): LUKS2 on `/dev/sda2`, UUID
+      `8891ddc0-b972-4ddf-8beb-d59b352caf3f`, one active passphrase slot
+      (`slot 0`), and no tokens.
+- [x] Add a Proxmox vTPM 2.0 state disk to VM 103.
+- [x] Verify the TPM device inside Omarchy (`/dev/tpm0` and `/dev/tpmrm0`
+      present; systemd 261 has TPM2 support).
+- [x] Enroll and test a separately stored recovery key in slot 1; retain the
+      existing passphrase in slot 0. The previously exposed key was removed.
+- [x] Enroll a TPM2 LUKS2 token while retaining slots 0 and 1. The guest
+      reports slots 0 `password`, 1 `recovery`, and 2 `tpm2`.
+- [x] Integrate TPM unlock into the UKI: switch Omarchy's active
+      `/etc/mkinitcpio.conf.d/omarchy_hooks.conf` override from legacy
+      `udev`/`encrypt` to `systemd`/`sd-encrypt`, and add an
+      `/etc/crypttab.initramfs` entry for mapper `root` with
+      `tpm2-device=auto`. Retain the known-working Limine `cryptdevice=`
+      command line while testing.
+- [x] Rebuild through Omarchy's supported `limine-mkinitcpio` wrapper and
+      verify the BLAKE2b hash embedded in the active `path:` entry exactly
+      matches `/boot/EFI/Linux/omarchy_linux.efi`. Raw `mkinitcpio` rebuilds
+      the UKI but bypasses this Limine history/hash synchronization.
+- [x] Test a clean reboot with no keyboard input: TPM unlocked LUKS,
+      `/dev/mapper/root[/@]` mounted as Btrfs, SSH and qemu-guest-agent became
+      active, graphical boot completed in 20.228 seconds, and Moonlight still
+      streamed the desktop successfully.
+- [x] Test a clean cold VM shutdown/start with unattended TPM unlock.
+- [ ] Test a Proxmox host reboot with unattended TPM unlock.
+- [x] Restore the post-LUKS backup as VM 203 with its matching EFI and TPM
+      state disks: automatic unlock, exact HEARTBEAT timestamp/hash, encrypted
+      root, SSH, qemu-guest-agent, Tailscale, and Moonlight all passed.
+- [x] Detach restored VM 203's TPM state (retained temporarily as `unused0`),
+      boot the encrypted disk, and verify the original passphrase still unlocks
+      it; exact HEARTBEAT state, encrypted root, SSH, and qemu-guest-agent all
+      passed. The separately stored slot-1 recovery key was already validated
+      directly with `cryptsetup --test-passphrase`.
+- [x] Complete both VM 103 → VM 203 recovery paths: automatic unlock with the
+      matching restored TPM state and manual unlock without TPM state.
+- [ ] Only after these tests, consider VM autostart/headless operation.
+- [ ] Optional follow-up: install a new disposable Omarchy VM with a vTPM
+      already attached and observe whether the installer configures TPM-backed
+      LUKS automatically. Consider running Codex inside that guest so its
+      bundled Omarchy skills are available.
+
+Implemented state: VM 103 has a Proxmox vTPM 2.0 state disk. LUKS slot 0 is
+the original passphrase, slot 1 is the tested recovery key stored in 1Password,
+and slot 2 is TPM2. Omarchy's active `omarchy_hooks.conf` uses `systemd` and
+`sd-encrypt`; `/etc/crypttab.initramfs` maps LUKS UUID
+`8891ddc0-b972-4ddf-8beb-d59b352caf3f` to `root` with
+`tpm2-device=auto`. Rebuild this UKI with `sudo limine-mkinitcpio`, not raw
+`mkinitcpio`, so Limine refreshes its BLAKE2b path hash and enrolled config.
+
+The verified post-LUKS backup is
+`vzdump-qemu-103-2026_09_11-00_54_15.vma.zst` (9,404,647,155 bytes). Proxmox
+included `scsi0`, `efidisk0`, and `tpmstate0`. Restoring it as temporary VM 203
+proved automatic unlock with the restored TPM state and manual passphrase
+fallback after detaching that TPM state. VM 203 and its temporary volumes were
+then deleted; the backup archive remains available.
 
 ### Options (keep LUKS)
 
@@ -106,8 +176,8 @@ Reference documentation:
 - [x] Complete the initial Omarchy system update; `checkupdates` reports no
       pending packages.
 - [x] Establish LAN access and SSH-key login to the guest.
-- [ ] Deferred: reserve `192.168.2.69` in the Bell router and create
-      `omoxy.imetrical.com`. This is not required for the current experiment.
+- [ ] Optional: create `omoxy.imetrical.com` once the UCG Fibre gateway is in
+      service and its DHCP/DNS behavior is known.
 - [x] Install and connect Tailscale.
 - [x] Create and validate `omoxy.ts.imetrical.com` for tailnet access.
 - [x] Install and sign in to 1Password using QR-code enrollment.
@@ -119,8 +189,7 @@ Reference documentation:
       image is completely garbled even in Moonlight's low-resolution mode.
 - [x] Retry with Moonlight forced to software decoding and H.264 at 1280x720,
       30 FPS, and 5 Mbps; the stream remained completely garbled.
-- [ ] After the baseline test, evaluate upgrading Sunshine from Omarchy's
-      packaged version to the current upstream stable Arch package and retest.
+- [x] Keep Omarchy's packaged Sunshine; the current stream is working.
 - [x] Test Moonlight video and remote input successfully from `galois`.
 - [x] Attach the RX 570 as a secondary PCIe device while retaining VirtIO.
 - [x] Unlock LUKS and verify the AMD driver, render node, and VA-API encoder.
@@ -132,11 +201,23 @@ Reference documentation:
       secondary recovery output; Moonlight then displays a usable desktop.
 - [x] Enable Moonlight's system-key capture so Omarchy Super shortcuts work.
 - [x] Validate 1920x1080 at 60 FPS and make the guest resolution persistent.
-- [ ] Later, evaluate GPU-only passthrough after the hybrid test works.
-- [ ] Configure a reliable headless Hyprland output.
-- [ ] Add optional Titan Ridge USB-controller passthrough.
-- [ ] Remove stale/conflicting passthrough entries from VM 100 when VM 103 is
-      proven stable.
+- [x] Restore VM 103's pre-LUKS backup as VM 203 and verify encrypted disk,
+      heartbeat, hostname, SSH, qemu-guest-agent, Tailscale, and Moonlight.
+- [x] Confirm the RX 580 HDMI output works through the physical KVM.
+- [x] Dedicate the convenient lower blue rear USB port for the KVM upstream
+      cable and identify its parent hub as `1-7.3` on PCH controller `00:14.0`.
+- [x] Prove the four Greathtek socket paths: general USB 2 ports `1-7.3.1` and
+      `1-7.3.2`; keyboard/mouse ports `1-7.3.4.1` and `1-7.3.4.2`.
+- [x] Confirm a red Type-A port is also PCH-owned: the complete KVM tree
+      appeared below hub `1-4` and disconnected together on a KVM switch.
+- [x] Map all four stable Greathtek socket paths to VM 103:
+      `usb0=1-7.3.1`, `usb1=1-7.3.4.1`, `usb2=1-7.3.4.2`, and
+      `usb3=1-7.3.2`.
+- [ ] Test disconnect/reconnect by switching the KVM between `galois` and
+      `omoxy`; verify keyboard, mouse, and microphone inside the guest.
+- [ ] Optional: evaluate GPU-only passthrough after the physical/KVM test.
+- [ ] Optional: configure a reliable headless Hyprland output.
+- [ ] Optional: add Titan Ridge USB-controller passthrough.
 
 ## Host inventory
 
@@ -185,6 +266,56 @@ ssh root@hilbert qm status 103
 ssh root@hilbert qm config 103
 ```
 
+### Annotated current `qm` configuration
+
+Snapshot from `qm config 103` on 2026-09-11. Lines beginning with `#` are
+documentation annotations, not part of the captured Proxmox configuration.
+
+```text
+# QEMU guest agent is enabled on the Proxmox side.
+agent: enabled=1
+
+# OVMF/q35 VM; boot the installed disk before the attached installer ISO.
+bios: ovmf
+boot: order=scsi0;ide2
+machine: q35
+ostype: l26
+
+# Host CPU model, four vCPUs, and 8 GiB RAM.
+cores: 4
+cpu: host
+memory: 8192
+
+# OVMF variables, encrypted root disk, installer ISO, and restored/tested vTPM.
+efidisk0: local-zfs:vm-103-disk-0,efitype=4m,pre-enrolled-keys=0,size=1M
+scsi0: local-zfs:vm-103-disk-1,discard=on,iothread=1,size=40G
+scsihw: virtio-scsi-single
+ide2: pve-storage_backups-isos:iso/omarchy-4.0.3.iso,media=cdrom,size=6113920K
+tpmstate0: local-zfs:vm-103-disk-2,size=4M,version=v2.0
+
+# Entire Radeon GPU plus HDMI-audio function; VirtIO remains for noVNC recovery.
+hostpci0: 0000:01:00,pcie=1
+vga: virtio
+
+# VirtIO LAN on Hilbert's primary bridge.
+net0: virtio=76:43:FF:F0:9B:AF,bridge=vmbr0,firewall=1
+
+# Greathtek physical socket paths under the selected blue-port prefix 1-7.3.
+# These match whatever non-hub device occupies each socket, not device IDs.
+usb0: host=1-7.3.1
+usb1: host=1-7.3.4.1
+usb2: host=1-7.3.4.2
+usb3: host=1-7.3.2
+
+# Serial recovery socket and VM identity/state metadata.
+serial0: socket
+smbios1: uuid=1eab55ce-298e-4d53-bfae-da94ad292d72
+vmgenid: f1bb1e8f-4dff-4f93-8a8c-c84c25d03594
+meta: creation-qemu=7.2.10,ctime=1789068698
+name: omoxy
+onboot: 0
+```
+
 The installation completed in 1 minute 53 seconds. Select **Reboot Now** in the
 Proxmox console. The VM boot order is `scsi0;ide2`, so the installed system disk
 is tried before the still-attached installer ISO.
@@ -223,16 +354,17 @@ Passwords and account credentials are deliberately not recorded here.
 | Tailnet MagicDNS suffix | `tail62209.ts.net`       |
 | MagicDNS name           | `omoxy.tail62209.ts.net` |
 | Tailscale IPv4          | `100.124.82.116`         |
-| Tailnet alias           | `omoxy.ts.imetrical.com` |
+| Hover DNS alias for Tailscale IP | `omoxy.ts.imetrical.com` |
 
-The LAN gateway and DHCP server is the Bell Home Hub/Giga Hub at
-`192.168.2.1`. Reserve the existing address by opening **My Devices**, locating
-the Ethernet device with MAC `76:43:FF:F0:9B:AF`, editing it, and changing its
-IP type from **Dynamic** to **Reserved** while retaining `192.168.2.69`.
+`omoxy.ts.imetrical.com` is not a Tailscale alias or a Tailscale naming
+feature. It is simply a manually created Hover A record pointing at the
+machine's Tailscale address. Tailscale's own MagicDNS name remains
+`omoxy.tail62209.ts.net`.
 
-This reservation could not be completed in the Bell Giga Hub interface and is
-deferred. Do not make it a prerequisite for Sunshine: use Tailscale for stable
-management access after the initial LAN bootstrap.
+The Bell Home Hub/Giga Hub DHCP reservation failure is a known router software
+bug and is not expected to be fixable in this setup. The network is moving to
+the existing UCG Fibre passthrough gateway; that migration is outside the
+scope of VM 103. Until then, use Tailscale for stable management access.
 
 `imetrical.com` uses Hover authoritative DNS. Existing host records establish
 the convention: `<host>.imetrical.com` is an A record containing its
@@ -241,7 +373,8 @@ containing its `100.x` Tailscale address. At discovery time,
 `omoxy.imetrical.com` had no explicit record and fell through to Hover's
 existing `216.40.34.41` wildcard/forwarding destination.
 
-Create the LAN record after reserving the DHCP lease:
+If/when the future gateway provides a stable LAN lease, create the optional LAN
+record:
 
 ```text
 omoxy.imetrical.com. A 192.168.2.69
@@ -299,16 +432,71 @@ Both functions are isolated together in IOMMU group 15. Passing
 
 ### Physical USB
 
+`hilbert` has two PCI USB controllers:
+
+| Controller | PCI address | Buses | IOMMU group | Physical scope |
+| ---------- | ----------- | ----- | ----------- | -------------- |
+| Z390 PCH xHCI | `00:14.0` | 1/2 | 5, shared with PCH SRAM `00:14.2` | All rear Type-A ports (black/blue/yellow/red), internal USB headers, and onboard USB devices such as Bluetooth |
+| Titan Ridge xHCI | `3c:00.0` | 3/4 | 24, isolated | The two rear Thunderbolt/USB-C ports |
+
+Therefore the colored Type-A groups are not separately assignable PCI
+controllers. Passing `00:14.0` would give the VM the blue KVM port, but would
+also remove the top host keyboard/mouse USB pair and the other PCH USB paths
+from Proxmox. Its shared IOMMU group also makes it a poor passthrough target.
+The motherboard PS/2 port would remain independent.
+
+Decision: keep the KVM on the selected blue Type-A port and map all four
+Greathtek downstream socket paths. The mapping is unfortunately motherboard-
+port-specific, but is stable in normal use, does not identify particular device
+models, and is easy to relocate by rediscovering and replacing its prefix.
+
+Passing `3c:00.0` is the clean whole-controller option. It is isolated in IOMMU
+group 24, but the KVM upstream cable would have to move to one of the rear
+USB-C ports (using the appropriate cable or adapter). The guest would then own
+both rear USB-C ports and receive normal downstream hotplug events.
+
+For the present blue Type-A connection, Proxmox/QEMU cannot pass the physical
+Greathtek hub recursively. Map its downstream physical sockets instead:
+
+```text
+usb0: host=1-7.3.1    # general USB 2 socket 1
+usb3: host=1-7.3.2    # general USB 2 socket 2
+usb1: host=1-7.3.4.1  # keyboard/mouse socket 1
+usb2: host=1-7.3.4.2  # keyboard/mouse socket 2
+```
+
+These are physical topology paths rather than transient USB device addresses,
+so they pass whatever non-hub device occupies each Greathtek socket. Ordinary
+device replacement, enumeration, and KVM switching should not alter them. The
+prefix `1-7.3` pins the setup to the selected blue motherboard port. Relocating
+the upstream cable only requires discovering a new prefix and updating all four
+entries; the red-port test, for example, changed the prefix to `1-4` while
+preserving the Greathtek suffixes `.1`, `.2`, `.4.1`, and `.4.2`.
+
 The Titan Ridge USB controller is currently:
 
 | PCI address | PCI ID      | IOMMU group | Current host driver |
 | ----------- | ----------- | ----------- | ------------------- |
 | `3c:00.0`   | `8086:15ec` | 24          | `xhci_hcd`          |
 
-The old VM 100 note says `3b:00.0`; that address is stale after PCI
-re-enumeration. The controller currently owns USB buses 3 and 4, and no devices
-were attached when inspected. Passing the controller allows hot-plugging its
-keyboard, mouse, and audio devices without individual USB mappings.
+The old VM 100/Feynman note recorded this same Titan Ridge USB function as
+`3b:00.0`. That was its valid PCI bus address at the time, not a different
+controller or a physical Type-A port. PCI bridge bus numbering later shifted:
+bus 3b is now an empty Thunderbolt downstream range and the USB function is now
+`3c:00.0`. Always rediscover the BDF before reusing an old passthrough recipe.
+The controller currently owns USB buses 3 and 4, and no devices were attached
+when inspected. Passing it allows hot-plugging keyboard, mouse, and audio
+devices connected through the two rear USB-C ports without individual USB
+mappings. Passing only this xHCI function does not assign Titan Ridge's separate
+Thunderbolt NHI function or its PCIe-tunnelling bridge tree.
+
+VM 100's current configuration was inspected read-only and contains no active
+`hostpci` or `usb` entries; its notes describe a historical configuration. VM
+100 remains immutable for this project.
+
+VM 100 (`feynman-production`, the Hackintosh) is immutable for this project:
+we will never edit or clean up its configuration. If it must be restarted while
+VM 103 owns the RX 580, shut down VM 103 first, then start VM 100.
 
 ## Hardware profiles
 
