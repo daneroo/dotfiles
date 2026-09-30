@@ -161,7 +161,8 @@ homebrew:
     - calibre
     - chatgpt # openai desktop - was codex-app
     - claude # anthropic desktop
-    - claude-code # anthropic cli
+    # brew install --cask claude-code@latest ??
+    - claude-code@latest # anthropic cli - track latest!
     - codex # openai cl1
     # codexbar: prefer OpenUsage.app
     # - steipete/tap/codexbar
