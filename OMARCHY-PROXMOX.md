@@ -3,7 +3,7 @@
 Living runbook for installing Omarchy on `hilbert` and using it remotely from
 `galois` with Sunshine/Moonlight.
 
-Last updated: 2026-09-11
+Last updated: 2026-09-12
 
 ## Daily quick reminders
 
@@ -30,10 +30,11 @@ Moonlight from `galois` to `omoxy` is working at 1080p/60 with Super-key input.
       guest-side USB hotplug/disconnect through the physical KVM.
 - [x] Prove the physical SF-558 microphone end-to-end: Voxtype successfully
       converted live speech to text inside Omarchy.
-- [x] Confirm physical keyboard/mouse control in the Omarchy desktop.
+- [x] Restore and prove stable physical-keyboard input after KVM reconnects;
+      apply the left-only Alt/Super swap without changing Moonlight or noVNC.
 - [ ] Complete the active Display and mirror setup checklist below, including
       boot visibility, Sunshine capture selection, and keyboard mapping.
-- [ ] Prove Moonlight still works after the final four-path USB configuration.
+- [x] Prove Moonlight still works after the final four-path USB configuration.
 - [ ] Investigate the recurring nonfatal boot message `Unable to resume from
       device /dev/mapper/root`.
 - [ ] Schedule a Proxmox host reboot and prove unattended TPM unlock afterward;
@@ -45,40 +46,156 @@ Deferred/outside this experiment: the UCG Fibre LAN/DNS migration, upgrading
 Hilbert sequentially from Proxmox VE 7 to 8 to 9, a clean-install vTPM test,
 and alternative GPU-only/headless/Titan-Ridge profiles.
 
-## Display and mirror setup — active checklist
+## Display, mirror, Moonlight, and keyboard implementation checklist
 
 Goal: one Omarchy desktop presented consistently through the physical RX 580,
-VirtIO/noVNC, and (once verified) Moonlight.
+VirtIO/noVNC, and Moonlight, while retaining dependable boot and recovery
+control.
 
-### Resolution and Hyprland
+### 1. Proxmox display architecture
 
 - [x] Identify the two guest outputs: RX 580 `HDMI-A-2` and VirtIO `Virtual-1`.
-- [x] Persist both at `1920x1080@60`, with `Virtual-1` mirroring `HDMI-A-2`.
-- [x] Reboot VM 103 and verify the mirror configuration is applied at startup.
-- [ ] After the shared-display behavior is settled, evaluate native
-      `2560x1440` with scaling or the common `2048x1152` mode.
-
-### Proxmox display and passthrough
-
-- [x] Retain `vga: virtio` so the Proxmox noVNC console remains available.
+- [x] Retain `vga: virtio` for the Proxmox noVNC boot/recovery console.
 - [x] Retain RX 580 PCI passthrough for physical HDMI and Radeon encoding.
 - [x] Retain the four physical Greathtek socket-path mappings for KVM input.
-- [ ] Verify Moonlight's actual Sunshine capture output after mirroring.
 
-### Boot sequence and stated preference
+### 2. Boot-sequence output and accepted tradeoff
 
 - [x] Confirm the OVMF/Proxmox boot-options screen appears on both outputs.
-- [x] Confirm Limine/early Linux output currently appears through VirtIO/noVNC;
-      the RX 580 becomes visible when the graphical desktop starts.
-- [ ] Determine whether stock Limine can show its graphical menu on both
-      independent GOP framebuffers, or whether a custom boot-stage solution is
-      required.
-- [ ] Determine whether early Linux boot/status output can also be presented on
-      both outputs; Hyprland mirroring is too late for this stage.
+- [x] Confirm the Limine menu and early Linux output currently appear through
+      VirtIO/noVNC; the RX 580 is blank until the graphical desktop starts.
+- [x] Confirm from the current boot log that VirtIO becomes primary framebuffer
+      `fb0`, while the RX 580 becomes secondary framebuffer `fb1`.
+- [x] Research stock Limine and Linux framebuffer-console options:
+      `interface_resolution` controls Limine's selected graphical mode but no
+      documented Limine option mirrors its menu across independent GOP
+      framebuffers; Linux `fbcon=map` assigns consoles to framebuffers rather
+      than cloning one console to both.
+- [x] Accept the resulting tradeoff: noVNC is the authoritative Limine and
+      early-boot display. Showing Limine on both would require unsupported or
+      custom boot-stage work and is outside this setup.
+- [x] Preserve the known behavior: OVMF is visible on both; Limine and early
+      Linux remain on noVNC; the mirrored desktop appears on both after
+      Hyprland starts.
 
-Preferred end state: Limine and useful boot visibility on both outputs, followed
-by one mirrored desktop. Fallback end state: preserve noVNC as the authoritative
-boot/recovery display if dual-output Limine is not achievable.
+### 3. Reboot-proven 1080p mirror baseline
+
+- [x] Persist RX 580 `HDMI-A-2` at `1920x1080@60`, position `0x0`, scale `1`.
+- [x] Persist VirtIO `Virtual-1` at `1920x1080@60`, position `0x0`, scale `1`,
+      mirroring `HDMI-A-2`.
+- [x] Reboot VM 103 and verify both outputs show the same Hyprland workspace;
+      `hyprctl monitors all` reports `Virtual-1` mirroring `HDMI-A-2`.
+
+This is the stable rollback-free baseline. Do not use runtime-only monitor rules
+for subsequent tests: change `~/.config/hypr/monitors.lua`, reboot, and verify
+the resulting live state.
+
+### 4. Moonlight behavior against the mirrored desktop
+
+- [x] Start a real Moonlight session while following Sunshine's live log and
+      identify the output selected for that session; startup encoder probing is
+      not sufficient evidence. The live session selected `HDMI-A-2`.
+- [x] Confirm Moonlight shows the same content as physical HDMI and noVNC.
+- [x] Record the 1080p baseline session: 1920x1080 at 60 FPS, HEVC through
+      `hevc_vaapi`, using the Mesa Radeon driver for the RX 580; Sunshine used
+      approximately 15 Mbps.
+- [x] Confirm Sunshine consistently chooses `HDMI-A-2`; explicit output pinning
+      is unnecessary.
+- [x] Switch the physical KVM away from and back to `omoxy`; confirm display
+      EDID changes do not break the mirrored desktop or Sunshine capture.
+
+Section 4 is complete. Dynamic scale changes through Omarchy's QuickShell
+widget were also confirmed simultaneously through noVNC, Moonlight, and the
+physical RX 580 display.
+
+### 5. Selected native-resolution and scaling configuration
+
+- [x] Confirm both outputs advertise `1920x1080@60` and `2048x1152@60`; the
+      physical ASUS also advertises native `2560x1440@59.95`.
+- [x] Persist and dynamically validate the selected modes with both outputs
+      controlled by Omarchy's shared scale variable:
+      - RX 580 `HDMI-A-2`: native `2560x1440@59.95`;
+      - VirtIO `Virtual-1`: `1920x1080@60`, mirroring `HDMI-A-2`.
+- [x] Select scale `1.25` through the QuickShell widget. The RX 580 source has
+      logical size `2048x1152`; the 1080p VirtIO mirror remains usable.
+- [x] Verify identical content, correct aspect ratio, comfortable physical UI
+      sizing, noVNC legibility, and correct pointer coordinates.
+- [x] Verify a real Moonlight session: Sunshine selects `HDMI-A-2`, captures
+      `2560x1440` with logical size `2048x1152`, and uses RX 580 HEVC VA-API;
+      the Moonlight client requests and receives a 1920x1080@60 stream at
+      approximately 15 Mbps.
+- [x] Retain native 2560x1440 plus 1.25 scaling: it is excellent on the physical
+      display, more than usable in Moonlight, and adequate through noVNC.
+
+The persistent Omarchy configuration is:
+
+```lua
+local omarchy_gdk_scale = 1
+local omarchy_monitor_scale = 1.25
+
+hl.env("GDK_SCALE", tostring(omarchy_gdk_scale))
+hl.monitor({ output = "", mode = "preferred", position = "auto", scale = omarchy_monitor_scale })
+hl.monitor({ output = "HDMI-A-2", mode = "2560x1440@59.95", position = "0x0", scale = omarchy_monitor_scale })
+hl.monitor({ output = "Virtual-1", mode = "1920x1080@60", position = "0x0", scale = omarchy_monitor_scale, mirror = "HDMI-A-2" })
+```
+
+`omarchy_monitor_scale` is deliberately referenced by both named monitor rules,
+so QuickShell scale changes continue to affect the whole mirrored desktop.
+`omarchy_gdk_scale` remains present and is exported through `GDK_SCALE`; at the
+selected fractional monitor scale of 1.25 its correct integer value is `1`.
+Hyprland renders the 2560x1440 source once and scales it onto the same-aspect
+1920x1080 mirror rather than independently re-rendering the mirror.
+
+### 6. Keyboard mapping and KVM stability
+
+Do this only after the display and Moonlight capture path are settled. Treat the
+three input paths independently: physical USB/KVM, Moonlight through macOS, and
+Proxmox noVNC.
+
+- [x] Physical path: repeated KVM disconnect/reconnect cycles restore keyboard,
+      mouse, and microphone operation through the topology-path mappings. Some
+      reconnects are slow while the KVM hub and guest devices re-enumerate, but
+      no manual remapping is required.
+- [x] Prove the physical keyboard's core mapped shortcuts: physical Left Alt
+      acts as Super for the launcher, copy/paste, and window close; physical
+      Left Windows acts as Alt for Alt+Tab. Right modifiers remain unchanged.
+- [x] Moonlight path: retain the existing macOS Command/Option
+      swap and with **Capture system keyboard shortcuts: always** enabled.
+- [x] noVNC path: verify the keys required for boot/recovery—arrows, Enter,
+      Escape, and passphrase entry. Full desktop modifier parity is desirable
+      but not required for this recovery path.
+- [x] Choose and apply per-device Hyprland rules rather than a global remap.
+      Sunshine's `keyboard-passthrough` and `mouse-passthrough` devices remain
+      unchanged.
+- [x] Apply the Super/Alt swap only to the physical passthrough keyboard so its
+      physical key positions match the existing macOS mapping: the PC **Alt**
+      key performs the Super/Command role, and the PC **Windows** key performs
+      the Alt/Option role. Do not apply this guest-side swap to Moonlight or
+      noVNC virtual keyboards.
+- [x] Confirm core Omarchy shortcuts work through both the physical RX 580/KVM
+      path and macOS/Moonlight path.
+- [ ] Confirm natural scrolling on the physical Logitech mouse; leave
+      Moonlight's already-correct scrolling unchanged.
+- [ ] Decide whether Super+Tab needs a narrow follow-up adjustment after normal
+      use; it is not required for the final restore proof.
+- [ ] Reboot and repeat physical KVM plus Moonlight input tests against the
+      selected mapping.
+
+### 7. Completion proof
+
+- [x] Detach the Omarchy installer ISO so the final VM configuration contains
+      only runtime devices.
+- [ ] Reboot VM 103 and verify the selected persistent display configuration,
+      automatic TPM unlock, noVNC boot control, physical HDMI/KVM operation,
+      and Moonlight video/input.
+- [ ] Update `~/HEARTBEAT.md`, take a final VM 103 backup, stop VM 103, restore
+      the backup as temporary VM 203 with its EFI and TPM state, and verify the
+      exact heartbeat plus automatic unlock, SSH, guest agent, Tailscale,
+      physical HDMI/KVM, noVNC, and Moonlight. Never run 103 and 203 together.
+- [ ] Delete temporary VM 203 after the proof and return VM 103 to service.
+- [ ] Update the daily reminders and consolidate this section into the final
+      end-state runbook, retaining only the chosen configuration and verified
+      recovery procedure.
 
 ## LUKS implementation checklist
 
@@ -325,16 +442,16 @@ ssh root@hilbert qm config 103
 
 ### Annotated current `qm` configuration
 
-Snapshot from `qm config 103` on 2026-09-11. Lines beginning with `#` are
+Snapshot from `qm config 103`, updated on 2026-09-12. Lines beginning with `#` are
 documentation annotations, not part of the captured Proxmox configuration.
 
 ```text
 # QEMU guest agent is enabled on the Proxmox side.
 agent: enabled=1
 
-# OVMF/q35 VM; boot the installed disk before the attached installer ISO.
+# OVMF/q35 VM; boot only from the installed disk.
 bios: ovmf
-boot: order=scsi0;ide2
+boot: order=scsi0
 machine: q35
 ostype: l26
 
@@ -343,11 +460,10 @@ cores: 4
 cpu: host
 memory: 8192
 
-# OVMF variables, encrypted root disk, installer ISO, and restored/tested vTPM.
+# OVMF variables, encrypted root disk, and restored/tested vTPM.
 efidisk0: local-zfs:vm-103-disk-0,efitype=4m,pre-enrolled-keys=0,size=1M
 scsi0: local-zfs:vm-103-disk-1,discard=on,iothread=1,size=40G
 scsihw: virtio-scsi-single
-ide2: pve-storage_backups-isos:iso/omarchy-4.0.3.iso,media=cdrom,size=6113920K
 tpmstate0: local-zfs:vm-103-disk-2,size=4M,version=v2.0
 
 # Entire Radeon GPU plus HDMI-audio function; VirtIO remains for noVNC recovery.
@@ -373,9 +489,9 @@ name: omoxy
 onboot: 0
 ```
 
-The installation completed in 1 minute 53 seconds. Select **Reboot Now** in the
-Proxmox console. The VM boot order is `scsi0;ide2`, so the installed system disk
-is tried before the still-attached installer ISO.
+The installation completed in 1 minute 53 seconds. After installation and
+validation, the installer CD/DVD entry was detached without deleting the ISO
+from shared storage. The VM now boots only from `scsi0`.
 
 First boot succeeded: LUKS unlocked and the Omarchy desktop appeared correctly
 through the VirtIO/noVNC display. Every boot since installation has displayed
