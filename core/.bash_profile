@@ -123,3 +123,6 @@ eval "$(starship init bash)"
 # Where our npm globals go! ~/.npmrc
 export PATH="$HOME/.npm-global/bin:$PATH"
 
+# The following lines were added by Docker Desktop to add commands to your PATH.
+export PATH="$PATH:/Users/daniel/.docker/bin"
+# End of Docker Desktop section.
