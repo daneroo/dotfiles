@@ -1,4 +1,11 @@
 onboarding = false
+
+[keys]
+# cmd+k clears the focused pane, like Ghostty's cmd+k outside herdr.
+# Ghostty forwards cmd+k here via `performable:super+k=clear_screen`.
+# prefix+ctrl+k is a fallback for terminals that don't forward Cmd.
+clear_pane = ["cmd+k", "prefix+ctrl+k"]
+
 [ui]
 agent_panel_sort = "priority"
 

@@ -46,3 +46,8 @@ window-save-state = always
 # Defaults: cursor, no-sudo, title, no-ssh-env, no-ssh-terminfo, path
 # We enable: ssh-env (fix SSH), sudo (preserve terminfo with sudo)
 shell-integration-features = cursor,sudo,title,ssh-env
+
+# DL-2026-10-02: cmd+k clears the screen, but only when Ghostty can actually do it.
+# In full-screen apps (alternate screen, e.g. herdr) clear_screen is not
+# performable, so cmd+k is passed through to the app; herdr binds it to clear_pane.
+keybind = performable:super+k=clear_screen
