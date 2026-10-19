@@ -157,7 +157,6 @@ homebrew:
     # - android-platform-tools
     - audacity
     - balenaetcher
-    - block-buzz
     - calibre
     - chatgpt # openai desktop - was codex-app
     - claude # anthropic desktop
