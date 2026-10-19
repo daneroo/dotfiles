@@ -28,8 +28,10 @@ This repo is for managing:
   - Manages versioned tools (Python, Bun) through mise
     - Reports each version spec with the release it resolves to
     - Prints `mise install` for missing versions, `mise use -g` when mise's
-      global defaults differ from `config.yaml`, and `mise uninstall` for
-      versions no spec resolves to; never runs them itself
+      global defaults differ from `config.yaml`, `mise uninstall` for
+      versions no spec resolves to, and `mise unuse -g` for a stray (a tool
+      in mise's global config that `config.yaml` doesn't list); never runs
+      them itself
   - Manages npm global packages
     - Desired packages: corepack, eslint, json, turbo, nx, etc.
     - Maintains shell completions

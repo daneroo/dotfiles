@@ -15,6 +15,8 @@ type observed struct {
 	defaults map[string][]string
 	// resolved maps each tool's version spec to the newest release it matches
 	resolved map[string]map[string]string
+	// globalConfig is the path of mise's global config, when it lists any tool
+	globalConfig string
 }
 
 // planned is what reconciling prints: a report line per check, then the
@@ -24,6 +26,7 @@ type planned struct {
 	install   []string
 	use       []string
 	uninstall []string
+	unuse     []string
 }
 
 // plan compares the desired version specs with the actual state and returns
@@ -31,6 +34,7 @@ type planned struct {
 //   - a resolved version that isn't installed → mise install <tool>@<version>
 //   - a global default list that differs from the specs → mise use -g <tool>@<spec> ...
 //   - an installed version that no spec resolves to → mise uninstall <tool>@<version>
+//   - a stray in mise's global config, a tool that config.yaml doesn't list → mise unuse -g <tool>
 //
 // Tools are taken in name order, so the output is stable.
 func plan(desired map[string][]string, actual observed) planned {
@@ -71,6 +75,15 @@ func plan(desired map[string][]string, actual observed) planned {
 			p.report = append(p.report, fmt.Sprintf("✗ - %s %s is installed but no version spec resolves to it", tool, version))
 			p.uninstall = append(p.uninstall, fmt.Sprintf("mise uninstall %s@%s", tool, version))
 		}
+	}
+
+	// mise unuse -g only removes the stray's line; its versions are uninstalled above
+	for _, tool := range slices.Sorted(maps.Keys(actual.defaults)) {
+		if _, ok := desired[tool]; ok {
+			continue
+		}
+		p.report = append(p.report, fmt.Sprintf("✗ - %s is a stray in mise's global config, %s: config.yaml doesn't list it", tool, actual.globalConfig))
+		p.unuse = append(p.unuse, "mise unuse -g "+tool)
 	}
 
 	return p

@@ -51,6 +51,8 @@ step, and the whole scenario; `run.sh` prints the total, build included:
    installing bun; run the printed line; rerun: nothing to do.
 7. Install an unwanted bun version; rerun: `reconfig` prints its
    `mise uninstall` line.
+8. Add a stray to mise's global config (a tool `e2e/config.yaml` doesn't
+   list); rerun: `reconfig` prints `mise unuse -g jq`; run it; rerun: no stray.
 
 ## Manual Testing
 

@@ -43,6 +43,7 @@ func Reconcile(desired map[string][]string) error {
 	showCommands(p.install, "missing mise versions")
 	showCommands(p.use, "mise defaults to change")
 	showCommands(p.uninstall, "unwanted mise versions")
+	showCommands(p.unuse, "strays in mise's global config")
 	return nil
 }
 
@@ -52,7 +53,7 @@ func observe(desired map[string][]string) (observed, error) {
 	if err != nil {
 		return observed{}, err
 	}
-	defaults, err := getGlobalDefaults()
+	defaults, globalConfig, err := getGlobalDefaults()
 	if err != nil {
 		return observed{}, err
 	}
@@ -67,7 +68,7 @@ func observe(desired map[string][]string) (observed, error) {
 			resolved[tool][spec] = version
 		}
 	}
-	return observed{installed: installed, defaults: defaults, resolved: resolved}, nil
+	return observed{installed: installed, defaults: defaults, resolved: resolved, globalConfig: globalConfig}, nil
 }
 
 // lsEntry is one version in mise ls --json.
@@ -95,26 +96,28 @@ func getInstalledVersions() (map[string][]string, error) {
 }
 
 // getGlobalDefaults returns, for each tool in mise's global config, its
-// version specs in config order. mise ls --global says which tools the global
-// config lists and where it is, but sorts their versions; so the ordered list
-// comes from mise config get on that file.
-func getGlobalDefaults() (map[string][]string, error) {
+// version specs in config order, and the config's path. mise ls --global says
+// which tools the global config lists and where it is, but sorts their
+// versions; so the ordered list comes from mise config get on that file.
+func getGlobalDefaults() (map[string][]string, string, error) {
 	entries, err := miseLs("--global")
 	if err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	defaults := map[string][]string{}
+	var globalConfig string
 	for tool, versions := range entries {
 		if len(versions) == 0 || versions[0].Source.Path == "" {
 			continue
 		}
-		specs, err := getConfiguredSpecs(versions[0].Source.Path, tool)
+		globalConfig = versions[0].Source.Path
+		specs, err := getConfiguredSpecs(globalConfig, tool)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
 		defaults[tool] = specs
 	}
-	return defaults, nil
+	return defaults, globalConfig, nil
 }
 
 // miseLs runs mise ls --json with a filter flag and parses the output

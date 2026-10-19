@@ -18,6 +18,7 @@ func TestPlan(t *testing.T) {
 		wantInstall   []string
 		wantUse       []string
 		wantUninstall []string
+		wantUnuse     []string
 	}{
 		{
 			name:    "a fresh machine",
@@ -105,6 +106,23 @@ func TestPlan(t *testing.T) {
 			wantInstall:   []string{"mise install bun@1.4.3"},
 			wantUninstall: []string{"mise uninstall bun@1.4.2"},
 		},
+		{
+			name:    "a stray in mise's global config",
+			desired: python,
+			actual: observed{
+				installed: map[string][]string{
+					"bun":    {"1.4.3"},
+					"python": {"3.11.17", "3.12.15"},
+				},
+				defaults: map[string][]string{
+					"bun":    {"latest"},
+					"python": {"3.12", "3.11"},
+				},
+				resolved: pythonResolved,
+			},
+			wantUninstall: []string{"mise uninstall bun@1.4.3"},
+			wantUnuse:     []string{"mise unuse -g bun"},
+		},
 	}
 
 	for _, tt := range tests {
@@ -113,6 +131,7 @@ func TestPlan(t *testing.T) {
 			assertCommands(t, "install", got.install, tt.wantInstall)
 			assertCommands(t, "use", got.use, tt.wantUse)
 			assertCommands(t, "uninstall", got.uninstall, tt.wantUninstall)
+			assertCommands(t, "unuse", got.unuse, tt.wantUnuse)
 		})
 	}
 }
@@ -129,6 +148,19 @@ func TestPlanReportsEachSpec(t *testing.T) {
 		"✓ - python 3.12 → 3.12.15",
 		"✗ - python 3.11 → 3.11.17 is not installed",
 		"✓ - python defaults match config.yaml: 3.12, 3.11",
+	}
+	if !slices.Equal(got.report, want) {
+		t.Errorf("report:\n got %q\nwant %q", got.report, want)
+	}
+}
+
+func TestPlanReportsAStray(t *testing.T) {
+	got := plan(map[string][]string{}, observed{
+		defaults:     map[string][]string{"bun": {"latest"}},
+		globalConfig: "/Users/daniel/.config/mise/config.toml",
+	})
+	want := []string{
+		"✗ - bun is a stray in mise's global config, /Users/daniel/.config/mise/config.toml: config.yaml doesn't list it",
 	}
 	if !slices.Equal(got.report, want) {
 		t.Errorf("report:\n got %q\nwant %q", got.report, want)

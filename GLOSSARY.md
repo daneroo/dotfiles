@@ -38,6 +38,13 @@ A program the machine keeps at specific versions, possibly several side by
 side, one of them the default. Python and Bun are versioned tools.
 _Avoid_: Runtime, plugin, SDK
 
+**Stray**:
+A tool listed in mise's global config, `~/.config/mise/config.toml`, that the
+desired state doesn't list, typically one removed from `config.yaml`.
+Reconciling reports it and prints `mise unuse -g <tool>`, which removes only
+that line; the tool's installed versions get their own `mise uninstall`.
+_Avoid_: Orphan, leftover
+
 **Version spec**:
 How the desired state names a versioned tool's version: a prefix such as
 `3.12` (the newest matching release), `latest`, or `lts` (the newest

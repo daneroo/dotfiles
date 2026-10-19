@@ -13,6 +13,7 @@ DESIRED_FORMULAE="hello jq tree"
 EXTRANEOUS_FORMULA=figlet
 NPM_GLOBAL=semver
 UNWANTED_BUN=1.1.0
+STRAY_TOOL=jq
 
 echo "Container: $(uname -sm), $(brew --version | head -1), bash ${BASH_VERSION}"
 
@@ -99,6 +100,20 @@ main() {
     run_reconfig
     assert_exit 0
     assert_output_line " mise uninstall bun@$UNWANTED_BUN"
+
+    step "8. A stray in mise's global config is reported with its unuse line, which works"
+    # Adds the line to mise's global config without installing the tool
+    mise config set -f ~/.config/mise/config.toml "tools.$STRAY_TOOL" 1.7.1 || fail "mise config set failed"
+    run_reconfig
+    assert_exit 0
+    assert_output "✗ - $STRAY_TOOL is a stray in mise's global config"
+    assert_output_line " mise unuse -g $STRAY_TOOL"
+    run_printed " mise unuse -g $STRAY_TOOL"
+    echo "Rerunning: no stray"
+    run_reconfig
+    assert_exit 0
+    assert_output "✓ - No strays in mise's global config"
+    assert_no_printed "mise unuse"
 
     echo
     end_step
