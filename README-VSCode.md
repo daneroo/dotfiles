@@ -16,7 +16,7 @@ Split the problem:
 
 - validation method: minimal requirements, or cue validation of json files
 - explicit requirements for extensions and workflows
-  - js/ts +deno,bun, markdown, go
+  - js/ts +bun, markdown, go
   - formating and linting
 
 ## Minimal extensions
@@ -32,7 +32,6 @@ We added these to the Workspace recommendations: `.vscode/extensions.json`
 | ------------------ | ------------------------------------- | :---: |
 | Markdownlint       | davidanson.vscode-markdownlint        |   ✗   |
 | Prettier           | esbenp.prettier-vscode                |   ✗   |
-| Deno               | denoland.vscode-deno                  |   ✗   |
 | Code Spell Checker | streetsidesoftware.code-spell-checker |   ✗   |
 
 ## Extensions

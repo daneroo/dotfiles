@@ -33,8 +33,6 @@ homebrew:
       - cmake
       - coreutils
       - cue
-      # deno is now managed by asdf
-      # deno
       - difftastic
       - direnv
       # docker-slim's project has been renamed to slimtoolkit
@@ -188,7 +186,6 @@ homebrew:
 asdf:
   # nodejs: moved back to brew
   python: ["3.12", "3.11"] # Multiple versions, latest patch
-  deno: ["latest"] # Latest stable
   bun: ["latest"] # Latest stable
 
 npm:

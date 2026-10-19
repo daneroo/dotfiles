@@ -43,7 +43,3 @@ fmt-check:
         echo "$unformatted"
         exit 1
     fi
-
-# Run Deno tests (deno/ is slated for removal).
-test-deno:
-    cd deno && deno task test

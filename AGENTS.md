@@ -14,8 +14,6 @@ installed; `check.sh` makes the machine match it.
   shell completions.
 - `core/`: Stow package mirrored into `~`. Edit dotfiles here, never the
   symlinked copies in `~`.
-- `deno/`: abandoned config-validation experiment, slated for removal (see
-  `thoughts/BACKLOG.md`). Don't extend it.
 
 ## Commands
 

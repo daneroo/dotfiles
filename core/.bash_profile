@@ -102,9 +102,6 @@ if [ -f  "$HOME/.cargo/env" ]; then
   . "$HOME/.cargo/env"
 fi
 
-# for Deno as installed from denoland's install script
-export PATH=$PATH:$HOME/.deno/bin
-
 # For ngs NATS.io utility
 export PATH=$PATH:$HOME/.ngs/bin  #Add NGS utility to the path
 

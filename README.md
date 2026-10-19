@@ -34,7 +34,7 @@ This repo is for managing:
     - Identifies extraneous packages
     - Ensures transitive dependencies are maintained
   - Manages runtime versions via asdf
-    - Manages plugins: Node.js, Python, Deno, Bun
+    - Manages plugins: Node.js, Python, Bun
     - For each plugin:
       - Automatic installation of desired versions
       - Global version management
@@ -67,28 +67,11 @@ This repo is for managing:
     - [ ] Better error reporting and recovery
     - [ ] Proper logging levels (debug, info, warn, error)
 
-- Consider a compatible equivalent implementation in Deno/Typescript
 - Consider a compatible equivalent implementation in Elixir/Gleam
 - Documentation and Testing
   - [ ] Add succinct but complete documentation
   - [ ] Create automated tests if possible
   - [ ] Document bootstrap process
-
-## Multi-host configuration Validation
-
-- Merging shared into host:
-  - [x] Type System Improvements:
-    - [x] Rename types to reflect multi-host vs single-host nature
-    - [x] Define types for flattened/merged configurations
-    - [x] Document type relationships and constraints
-  - [ ] Define Merging API:
-    - [ ] Parse/load multi-host config
-    - [ ] Flatten to single host
-    - [ ] Flatten all hosts
-  - [ ] Implement Merging:
-    - [x] Validate ASDF plugin uniqueness (no merging)
-    - [ ] Merge sorted arrays (homebrew, npm)
-    - [ ] Preserve type safety through the merge
 
 ## Operating
 
@@ -128,7 +111,6 @@ done
     - Consider installing 'JetBrains Mono' and 'FiraCode Nerd Font Mono'
 - [ ] replace asdf with mise
 - [ ] Per machine specialization
-  - deno - multi config - not necessary - per host file: config.host.yaml - or...
   - [x] CUE has been declared a disaster area
 - [ ] config content: update python tooling, after move to uv/ruff
 - [ ] Rename the executable to: reconfig

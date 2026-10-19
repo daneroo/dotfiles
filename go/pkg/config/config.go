@@ -1,6 +1,7 @@
 package config
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path"
@@ -40,9 +41,22 @@ func LoadConfig(configFile string) (*Config, error) {
 		return nil, fmt.Errorf("reading %s: %w", configFile, err)
 	}
 
+	cfg, err := ParseConfig(out)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", configFile, err)
+	}
+
+	fmt.Printf("✓ - Configuration loaded\n")
+	return cfg, nil
+}
+
+// ParseConfig parses and validates a configuration document
+func ParseConfig(data []byte) (*Config, error) {
 	var temp packageConfig
-	if err := yaml.Unmarshal(out, &temp); err != nil {
-		return nil, fmt.Errorf("parsing %s: %v", configFile, err)
+	decoder := yaml.NewDecoder(bytes.NewReader(data))
+	decoder.KnownFields(true) // reject unknown keys, e.g. a misspelled section
+	if err := decoder.Decode(&temp); err != nil {
+		return nil, fmt.Errorf("parsing: %w", err)
 	}
 
 	if err := validateConfig(&temp); err != nil {
@@ -65,7 +79,6 @@ func LoadConfig(configFile string) (*Config, error) {
 		cfg.Homebrew = append(cfg.Homebrew, BrewPackage{Name: c, IsCask: true})
 	}
 
-	fmt.Printf("✓ - Configuration loaded\n")
 	return &cfg, nil
 }
 
@@ -73,6 +86,22 @@ func LoadConfig(configFile string) (*Config, error) {
 func validateConfig(cfg *packageConfig) error {
 	var violations []string
 	var sectionViolations []string
+
+	// Required sections may be empty ([] or {}), but must be present
+	required := []struct {
+		name    string
+		missing bool
+	}{
+		{"homebrew.formulae", cfg.Homebrew.FormulaeBySection == nil},
+		{"homebrew.casks", cfg.Homebrew.Casks == nil},
+		{"asdf", cfg.Asdf == nil},
+		{"npm", cfg.Npm == nil},
+	}
+	for _, r := range required {
+		if r.missing {
+			violations = append(violations, fmt.Sprintf("✗ - missing required section %q", r.name))
+		}
+	}
 
 	// Validate format for all sections
 	for section, formulae := range cfg.Homebrew.FormulaeBySection {
@@ -95,7 +124,7 @@ func validateConfig(cfg *packageConfig) error {
 		if sortViolations := validateSorting(formulae); len(sortViolations) > 0 {
 			sectionViolations = append(sectionViolations, fmt.Sprintf("  ✗ - Section %q is not sorted", section))
 			for _, v := range sortViolations {
-				sectionViolations = append(violations, fmt.Sprintf("    ✗ - %s", v))
+				sectionViolations = append(sectionViolations, fmt.Sprintf("    ✗ - %s", v))
 			}
 		}
 	}
@@ -131,9 +160,18 @@ func validateConfig(cfg *packageConfig) error {
 		}
 	}
 
+	// Validate no list declares the same entry twice
+	for section, formulae := range cfg.Homebrew.FormulaeBySection {
+		violations = append(violations, validateUnique(fmt.Sprintf("Section %q", section), formulae)...)
+	}
+	violations = append(violations, validateUnique("Casks", cfg.Homebrew.Casks)...)
+	violations = append(violations, validateUnique("NPM packages", cfg.Npm)...)
+	for plugin, versions := range cfg.Asdf {
+		violations = append(violations, validateUnique(fmt.Sprintf("Plugin %q", plugin), versions)...)
+	}
+
 	if len(violations) > 0 {
-		fmt.Println(strings.Join(violations, "\n"))
-		return fmt.Errorf("validation failed for config")
+		return fmt.Errorf("validation failed:\n%s", strings.Join(violations, "\n"))
 	}
 
 	return nil
@@ -154,10 +192,24 @@ func validateSorting(items []string) []string {
 
 	var violations []string
 	for i := 1; i < len(items); i++ {
-		if !compareByBasename(items[i-1], items[i]) {
+		// Equal neighbours are duplicates, reported by validateUnique
+		if items[i-1] != items[i] && !compareByBasename(items[i-1], items[i]) {
 			violations = append(violations, fmt.Sprintf("%q should come before %q",
 				items[i], items[i-1]))
 		}
+	}
+	return violations
+}
+
+// validateUnique reports each entry that appears more than once in a list
+func validateUnique(list string, items []string) []string {
+	var violations []string
+	seen := make(map[string]bool)
+	for _, item := range items {
+		if seen[item] {
+			violations = append(violations, fmt.Sprintf("  ✗ - %s: duplicate %q", list, item))
+		}
+		seen[item] = true
 	}
 	return violations
 }
