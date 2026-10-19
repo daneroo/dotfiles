@@ -20,16 +20,6 @@ done
 # brew's bash completion - assumes HOMEBREW_PREFIX is set - works for v2
 [[ -r "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh" ]] && . "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh"
 
-# ASDF Setup
-ASDF_DATA_DIR=$HOME/.asdf
-# Add asdf shims to PATH
-export PATH="${ASDF_DATA_DIR:-$HOME/.asdf}/shims:$PATH"
-# asdf completion
-# if asdf is installed, use its completion
-if command -v asdf &>/dev/null; then
-  . <(asdf completion bash)
-fi
-
 # direnv hook - load environment from .envrc files
 # added for nix/flakes support
 if command -v direnv &>/dev/null; then

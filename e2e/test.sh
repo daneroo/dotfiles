@@ -21,7 +21,7 @@ main() {
     step "1. A fresh machine reports exactly the desired formulae as missing"
     run_reconfig
     assert_exit 0
-    assert_section_output "ASDF Section" "✗ - asdf is not installed, skipping"
+    assert_no_output "## ASDF"
     assert_section_output "NPM Globals Section" "✗ - npm is not installed, skipping"
     assert_output "## CLI Completions Section"
     local install_line

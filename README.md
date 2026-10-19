@@ -1,15 +1,6 @@
 # dotfiles
 
-**Note:** asdf breaking changes, See <https://asdf-vm.com/guide/upgrading-to-v0-16.html#breaking-changes>
-
 **Note:** NPM Globals are now in `~/.npm-global` as decraed in our dotfile managed [`.npmrc`](npmrc). (Yes, prefix=XX means global install go here)
-
-To replace nvm/asdf, consider [mise](https://mise.jdx.dev/)
-
-Also: we can use a default-npm-packages file to install npm packages after installing a Node.js version.
-
-Default npm Packages
-asdf-nodejs can automatically install a set of default set of npm package right after installing a Node.js version. To enable this feature, provide a $HOME/.default-npm-packages file that lists one package per line, for example:
 
 ## Current State and Plan
 
@@ -34,13 +25,6 @@ This repo is for managing:
     - Detects missing packages
     - Identifies extraneous packages
     - Ensures transitive dependencies are maintained
-  - Manages runtime versions via asdf
-    - Manages plugins: Node.js, Python, Bun
-    - For each plugin:
-      - Automatic installation of desired versions
-      - Global version management
-      - Detection of extraneous versions
-      - Plugin updates
   - Manages npm global packages
     - Desired packages: corepack, eslint, json, turbo, nx, etc.
     - Maintains shell completions
@@ -50,7 +34,7 @@ This repo is for managing:
     - Handles pnpm via corepack
   - Common features across all reconcilers:
     - Consistent ✓/✗ status reporting
-    - A missing tool (asdf, npm, a completion tool) is reported as
+    - A missing tool (npm, a completion tool) is reported as
       `not installed, skipping`; only real errors exit non-zero
     - Idempotent reconciliation pattern
     - New implementation (1,677 lines of Go <--> 255 lines of bash)
@@ -113,7 +97,7 @@ done
   - [ ] starship new prompt with Nerd font test
     - Default VSCode font: 'MesloLGS Nerd Font Mono', Menlo, Monaco, 'Courier New', monospace
     - Consider installing 'JetBrains Mono' and 'FiraCode Nerd Font Mono'
-- [ ] replace asdf with mise
+- [ ] manage versioned tools with [mise](https://mise.jdx.dev/) (#5)
 - [ ] Per machine specialization
   - [x] CUE has been declared a disaster area
 - [ ] config content: update python tooling, after move to uv/ruff

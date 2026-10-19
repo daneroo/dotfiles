@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -30,8 +29,7 @@ type packageConfig struct {
 		FormulaeBySection map[string][]string `yaml:"formulae"`
 		Casks             []string            `yaml:"casks"`
 	} `yaml:"homebrew"`
-	Asdf map[string][]string `yaml:"asdf"`
-	Npm  []string            `yaml:"npm"`
+	Npm []string `yaml:"npm"`
 }
 
 // LoadConfig loads and validates the configuration from the specified file
@@ -66,7 +64,6 @@ func ParseConfig(data []byte) (*Config, error) {
 	// After validation passes, flatten into final Config
 	var cfg Config
 	cfg.Npm = temp.Npm
-	cfg.Asdf = temp.Asdf
 
 	// Convert and flatten formulae sections and casks into []Package
 	cfg.Homebrew = make([]BrewPackage, 0)
@@ -94,7 +91,6 @@ func validateConfig(cfg *packageConfig) error {
 	}{
 		{"homebrew.formulae", cfg.Homebrew.FormulaeBySection == nil},
 		{"homebrew.casks", cfg.Homebrew.Casks == nil},
-		{"asdf", cfg.Asdf == nil},
 		{"npm", cfg.Npm == nil},
 	}
 	for _, r := range required {
@@ -151,24 +147,12 @@ func validateConfig(cfg *packageConfig) error {
 		}
 	}
 
-	// Validate asdf plugin versions
-	for plugin, versions := range cfg.Asdf {
-		for _, version := range versions {
-			if err := validateAsdfVersion(version, plugin); err != nil {
-				violations = append(violations, fmt.Sprintf("  ✗ - Plugin %q: %v", plugin, err))
-			}
-		}
-	}
-
 	// Validate no list declares the same entry twice
 	for section, formulae := range cfg.Homebrew.FormulaeBySection {
 		violations = append(violations, validateUnique(fmt.Sprintf("Section %q", section), formulae)...)
 	}
 	violations = append(violations, validateUnique("Casks", cfg.Homebrew.Casks)...)
 	violations = append(violations, validateUnique("NPM packages", cfg.Npm)...)
-	for plugin, versions := range cfg.Asdf {
-		violations = append(violations, validateUnique(fmt.Sprintf("Plugin %q", plugin), versions)...)
-	}
 
 	if len(violations) > 0 {
 		return fmt.Errorf("validation failed:\n%s", strings.Join(violations, "\n"))
@@ -222,34 +206,4 @@ func compareByBasename(i, j string) bool {
 		return i < j // Use full path as tiebreaker
 	}
 	return iBase < jBase
-}
-
-// validateAsdfVersion validates version format for asdf plugins
-// Supported formats:
-// - "latest": resolves to the latest stable version (using asdf latest <plugin>)
-// - "lts": for nodejs only, resolves to the latest LTS version from nodejs.org
-// - "X[.Y[.Z]]": resolves to the latest version matching the prefix:
-//   - "3" -> latest 3.x.x
-//   - "3.12" -> latest 3.12.x
-//   - "3.12.0" -> exact version
-func validateAsdfVersion(version string, plugin string) error {
-	if version == "latest" {
-		return nil
-	}
-	if version == "lts" {
-		if plugin != "nodejs" {
-			return fmt.Errorf("version %q is only valid for nodejs, not for %q", version, plugin)
-		}
-		return nil
-	}
-
-	pattern := `^\d+(\.\d+){0,2}$`
-	matched, _ := regexp.MatchString(pattern, version)
-	if !matched {
-		if plugin == "nodejs" {
-			return fmt.Errorf("invalid version format %q: must be 'latest', 'lts', or 'X[.Y[.Z]]'", version)
-		}
-		return fmt.Errorf("invalid version format %q: must be 'latest' or 'X[.Y[.Z]]'", version)
-	}
-	return nil
 }

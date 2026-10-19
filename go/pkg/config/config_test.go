@@ -17,7 +17,6 @@ homebrew:
   formulae:
     main: []
   casks: []
-asdf: {}
 npm: []`,
 		},
 		{
@@ -30,21 +29,8 @@ homebrew:
       - go
   casks:
     - 1password
-asdf:
-  nodejs: ["lts"]
 npm:
   - typescript`,
-		},
-		{
-			name: "asdf versions can be in any order",
-			yaml: `
-homebrew:
-  formulae:
-    main: []
-  casks: []
-asdf:
-  nodejs: ["20.0.0", "18.0.0", "lts"]
-npm: []`,
 		},
 		{
 			name: "tap formula sorted by basename",
@@ -56,7 +42,6 @@ homebrew:
       - westpoint-io/lazyrsync/lazyrsync
       - wget
   casks: []
-asdf: {}
 npm: []`,
 		},
 	}
@@ -86,7 +71,6 @@ homebrew:
       - git
       - bash
   casks: []
-asdf: {}
 npm: []`,
 			msgIncludes: []string{`"git" should come before "zsh"`, `"bash" should come before "git"`},
 		},
@@ -100,7 +84,6 @@ homebrew:
     - zoom
     - alfred
     - 1password
-asdf: {}
 npm: []`,
 			msgIncludes: []string{"Casks are not sorted"},
 		},
@@ -111,7 +94,6 @@ homebrew:
   formulae:
     main: []
   casks: []
-asdf: {}
 npm:
   - zod
   - typescript
@@ -127,7 +109,6 @@ homebrew:
       - bbb
       - org/repo/aaa
   casks: []
-asdf: {}
 npm: []`,
 			msgIncludes: []string{`"org/repo/aaa" should come before "bbb"`},
 		},
@@ -140,7 +121,6 @@ homebrew:
       - org2/repo2/name
       - org1/repo1/name
   casks: []
-asdf: {}
 npm: []`,
 			msgIncludes: []string{`"org1/repo1/name" should come before "org2/repo2/name"`},
 		},
@@ -153,7 +133,6 @@ homebrew:
   casks:
     - bbb
     - org/repo/aaa
-asdf: {}
 npm: []`,
 			msgIncludes: []string{`"org/repo/aaa" should come before "bbb"`},
 		},
@@ -166,7 +145,6 @@ homebrew:
   casks:
     - org2/repo2/name
     - org1/repo1/name
-asdf: {}
 npm: []`,
 			msgIncludes: []string{`"org1/repo1/name" should come before "org2/repo2/name"`},
 		},
@@ -177,21 +155,8 @@ homebrew:
   formulae:
     main: "not-an-array"
   casks: []
-asdf: {}
 npm: []`,
 			msgIncludes: []string{"cannot unmarshal"},
-		},
-		{
-			name: "invalid asdf version format",
-			yaml: `
-homebrew:
-  formulae:
-    main: []
-  casks: []
-asdf:
-  nodejs: ["invalid-version"]
-npm: []`,
-			msgIncludes: []string{"invalid version format"},
 		},
 		{
 			name: "invalid cask format",
@@ -201,7 +166,6 @@ homebrew:
     main: []
   casks:
     - this/has/way/too/many/parts
-asdf: {}
 npm: []`,
 			msgIncludes: []string{"invalid format"},
 		},
@@ -211,7 +175,6 @@ npm: []`,
 homebrew:
   formulae:
     main: []
-asdf: {}
 npm: []`,
 			msgIncludes: []string{"missing required", "homebrew.casks"},
 		},
@@ -220,19 +183,19 @@ npm: []`,
 			yaml: `
 homebrew:
   casks: []
-asdf: {}
 npm: []`,
 			msgIncludes: []string{"missing required", "homebrew.formulae"},
 		},
 		{
-			name: "missing required asdf section",
+			name: "asdf section is an unknown key",
 			yaml: `
 homebrew:
   formulae:
     main: []
   casks: []
+asdf: {}
 npm: []`,
-			msgIncludes: []string{"missing required", "asdf"},
+			msgIncludes: []string{"field asdf not found"},
 		},
 		{
 			name: "missing required npm section",
@@ -240,8 +203,7 @@ npm: []`,
 homebrew:
   formulae:
     main: []
-  casks: []
-asdf: {}`,
+  casks: []`,
 			msgIncludes: []string{"missing required", "npm"},
 		},
 		{
@@ -251,7 +213,6 @@ homebrew:
   formulae:
     main: []
   casks: []
-asdf: {}
 npm: []
 homebew: {}`,
 			msgIncludes: []string{"homebew"},
@@ -264,7 +225,6 @@ homebrew:
     main: []
   casks: []
   cask: []
-asdf: {}
 npm: []`,
 			msgIncludes: []string{"cask"},
 		},
@@ -275,7 +235,6 @@ homebrew:
   formulae:
     main: [same-package, same-package]
   casks: []
-asdf: {}
 npm: []`,
 			msgIncludes: []string{`duplicate "same-package"`},
 		},
@@ -286,7 +245,6 @@ homebrew:
   formulae:
     main: []
   casks: [same-package, same-package]
-asdf: {}
 npm: []`,
 			msgIncludes: []string{`duplicate "same-package"`},
 		},
@@ -297,21 +255,8 @@ homebrew:
   formulae:
     main: []
   casks: []
-asdf: {}
 npm: [same-package, same-package]`,
 			msgIncludes: []string{`duplicate "same-package"`},
-		},
-		{
-			name: "duplicate asdf version",
-			yaml: `
-homebrew:
-  formulae:
-    main: []
-  casks: []
-asdf:
-  nodejs: [lts, lts]
-npm: []`,
-			msgIncludes: []string{`duplicate "lts"`},
 		},
 	}
 

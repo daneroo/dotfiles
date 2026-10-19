@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/daneroo/dotfiles/go/pkg/asdf"
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/actual"
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/reconcile"
 	"github.com/daneroo/dotfiles/go/pkg/completions"
@@ -47,13 +46,6 @@ func main() {
 	err = reconcile.Reconcile(cfg.Homebrew)
 	if err != nil {
 		handleError(err)
-	}
-
-	fmt.Printf("\n## ASDF Section\n\n")
-	// Handle asdf plugins and versions
-	if err := asdf.Reconcile(cfg.Asdf); err != nil {
-		fmt.Printf("✗ - %v\n", err)
-		os.Exit(1)
 	}
 
 	fmt.Printf("\n## NPM Globals Section\n\n")

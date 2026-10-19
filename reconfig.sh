@@ -16,7 +16,7 @@ fi
 # Check for go
 if ! command -v go &>/dev/null; then
     echo "✓ - brew is installed but go is missing"
-    echo " temporarily install it with (it may be replaced with an asdf version later):"
+    echo " install it with:"
     echo " brew install go"
     exit 1
 else

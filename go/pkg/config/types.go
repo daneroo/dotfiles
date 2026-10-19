@@ -9,6 +9,5 @@ type BrewPackage struct {
 // Config represents the complete configuration for all package managers
 type Config struct {
 	Homebrew []BrewPackage
-	Asdf     map[string][]string
 	Npm      []string
 }

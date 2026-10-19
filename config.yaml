@@ -2,7 +2,6 @@
 
 # Configuration for package managers
 # - Homebrew (formulae and casks)
-# - asdf (runtime versions)
 # - npm (global packages)
 
 homebrew:
@@ -17,7 +16,6 @@ homebrew:
     main:
       - act
       - asciinema
-      - asdf
       - aws-iam-authenticator
       - awscli
       # azure-cli
@@ -26,13 +24,13 @@ homebrew:
       - b3sum
       - bash
       - bash-completion@2
-      # bun is now managed by asdf
       # bun, oven-sh/bun/
       - caddy
       # cmake is for local whisper-cpp build
       - cmake
       - coreutils
       - cue
+      - deno
       - difftastic
       - direnv
       # docker-slim's project has been renamed to slimtoolkit
@@ -79,7 +77,6 @@ homebrew:
       # VSCode's nix.formatterPath is editor-global, so it needs a binary that
       # is always on PATH, not one scoped to a project devshell.
       - nixfmt
-      # removed from asdf
       - node
       - ntfy
       - pnpm # using this instead of npm install -g pnpm
@@ -139,7 +136,6 @@ homebrew:
       - mole
 
     python:
-      # Python stuff - TODO(daneroo): python is in asdf now
       - black
       - flake8
       - pipenv
@@ -147,7 +143,6 @@ homebrew:
       - ruff
       - uv
       - virtualenv
-      # python@3.11 - moved to asdf
 
   casks:
     - 1password-cli
@@ -183,13 +178,8 @@ homebrew:
     # Previously Microsoft Remote Desktop
     - windows-app
 
-asdf:
-  # nodejs: moved back to brew
-  python: ["3.12", "3.11"] # Multiple versions, latest patch
-  bun: ["latest"] # Latest stable
-
 npm:
-  # agentic opencode helper seems broken with npm/asdf - so I used bun
+  # agentic opencode helper seems broken with npm - so I used bun
   # - agentic-cli
   # - corepack - deprecated
   - eslint

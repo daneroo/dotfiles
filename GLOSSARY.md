@@ -35,7 +35,7 @@ _Avoid_: Missing dependency
 
 **Versioned tool**:
 A program the machine keeps at specific versions, possibly several side by
-side, one of them the default. Python, Bun and Deno are versioned tools.
+side, one of them the default. Python and Bun are versioned tools.
 _Avoid_: Runtime, plugin, SDK
 
 **Version spec**:
