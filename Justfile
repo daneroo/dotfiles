@@ -3,31 +3,47 @@
 # Install just on macOS:
 # brew install just
 
-# List all available commands
+# Show this helpful listing.
 default:
-    @just --list
+    @just --list --unsorted
 
-# Run all tests (Go and Deno - no e2e)
-test: test-go test-deno
+# Quality gate: run after edits and before commits.
+ci: fmt-check vet test
 
-# Run Go tests
-test-go:
+# Reconcile this machine with config.yaml. Changes the machine (installs packages).
+reconcile:
+    ./check.sh
+
+# Run Go tests.
+test:
     go test ./go/...
 
-# Run Deno tests
-test-deno:
-    cd deno && deno task test
-
-test-go-pretty:
+# Run Go tests, showing only pass/fail lines.
+test-pretty:
     go test -v ./go/... | grep -E "(--- PASS|--- FAIL)"
 
-# Run tests with coverage
-# test-go-cover:
-#     go test -cover ./go/...
-#     # For HTML coverage report:
-#     # go test -coverprofile=coverage.out ./go/... && go tool cover -html=coverage.out
-
-
-# Run end-to-end tests (in Docker)
+# Run end-to-end tests (in Docker).
 test-e2e:
     ./e2e/run.sh
+
+# Vet Go code.
+vet:
+    go vet ./go/...
+
+# Format Go code in place.
+fmt:
+    gofmt -w ./go/
+
+# Fail if any Go file needs formatting.
+fmt-check:
+    #!/usr/bin/env bash
+    unformatted=$(gofmt -l ./go/)
+    if [ -n "$unformatted" ]; then
+        echo "Needs gofmt (run: just fmt):"
+        echo "$unformatted"
+        exit 1
+    fi
+
+# Run Deno tests (deno/ is slated for removal).
+test-deno:
+    cd deno && deno task test

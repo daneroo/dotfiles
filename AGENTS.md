@@ -19,12 +19,13 @@ installed; `check.sh` makes the machine match it.
 
 ## Commands
 
-- Test: `just test-go` (`go test ./go/...`); one package:
-  `go test ./go/pkg/asdf -run TestName`
-- Vet: `go vet ./go/...`
-- Format: `gofmt -w ./go/`
-- `./check.sh` changes the machine (it installs npm globals, for example). Ask
-  before running it.
+Commands live in the `Justfile`; run `just` to list them.
+
+- `just ci` is the quality gate (gofmt check, vet, tests). Run it after edits
+  and before commits.
+- `go test ./go/pkg/asdf -run TestName` runs a single test.
+- `just reconcile` runs `./check.sh`, which changes the machine (it installs
+  npm globals, for example). Ask before running it.
 
 ## Conventions
 
