@@ -17,6 +17,10 @@ when Daniel asks.
       TODO that says "CUE has been declared a disaster area".
 - [ ] remove-deno — promoted to issue #2.
 
+## Repo
+
+- [ ] rename-master-to-main — rename the default branch from `master` to `main`.
+
 ## Closed
 
 - [x] agents-md-rewrite — 2026-10-19: `AGENTS.md` written from the old
