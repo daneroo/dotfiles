@@ -20,7 +20,8 @@ This repo is for managing:
 
 ## Current State
 
-- Entry point: `reconfig.sh` (`check.sh` hands off to it, for muscle memory)
+- Entry point: `reconfig.sh`
+  - `check.sh` is retired: it only says to run `reconfig.sh`
   - Minimal bootstrap checks (brew, go installation)
   - Orchestrates the reconciliation process
   - Manages dotfiles via `installDotLinks.sh`
@@ -82,7 +83,7 @@ _Systems under control:_ `galois, davinci, shannon, dirac, goedel, feynman`
 Regular maintenance (_idempotent_):
 
 ```bash
-just reconcile # or ./reconfig.sh, or ./check.sh
+just reconcile # or ./reconfig.sh
 ```
 
 ## TODO

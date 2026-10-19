@@ -6,8 +6,8 @@ installed; `reconfig.sh` makes the machine match it.
 ## Layout
 
 - `reconfig.sh`: entry point. Checks brew and go, runs `installDotLinks.sh`
-  (GNU Stow links `core/` into `~`), then runs `go/cmd/reconfig`. `check.sh`
-  only hands off to it.
+  (GNU Stow links `core/` into `~`), then runs `go/cmd/reconfig`.
+  `check.sh` is retired: it only says to run `reconfig.sh`.
 - `config.yaml`: desired state: Homebrew formulae (grouped in sections) and
   casks, asdf versions, npm globals. Lists are sorted by basename, the part after
   the last `/` (`westpoint-io/lazyrsync/lazyrsync` sorts as `lazyrsync`).
