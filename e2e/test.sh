@@ -16,6 +16,8 @@ NPM_GLOBAL=semver
 echo "Container: $(uname -sm), $(brew --version | head -1), bash ${BASH_VERSION}"
 
 main() {
+    local scenario_start=$EPOCHREALTIME
+
     step "1. A fresh machine reports exactly the desired formulae as missing"
     run_reconfig
     assert_exit 0
@@ -27,8 +29,7 @@ main() {
     assert_equal "missing formulae" "$DESIRED_FORMULAE" "$(words_sorted "${install_line# brew install --formula }")"
 
     step "2. The printed brew install line works"
-    echo "Running:$install_line"
-    eval "$install_line" || fail "printed install line failed"
+    run_printed "$install_line"
     for f in $DESIRED_FORMULAE; do
         brew list --formula "$f" >/dev/null 2>&1 || fail "$f is not installed"
     done
@@ -60,8 +61,7 @@ main() {
     # with node is outdated.
     local npm_install_line
     npm_install_line=$(grep '^ npm install -g ' "$OUT" | tail -1)
-    echo "Running:$npm_install_line"
-    eval "$npm_install_line" >/dev/null || fail "printed npm install line failed"
+    run_printed "$npm_install_line"
     npm_global_installed || fail "npm global $NPM_GLOBAL is not installed"
     echo "✓ npm global installed: $NPM_GLOBAL"
     echo "Rerunning: nothing to do"
@@ -74,7 +74,8 @@ main() {
     assert_no_output " npm install -g "
 
     echo
-    echo "All e2e steps passed"
+    end_step
+    echo "All e2e steps passed in $(seconds_since "$scenario_start")"
 }
 
 # run_reconfig runs reconfig against the e2e desired state, saving its
@@ -84,9 +85,25 @@ run_reconfig() {
     local start=$EPOCHREALTIME
     reconfig -c "$CONFIG" >"$OUT" 2>&1
     CODE=$?
-    local end=$EPOCHREALTIME
+    local took
+    took=$(seconds_since "$start")
     sed 's/^/  | /' "$OUT"
-    awk -v s="$start" -v e="$end" 'BEGIN { printf "- exited after %.2fs\n", e - s }'
+    echo "- exited after $took"
+}
+
+# run_printed runs a command line that reconfig printed, failing the scenario
+# if it fails, then prints how long it took.
+run_printed() {
+    echo "Running:$1"
+    local start=$EPOCHREALTIME
+    eval "$1" || fail "printed line failed:$1"
+    echo "- exited after $(seconds_since "$start")"
+}
+
+# seconds_since prints the time elapsed since the given $EPOCHREALTIME, as
+# in 23.92s.
+seconds_since() {
+    awk -v s="$1" -v e="$EPOCHREALTIME" 'BEGIN { printf "%.2fs", e - s }'
 }
 
 # npm_global_installed reports whether $NPM_GLOBAL is a top-level global
@@ -95,9 +112,18 @@ npm_global_installed() {
     [ -d "$(npm root -g)/$NPM_GLOBAL" ]
 }
 
+# step ends the current step, then starts the next one.
 step() {
+    end_step
     echo
     echo "## $1"
+    STEP_START=$EPOCHREALTIME
+}
+
+# end_step prints how long the current step took, if one has started.
+end_step() {
+    [ -n "${STEP_START:-}" ] || return 0
+    echo "- step took $(seconds_since "$STEP_START")"
 }
 
 fail() {

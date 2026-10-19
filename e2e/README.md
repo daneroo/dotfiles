@@ -34,8 +34,9 @@ It takes a few minutes, mostly `brew update` and installing node.
 
 ## Test Workflow
 
-`e2e/test.sh` asserts output, exit codes, and installed packages at each step,
-and prints how long each `reconfig` run took:
+`e2e/test.sh` asserts output, exit codes, and installed packages at each step.
+It prints how long each `reconfig` run and each printed command took, each
+step, and the whole scenario; `run.sh` prints the total, build included:
 
 1. First run reports exactly the desired formulae as missing and exits 0
    (asdf and npm are reported as not installed, skipping).

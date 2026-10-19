@@ -14,4 +14,4 @@ docker build --pull -t dotfiles-e2e -f "$DIR/Dockerfile" .
 echo "$ECHO_PREFIX Running e2e tests in Docker container..."
 docker run --rm dotfiles-e2e
 
-echo "$ECHO_PREFIX E2E tests completed successfully!"
+echo "$ECHO_PREFIX E2E tests completed successfully in $((SECONDS / 60))m$((SECONDS % 60))s (build included)!"
