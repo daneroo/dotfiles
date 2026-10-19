@@ -9,9 +9,9 @@ This directory contains end-to-end tests for the dotfiles repository using Docke
 The scenario runs `reconfig` in a fresh container from the official
 `homebrew/ubuntu24.04` image, against its own small desired state,
 `e2e/config.yaml` (a few Linux-compatible formulae, no casks, no asdf, one tiny
-npm global). Ubuntu 24.04 matters: its glibc 2.39 is what current bottles need;
-on the older `homebrew/brew` image (glibc 2.35) brew installs its own glibc and
-gcc first.
+npm global plus npm itself, which comes with node). Ubuntu 24.04 matters: its
+glibc 2.39 is what current bottles need; on the older `homebrew/brew` image
+(glibc 2.35) brew installs its own glibc and gcc first.
 
 A multi-stage build compiles `reconfig` in a builder stage and copies only the
 binary into the clean final stage. The test sets no git config.
@@ -34,8 +34,9 @@ It takes a few minutes, mostly `brew update` and installing node.
 3. Rerun: nothing missing, nothing extraneous.
 4. Install one formula not in the desired state; rerun: it is reported
    extraneous.
-5. Install node; rerun: `reconfig` installs the npm global; rerun again:
-   nothing to do.
+5. Install node; rerun: `reconfig` prints `npm install -g semver` without
+   installing it (and `npm install -g npm` when the npm that comes with node
+   is outdated); run the printed combined line; rerun: nothing to do.
 
 ## Manual Testing
 

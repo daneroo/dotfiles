@@ -47,19 +47,31 @@ main() {
     assert_output "✓ - No missing casks/formulae"
     assert_output " brew uninstall --formula $EXTRANEOUS_FORMULA"
 
-    step "5. Once node is present, reconfig installs the npm global"
+    step "5. Once node is present, reconfig prints the npm install line, which works"
     brew install --formula node >/dev/null 2>&1 || fail "brew install node failed"
     run_reconfig
     assert_exit 0
     assert_output "✓ - npm is installed"
-    assert_output "✗ - npm: $NPM_GLOBAL is missing. Installing..."
-    npm ls -g "$NPM_GLOBAL" >/dev/null || fail "npm global $NPM_GLOBAL is not installed"
+    assert_output "✗ - npm: $NPM_GLOBAL is missing"
+    npm_global_installed && fail "reconfig installed $NPM_GLOBAL; it should only print the command"
+    echo "✓ npm global not installed by reconfig: $NPM_GLOBAL"
+    assert_output_line " npm install -g $NPM_GLOBAL"
+    # The combined line may also update npm itself, when the npm that comes
+    # with node is outdated.
+    local npm_install_line
+    npm_install_line=$(grep '^ npm install -g ' "$OUT" | tail -1)
+    echo "Running:$npm_install_line"
+    eval "$npm_install_line" >/dev/null || fail "printed npm install line failed"
+    npm_global_installed || fail "npm global $NPM_GLOBAL is not installed"
     echo "✓ npm global installed: $NPM_GLOBAL"
     echo "Rerunning: nothing to do"
     run_reconfig
     assert_exit 0
     assert_output "✓ - $NPM_GLOBAL"
+    assert_output "✓ - No missing or outdated npm globals"
+    assert_output "✓ - No unwanted npm globals"
     assert_no_output "Installing..."
+    assert_no_output " npm install -g "
 
     echo
     echo "All e2e steps passed"
@@ -72,6 +84,12 @@ run_reconfig() {
     reconfig -c "$CONFIG" >"$OUT" 2>&1
     CODE=$?
     sed 's/^/  | /' "$OUT"
+}
+
+# npm_global_installed reports whether $NPM_GLOBAL is a top-level global
+# package. Not `npm ls -g`: that also finds the semver bundled inside npm.
+npm_global_installed() {
+    [ -d "$(npm root -g)/$NPM_GLOBAL" ]
 }
 
 step() {
@@ -100,6 +118,13 @@ assert_section_output() {
     awk -v h="## $1" '$0 == h { on = 1; next } /^## / { on = 0 } on' "$OUT" | grep -qF -- "$2" ||
         fail "section $1 lacks: $2"
     echo "✓ section $1 has: $2"
+}
+
+# assert_output_line checks that the output has a line exactly equal to the
+# given text.
+assert_output_line() {
+    grep -qxF -- "$1" "$OUT" || fail "output lacks line: $1"
+    echo "✓ output has line: $1"
 }
 
 assert_no_output() {

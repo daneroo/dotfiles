@@ -1,6 +1,7 @@
 package npm
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os/exec"
@@ -11,45 +12,61 @@ import (
 	"github.com/daneroo/dotfiles/go/pkg/tool"
 )
 
-// Reconcile performs a complete reconciliation cycle for npm global packages:
+// Reconcile compares the desired npm global packages with the installed ones
+// and prints the npm commands that would close the gap. It never installs,
+// updates or uninstalls anything itself:
 // 1. Check if npm is installed (a missing tool is skipped, not an error)
-// 2. Get actual state (installed packages)
+// 2. Get actual state (installed and outdated packages)
 // 3. Compare with desired state
-// 4. Take actions to reconcile differences
+// 4. Print the commands that reconcile the differences
 func Reconcile(desiredPackages []string) error {
 	if !tool.Installed("npm") {
 		return nil
 	}
 	fmt.Printf("✓ - npm is installed\n")
 
-	// Get actual installed packages
+	// Get actual state
 	actual, err := getInstalledPackages()
 	if err != nil {
 		return err
 	}
+	outdated, err := getOutdatedPackages()
+	if err != nil {
+		return err
+	}
 
-	// Reconcile differences
+	// Compare with desired state
 	missing, extra := reconcilePackages(desiredPackages, actual)
 
-	// Show already installed packages - if not extraneous
+	// Report each package: up to date, outdated, missing or unwanted
 	fmt.Printf("\n") // separator
+	var toInstall []string
 	for _, pkg := range actual {
-		if !slices.Contains(extra, pkg) {
+		if slices.Contains(extra, pkg) {
+			continue
+		}
+		if info, ok := outdated[pkg]; ok {
+			fmt.Printf("✗ - npm: %s is outdated (%s → %s)\n", pkg, info.Current, info.Latest)
+			toInstall = append(toInstall, pkg)
+		} else {
 			fmt.Printf("✓ - %s\n", pkg)
 		}
 	}
-
-	// Install missing packages
-	fmt.Printf("\n") // separator
-	if err := performPackageActions(missing, extra); err != nil {
-		return err
+	for _, pkg := range missing {
+		fmt.Printf("✗ - npm: %s is missing\n", pkg)
+		toInstall = append(toInstall, pkg)
 	}
-
-	// Check for updates
-	fmt.Printf("\n") // separator
-	if err := checkOutdated(); err != nil {
-		return err
+	for _, pkg := range extra {
+		fmt.Printf("✗ - npm: %s is unwanted\n", pkg)
 	}
+	sort.Strings(toInstall)
+
+	// Print the commands: installs before uninstalls
+	fmt.Printf("\n") // separator
+	showCommands(toInstall, "install", "Missing or outdated")
+	fmt.Printf("\n") // separator
+	showCommands(extra, "uninstall", "Unwanted")
+
 	//  deprecateCorepackPnpm
 	fmt.Printf("\n") // separator
 	if err := deprecateCorepackPnpm(); err != nil {
@@ -85,7 +102,33 @@ func getInstalledPackages() ([]string, error) {
 	return packages, nil
 }
 
-// reconcilePackages determines which packages need to be installed/removed
+// outdatedInfo is one package's entry in npm outdated -g --json.
+type outdatedInfo struct {
+	Current string `json:"current"`
+	Latest  string `json:"latest"`
+}
+
+// getOutdatedPackages returns the global packages that have a newer release,
+// keyed by name, by running npm outdated -g --json and parsing the output
+func getOutdatedPackages() (map[string]outdatedInfo, error) {
+	out, err := exec.Command("npm", "outdated", "-g", "--json").Output()
+	// npm outdated exits 1 when updates are available, still printing JSON
+	if err != nil && len(out) == 0 {
+		return nil, fmt.Errorf("failed to check for updates: %w", err)
+	}
+
+	outdated := map[string]outdatedInfo{}
+	if len(bytes.TrimSpace(out)) == 0 {
+		return outdated, nil
+	}
+	if err := json.Unmarshal(out, &outdated); err != nil {
+		return nil, fmt.Errorf("failed to parse npm outdated output: %w", err)
+	}
+	return outdated, nil
+}
+
+// reconcilePackages determines which packages need to be installed/removed,
+// each sorted by name
 func reconcilePackages(desired, actual []string) (missing, extra []string) {
 	desiredSet := make(map[string]bool)
 	for _, pkg := range desired {
@@ -111,62 +154,33 @@ func reconcilePackages(desired, actual []string) (missing, extra []string) {
 		}
 	}
 
+	sort.Strings(missing)
+	sort.Strings(extra)
 	return missing, extra
 }
 
-// performPackageActions installs missing packages
-func performPackageActions(missing, extra []string) error {
-	// Install missing packages
-	for _, pkg := range missing {
-		fmt.Printf("✗ - npm: %s is missing. Installing...\n", pkg)
-		if err := exec.Command("npm", "install", "-g", pkg).Run(); err != nil {
-			return fmt.Errorf("failed to install %s: %w", pkg, err)
-		}
-		fmt.Printf("  ✓ - npm: %s was successfully installed\n", pkg)
+// showCommands prints the npm commands for one verb, as the brew reconciler
+// does: one command per package, then all packages in one command.
+//
+// Example output for missing or outdated packages:
+//
+//	✗ - Missing or outdated npm globals: (2 packages)
+//	 npm install -g json
+//	 npm install -g serve
+//
+//	  or all together:
+//	 npm install -g json serve
+func showCommands(pkgs []string, verb, label string) {
+	if len(pkgs) == 0 {
+		fmt.Printf("✓ - No %s npm globals\n", strings.ToLower(label))
+		return
 	}
-
-	// Show extra packages
-	if len(extra) > 0 {
-		fmt.Printf("\n✗ - Extraneous npm packages found:\n")
-		for _, pkg := range extra {
-			fmt.Printf("- To remove %s:\n", pkg)
-			fmt.Printf("  npm uninstall -g %s\n", pkg)
-		}
+	fmt.Printf("✗ - %s npm globals: (%d packages)\n", label, len(pkgs))
+	for _, pkg := range pkgs {
+		fmt.Printf(" npm %s -g %s\n", verb, pkg)
 	}
-
-	return nil
-}
-
-// checkOutdated checks for available updates in global packages
-func checkOutdated() error {
-	// Get outdated packages in JSON format
-	out, err := exec.Command("npm", "outdated", "-g", "--json").Output()
-	if err != nil {
-		// npm outdated returns exit code 1 if updates are available
-		if len(out) > 0 {
-			var outdated map[string]struct {
-				Current string `json:"current"`
-				Wanted  string `json:"wanted"`
-				Latest  string `json:"latest"`
-			}
-			if err := json.Unmarshal(out, &outdated); err != nil {
-				return fmt.Errorf("failed to parse npm outdated output: %w", err)
-			}
-
-			// Update each outdated package
-			for pkg, info := range outdated {
-				fmt.Printf("✗ - npm: %s needs update (%s -> %s). Installing...\n", pkg, info.Current, info.Latest)
-				if err := exec.Command("npm", "install", "-g", pkg).Run(); err != nil {
-					return fmt.Errorf("failed to update %s: %w", pkg, err)
-				}
-				fmt.Printf("  ✓ - npm: %s was successfully updated\n", pkg)
-			}
-			return nil
-		}
-		return fmt.Errorf("failed to check for updates: %w", err)
-	}
-	fmt.Printf("✓ - All global packages are up to date\n")
-	return nil
+	fmt.Printf("\n  or all together:\n")
+	fmt.Printf(" npm %s -g %s\n", verb, strings.Join(pkgs, " "))
 }
 
 // deprecateCorepackPnpm prepares corepack for pnpm

@@ -25,15 +25,18 @@ Commands live in the `Justfile`; run `just` to list them.
 - `go test ./go/pkg/asdf -run TestName` runs a single test.
 - `just e2e` runs the end-to-end scenario in a fresh Homebrew container against
   its own desired state, `e2e/config.yaml` (needs Docker, takes minutes).
-- `just reconcile` runs `./reconfig.sh`, which changes the machine (it installs
-  npm globals, for example). Ask before running it.
+- `just reconcile` runs `./reconfig.sh`, which changes the machine (it
+  Stow-links `core/` into `~` and installs asdf versions, for example). Ask
+  before running it.
 
 ## Conventions
 
 - Everything here manages a live machine, so every action must be idempotent:
   running it twice is the same as running it once.
 - Reconcilers follow one pattern: observe the current state, compare it with
-  the desired state from `config.yaml`, then act or print the commands to run.
+  the desired state from `config.yaml`, then print the commands to run. They
+  never install, update or remove anything themselves. (The asdf reconciler
+  still installs; it is being removed, see #5.)
 - A reconciler checks for its tool first (`tool.Installed`); a missing tool is
   reported and skipped, never an error. Only real errors exit non-zero.
 - Go: standard style and `gofmt`; callers before helpers (top-down); explicit

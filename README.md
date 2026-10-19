@@ -44,8 +44,9 @@ This repo is for managing:
   - Manages npm global packages
     - Desired packages: corepack, eslint, json, turbo, nx, etc.
     - Maintains shell completions
-    - Reports outdated packages
-    - Proposes upgrades
+    - Reports missing, outdated and unwanted packages
+    - Prints the `npm install -g` and `npm uninstall -g` commands to run;
+      never installs or updates anything itself
     - Handles pnpm via corepack
   - Common features across all reconcilers:
     - Consistent ✓/✗ status reporting
