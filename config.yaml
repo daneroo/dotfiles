@@ -188,6 +188,7 @@ homebrew:
 mise:
   # Versioned tools: the first version spec is the default
   # - "latest": the newest release
+  # - "lts": the newest long-term support release, for tools that have one (node)
   # - "3.12": the newest 3.12.x release; "3.12.15": exactly that version
   bun: ["latest"]
   python: ["3.12", "3.11"]

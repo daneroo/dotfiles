@@ -158,7 +158,7 @@ func validateConfig(cfg *packageConfig) error {
 		}
 		for _, spec := range specs {
 			if !versionSpecPattern.MatchString(spec) {
-				violations = append(violations, fmt.Sprintf("  ✗ - Tool %q: invalid version spec %q: must be 'latest' or 'X[.Y[.Z...]]'", tool, spec))
+				violations = append(violations, fmt.Sprintf("  ✗ - Tool %q: invalid version spec %q: must be 'latest', 'lts' or 'X[.Y[.Z...]]'", tool, spec))
 			}
 		}
 	}
@@ -229,8 +229,10 @@ func compareByBasename(i, j string) bool {
 
 // versionSpecPattern matches a mise version spec:
 // - "latest": the newest release
+// - "lts": the newest long-term support release, for tools that have one
+// (node); for others mise finds no release, which reconciling reports
 // - "X[.Y[.Z...]]": the newest release matching the prefix:
 //   - "3" -> newest 3.x.x
 //   - "3.12" -> newest 3.12.x
 //   - "3.12.15" -> exact version
-var versionSpecPattern = regexp.MustCompile(`^(latest|\d+(\.\d+)*)$`)
+var versionSpecPattern = regexp.MustCompile(`^(latest|lts|\d+(\.\d+)*)$`)

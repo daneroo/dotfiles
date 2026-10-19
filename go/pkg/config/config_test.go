@@ -49,6 +49,17 @@ mise:
 npm: []`,
 		},
 		{
+			name: "lts is a mise version spec",
+			yaml: `
+homebrew:
+  formulae:
+    main: []
+  casks: []
+mise:
+  node: ["lts"]
+npm: []`,
+		},
+		{
 			name: "tap formula sorted by basename",
 			yaml: `
 homebrew:
@@ -247,18 +258,6 @@ mise:
   python: ["3.12.x"]
 npm: []`,
 			msgIncludes: []string{`Tool "python"`, `invalid version spec "3.12.x"`},
-		},
-		{
-			name: "lts is not a mise version spec",
-			yaml: `
-homebrew:
-  formulae:
-    main: []
-  casks: []
-mise:
-  node: ["lts"]
-npm: []`,
-			msgIncludes: []string{`invalid version spec "lts"`},
 		},
 		{
 			name: "mise tool with no version specs",

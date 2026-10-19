@@ -40,5 +40,6 @@ _Avoid_: Runtime, plugin, SDK
 
 **Version spec**:
 How the desired state names a versioned tool's version: a prefix such as
-`3.12` (the newest matching release) or `latest`.
+`3.12` (the newest matching release), `latest`, or `lts` (the newest
+long-term support release, for tools that have one, such as node).
 _Avoid_: Pin, constraint

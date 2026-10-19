@@ -18,6 +18,7 @@ package schema
 //    - Homebrew formulae: must be either "name" or "org/repo/name"
 //    - mise version specs, in order (the first is the default), each one of:
 //      * "latest": the newest release
+//      * "lts": the newest long-term support release (node)
 //      * A version prefix: "X[.Y[.Z...]]" (e.g., "3", "3.12", "3.12.15")
 //    - NPM packages: list of package names
 
@@ -67,8 +68,8 @@ testValidConfigs: {
 	out:   strings.Split(input, "/")[-1]
 }
 
-// Valid version spec: latest or a version prefix
-#VersionSpec: string & =~"^(latest|\\d+(\\.\\d+)*)$"
+// Valid version spec: latest, lts or a version prefix
+#VersionSpec: string & =~"^(latest|lts|\\d+(\\.\\d+)*)$"
 
 // Valid formula format (either "name" or "tap/repo/name")
 #Formula: string & =~"^([^/]+|[^/]+/[^/]+/[^/]+)$"

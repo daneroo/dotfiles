@@ -33,7 +33,7 @@
         "uniqueItems": true,
         "items": {
           "type": "string",
-          "pattern": "^(latest|\\d+(\\.\\d+)*)$"
+          "pattern": "^(latest|lts|\\d+(\\.\\d+)*)$"
         }
       }
     },
