@@ -15,9 +15,7 @@ when Daniel asks.
       `cuelang.org/go` (embedded, so bootstrap needs no `cue` binary); drop the
       hand-written checks in `go/pkg/config`. Reconcile first with the README
       TODO that says "CUE has been declared a disaster area".
-- [ ] remove-deno — delete `deno/` and its references (`Justfile`,
-      `.cursorrules`, `.vscode/extensions.json`, `README.md`). The `deno` binary
-      itself stays: yt-dlp depends on it via brew; asdf `deno` is a separate call.
+- [ ] remove-deno — promoted to issue #2.
 
 ## Closed
 
