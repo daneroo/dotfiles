@@ -6,7 +6,9 @@ when Daniel asks.
 
 ## Now
 
-- [ ] asdf-to-mise — replace asdf with mise.
+- [ ] asdf-to-mise — promoted to issue #5.
+- [ ] claude-code-via-mise — consider managing Claude Code (and other npm-style
+      tools) as versioned tools through mise.
 
 ## Config
 
@@ -15,14 +17,7 @@ when Daniel asks.
       `cuelang.org/go` (embedded, so bootstrap needs no `cue` binary); drop the
       hand-written checks in `go/pkg/config`. Reconcile first with the README
       TODO that says "CUE has been declared a disaster area".
-- [ ] remove-deno — promoted to issue #2.
 
 ## Repo
 
 - [ ] rename-master-to-main — rename the default branch from `master` to `main`.
-
-## Closed
-
-- [x] agents-md-rewrite — 2026-10-19: `AGENTS.md` written from the old
-      `CLAUDE.md` (Go commands, reconciliation, idempotency kept; Deno and the
-      stale Claude Code auth notes dropped); `CLAUDE.md` now imports it.

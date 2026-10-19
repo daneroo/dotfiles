@@ -14,8 +14,9 @@ The software installed on the machine right now.
 _Avoid_: Current config
 
 **Reconcile**:
-Compare the actual state with the desired state, then act or print the commands
-that would close the gap.
+Compare the actual state with the desired state, then print the commands that
+would close the gap: installs and removals alike. Reconciling never changes the
+machine itself.
 _Avoid_: Sync, check deps
 
 **Section**:
@@ -31,3 +32,13 @@ _Avoid_: Alphabetical order
 A package manager or completion tool that isn't installed, so its part of the
 desired state is reported and skipped rather than reconciled.
 _Avoid_: Missing dependency
+
+**Versioned tool**:
+A program the machine keeps at specific versions, possibly several side by
+side, one of them the default. Python, Bun and Deno are versioned tools.
+_Avoid_: Runtime, plugin, SDK
+
+**Version spec**:
+How the desired state names a versioned tool's version: a prefix such as
+`3.12` (the newest matching release) or `latest`.
+_Avoid_: Pin, constraint
