@@ -7,11 +7,19 @@ This directory contains end-to-end tests for the dotfiles repository using Docke
 ## Overview
 
 The scenario runs `reconfig` in a fresh container from the official
-`homebrew/ubuntu24.04` image, against its own small desired state,
+`ghcr.io/homebrew/ubuntu26.04` image, against its own small desired state,
 `e2e/config.yaml` (a few Linux-compatible formulae, no casks, no asdf, one tiny
-npm global plus npm itself, which comes with node). Ubuntu 24.04 matters: its
-glibc 2.39 is what current bottles need; on the older `homebrew/brew` image
-(glibc 2.35) brew installs its own glibc and gcc first.
+npm global plus npm itself, which comes with node). The Ubuntu version
+matters: current bottles need the glibc of Ubuntu 24.04 or newer; on older
+images brew installs its own glibc and gcc first.
+
+Homebrew publishes its images on GitHub's registry (`ghcr.io`); the Docker Hub
+copies stopped updating in November 2025. `run.sh` builds with `--pull`, so
+each run starts from the newest image.
+
+The container runs on the host's own architecture (arm64 on Apple Silicon), with
+no `--platform` flag: under amd64 emulation, tar on Ubuntu 26.04 fails with
+`Cannot mkdir: Function not implemented`.
 
 A multi-stage build compiles `reconfig` in a builder stage and copies only the
 binary into the clean final stage. The test sets no git config.
@@ -26,7 +34,8 @@ It takes a few minutes, mostly `brew update` and installing node.
 
 ## Test Workflow
 
-`e2e/test.sh` asserts output, exit codes, and installed packages at each step:
+`e2e/test.sh` asserts output, exit codes, and installed packages at each step,
+and prints how long each `reconfig` run took:
 
 1. First run reports exactly the desired formulae as missing and exits 0
    (asdf and npm are reported as not installed, skipping).
@@ -43,7 +52,7 @@ It takes a few minutes, mostly `brew update` and installing node.
 To start an interactive shell for manual testing:
 
 ```bash
-docker run --rm --platform linux/amd64 -it homebrew/ubuntu24.04
+docker run --rm -it ghcr.io/homebrew/ubuntu26.04
 ```
 
 ## Bad Git user

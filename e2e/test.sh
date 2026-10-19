@@ -78,12 +78,15 @@ main() {
 }
 
 # run_reconfig runs reconfig against the e2e desired state, saving its
-# output in $OUT and its exit code in $CODE.
+# output in $OUT and its exit code in $CODE, then prints how long it took.
 run_reconfig() {
     OUT=$(mktemp)
+    local start=$EPOCHREALTIME
     reconfig -c "$CONFIG" >"$OUT" 2>&1
     CODE=$?
+    local end=$EPOCHREALTIME
     sed 's/^/  | /' "$OUT"
+    awk -v s="$start" -v e="$end" 'BEGIN { printf "- exited after %.2fs\n", e - s }'
 }
 
 # npm_global_installed reports whether $NPM_GLOBAL is a top-level global

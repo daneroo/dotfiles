@@ -1,5 +1,5 @@
 # Build stage for compiling the Go binary
-FROM homebrew/ubuntu24.04:latest AS builder
+FROM ghcr.io/homebrew/ubuntu26.04:latest AS builder
 
 # Install Go with brew
 RUN brew install go
@@ -9,9 +9,9 @@ COPY . /home/linuxbrew/.dotfiles
 WORKDIR /home/linuxbrew/.dotfiles/go/cmd/reconfig
 RUN go build -buildvcs=false -o /tmp/reconfig
 
-# Final stage with clean environment. Ubuntu 24.04 has glibc 2.39, which
-# current bottles need; on older images brew installs its own glibc and gcc.
-FROM homebrew/ubuntu24.04:latest
+# Final stage with clean environment. Current bottles need the glibc of
+# Ubuntu 24.04 or newer; on older images brew installs its own glibc and gcc.
+FROM ghcr.io/homebrew/ubuntu26.04:latest
 
 # Copy the prebuilt binary
 COPY --from=builder /tmp/reconfig /usr/local/bin/
