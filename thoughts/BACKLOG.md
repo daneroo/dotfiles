@@ -6,6 +6,8 @@ when Daniel asks.
 
 ## Now
 
+- [ ] asdf-to-mise — replace asdf with mise.
+
 ## Config
 
 - [ ] cue-config-schema — make `config.cue` the single schema for `config.yaml`:
