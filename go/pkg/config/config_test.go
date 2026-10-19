@@ -335,3 +335,9 @@ func TestLoadConfigAcceptsRepoConfig(t *testing.T) {
 		t.Errorf("the repo's config.yaml is invalid: %v", err)
 	}
 }
+
+func TestLoadConfigAcceptsE2EConfig(t *testing.T) {
+	if _, err := LoadConfig("../../../e2e/config.yaml"); err != nil {
+		t.Errorf("e2e/config.yaml is invalid: %v", err)
+	}
+}

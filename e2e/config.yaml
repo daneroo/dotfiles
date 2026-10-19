@@ -1,0 +1,11 @@
+# Desired state for the e2e scenario (see e2e/test.sh): small, Linux-compatible.
+homebrew:
+  formulae:
+    e2e:
+      - hello
+      - jq
+      - tree
+  casks: []
+asdf: {}
+npm:
+  - semver

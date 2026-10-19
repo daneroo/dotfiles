@@ -20,14 +20,14 @@ This repo is for managing:
 
 ## Current State
 
-- Entry point: `check.sh`
+- Entry point: `reconfig.sh` (`check.sh` hands off to it, for muscle memory)
   - Minimal bootstrap checks (brew, go installation)
   - Orchestrates the reconciliation process
   - Manages dotfiles via `installDotLinks.sh`
     - Uses **GNU Stow** to safely manage symlinks for bash configuration files.
   - Delegates all dependency management to Go implementation
 
-- Core functionality (Go implementation `go/cmd/checkdeps/main.go`):
+- Core functionality (Go implementation `go/cmd/reconfig/main.go`):
   - Manages Homebrew packages
     - Validates installed formulae and casks against desired state
     - Detects missing packages
@@ -48,6 +48,8 @@ This repo is for managing:
     - Handles pnpm via corepack
   - Common features across all reconcilers:
     - Consistent ✓/✗ status reporting
+    - A missing tool (asdf, npm, a completion tool) is reported as
+      `not installed, skipping`; only real errors exit non-zero
     - Idempotent reconciliation pattern
     - New implementation (1,677 lines of Go <--> 255 lines of bash)
 
@@ -80,7 +82,7 @@ _Systems under control:_ `galois, davinci, shannon, dirac, goedel, feynman`
 Regular maintenance (_idempotent_):
 
 ```bash
-./check.sh
+just reconcile # or ./reconfig.sh, or ./check.sh
 ```
 
 ## TODO
@@ -113,7 +115,7 @@ done
 - [ ] Per machine specialization
   - [x] CUE has been declared a disaster area
 - [ ] config content: update python tooling, after move to uv/ruff
-- [ ] Rename the executable to: reconfig
+- [x] Rename the executable to: reconfig
 - [ ] [Charm v2](https://charm.land/blog/v2/)
 - [ ] Consider [brew bundle](https://docs.brew.sh/Brew-Bundle-and-Brewfile)
 
@@ -181,7 +183,7 @@ echo $SHELL # to confirm
 
 ### Normal update procedure starts
 
-- start the dance: `./check.sh`
+- start the dance: `./reconfig.sh`
 
 - nvm npm stuff ??
 

@@ -11,6 +11,6 @@ echo "$ECHO_PREFIX Building Docker image..."
 docker build --platform linux/amd64 -t dotfiles-e2e -f "$DIR/Dockerfile" .
 
 echo "$ECHO_PREFIX Running e2e tests in Docker container..."
-docker run --rm --platform linux/amd64 -t dotfiles-e2e
+docker run --rm --platform linux/amd64 dotfiles-e2e
 
 echo "$ECHO_PREFIX E2E tests completed successfully!"

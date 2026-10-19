@@ -6,6 +6,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/daneroo/dotfiles/go/pkg/tool"
 )
 
 // CompletionSpec defines a CLI tool whose bash completion should be cached.
@@ -23,15 +25,13 @@ type CompletionSpec struct {
 
 // UpdateCachedCompletion generates a completion script and caches it to disk.
 // It only writes the file if the content has changed.
-// If the command is not installed, it skips gracefully.
+// If the command is a missing tool, it is skipped.
 //
 // Not migrated to v2 on-demand loading: npm/pnpm's shipped completions live
 // under versioned Cellar paths that move on every brew upgrade. Caching
 // generated content here avoids that.
 func UpdateCachedCompletion(spec CompletionSpec) error {
-	// Check if the command is available
-	if _, err := exec.LookPath(spec.Command); err != nil {
-		fmt.Printf("△ - %s is not installed, skipping completion cache\n", spec.Name)
+	if !tool.Installed(spec.Command) {
 		return nil
 	}
 
@@ -76,6 +76,10 @@ func UpdateCachedCompletion(spec CompletionSpec) error {
 // We leave bun's own file untouched and write a separate corrected "bun"
 // file, so the original stays as proof both bugs are still unfixed.
 func UpdateGlobalBunCompletionAsASpecialSnowflake() error {
+	if !tool.Installed("bun") {
+		return nil
+	}
+
 	homebrewPrefix := os.Getenv("HOMEBREW_PREFIX")
 	if homebrewPrefix == "" {
 		homebrewPrefix = "/opt/homebrew"

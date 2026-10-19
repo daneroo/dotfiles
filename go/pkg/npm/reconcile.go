@@ -7,17 +7,18 @@ import (
 	"slices"
 	"sort"
 	"strings"
+
+	"github.com/daneroo/dotfiles/go/pkg/tool"
 )
 
 // Reconcile performs a complete reconciliation cycle for npm global packages:
-// 1. Check if npm is installed
+// 1. Check if npm is installed (a missing tool is skipped, not an error)
 // 2. Get actual state (installed packages)
 // 3. Compare with desired state
 // 4. Take actions to reconcile differences
 func Reconcile(desiredPackages []string) error {
-	// Check if npm is installed
-	if err := exec.Command("command", "-v", "npm").Run(); err != nil {
-		return fmt.Errorf("npm is not installed")
+	if !tool.Installed("npm") {
+		return nil
 	}
 	fmt.Printf("✓ - npm is installed\n")
 
@@ -183,6 +184,9 @@ func deprecateCorepackPnpm() error {
 	// }
 
 	// Show version
+	if !tool.Installed("pnpm") {
+		return nil
+	}
 	if out, err := exec.Command("pnpm", "--version").Output(); err == nil {
 		fmt.Printf("✓ - pnpm version: %s (homebrew)\n", strings.TrimSpace(string(out)))
 		return nil

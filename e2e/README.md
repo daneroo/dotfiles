@@ -6,47 +6,43 @@ This directory contains end-to-end tests for the dotfiles repository using Docke
 
 ## Overview
 
-The E2E tests run in a clean Docker container based on the vanilla `homebrew/brew` image.
-This ensures that the tests run in an environment similar to a fresh installation.
+The scenario runs `reconfig` in a fresh container from the official
+`homebrew/ubuntu24.04` image, against its own small desired state,
+`e2e/config.yaml` (a few Linux-compatible formulae, no casks, no asdf, one tiny
+npm global). Ubuntu 24.04 matters: its glibc 2.39 is what current bottles need;
+on the older `homebrew/brew` image (glibc 2.35) brew installs its own glibc and
+gcc first.
 
-## Implementation Details
-
-The test setup uses a multi-stage Docker build to:
-
-- Build the Go binary in an isolated builder stage
-- Copy only the compiled binary to the final clean environment
-- Run tests against a pristine Homebrew installation
-
-This approach ensures we don't pollute the test environment with build dependencies.
+A multi-stage build compiles `reconfig` in a builder stage and copies only the
+binary into the clean final stage. The test sets no git config.
 
 ## Running the Tests
 
-To run the E2E tests:
-
 ```bash
-./e2e/run.sh
+just e2e # or ./e2e/run.sh
 ```
 
-This script will:
-
-- Build a Docker image with the Dockerfile in this directory
-- Run the container with the current dotfiles repository mounted
-- Execute the test script inside the container
+It takes a few minutes, mostly `brew update` and installing node.
 
 ## Test Workflow
 
-The testing process:
+`e2e/test.sh` asserts output, exit codes, and installed packages at each step:
 
-- Captures the initial state of the container (pre-installed packages)
-- Loads and verifies the configuration
-- Verifies that our tools can correctly identify missing packages
+1. First run reports exactly the desired formulae as missing and exits 0
+   (asdf and npm are reported as not installed, skipping).
+2. Run the `brew install` line `reconfig` printed.
+3. Rerun: nothing missing, nothing extraneous.
+4. Install one formula not in the desired state; rerun: it is reported
+   extraneous.
+5. Install node; rerun: `reconfig` installs the npm global; rerun again:
+   nothing to do.
 
 ## Manual Testing
 
 To start an interactive shell for manual testing:
 
 ```bash
-docker run --rm --platform linux/amd64 -it homebrew/brew
+docker run --rm --platform linux/amd64 -it homebrew/ubuntu24.04
 ```
 
 ## Bad Git user

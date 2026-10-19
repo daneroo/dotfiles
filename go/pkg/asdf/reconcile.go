@@ -3,18 +3,18 @@ package asdf
 
 import (
 	"fmt"
-	"os/exec"
+
+	"github.com/daneroo/dotfiles/go/pkg/tool"
 )
 
 // Reconcile performs a complete reconciliation cycle for asdf:
-// 1. Check if asdf is installed
+// 1. Check if asdf is installed (a missing tool is skipped, not an error)
 // 2. Get actual state (installed plugins)
 // 3. Compare with desired state
 // 4. Take actions to reconcile differences
 func Reconcile(desiredVersions map[string][]string) error {
-	// Check if asdf is installed
-	if err := exec.Command("command", "-v", "asdf").Run(); err != nil {
-		return fmt.Errorf("asdf is not installed")
+	if !tool.Installed("asdf") {
+		return nil
 	}
 	fmt.Printf("✓ - asdf is installed\n")
 
