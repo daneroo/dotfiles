@@ -16,8 +16,9 @@ FROM ghcr.io/homebrew/ubuntu26.04:latest
 # Copy the prebuilt binary
 COPY --from=builder /tmp/reconfig /usr/local/bin/
 
-# Copy dotfiles repository into container
-COPY . /home/linuxbrew/.dotfiles
+# Copy dotfiles repository into container, owned by the user reconfig runs
+# as, so it can write the cached completions (mise's file is new there)
+COPY --chown=linuxbrew:linuxbrew . /home/linuxbrew/.dotfiles
 WORKDIR /home/linuxbrew/.dotfiles
 
 ENTRYPOINT ["/home/linuxbrew/.dotfiles/e2e/entrypoint.sh"]

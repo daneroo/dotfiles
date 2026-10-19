@@ -1,0 +1,143 @@
+package mise
+
+import (
+	"slices"
+	"testing"
+)
+
+func TestPlan(t *testing.T) {
+	python := map[string][]string{"python": {"3.12", "3.11"}}
+	pythonResolved := map[string]map[string]string{
+		"python": {"3.12": "3.12.15", "3.11": "3.11.17"},
+	}
+
+	tests := []struct {
+		name          string
+		desired       map[string][]string
+		actual        observed
+		wantInstall   []string
+		wantUse       []string
+		wantUninstall []string
+	}{
+		{
+			name:    "a fresh machine",
+			desired: map[string][]string{"bun": {"latest"}},
+			actual: observed{
+				resolved: map[string]map[string]string{"bun": {"latest": "1.4.3"}},
+			},
+			wantInstall: []string{"mise install bun@1.4.3"},
+			wantUse:     []string{"mise use -g bun@latest"},
+		},
+		{
+			name:    "actual state matches desired state",
+			desired: python,
+			actual: observed{
+				installed: map[string][]string{"python": {"3.11.17", "3.12.15"}},
+				defaults:  map[string][]string{"python": {"3.12", "3.11"}},
+				resolved:  pythonResolved,
+			},
+		},
+		{
+			name:    "a newer patch release available",
+			desired: python,
+			actual: observed{
+				installed: map[string][]string{"python": {"3.11.17", "3.12.15"}},
+				defaults:  map[string][]string{"python": {"3.12", "3.11"}},
+				resolved: map[string]map[string]string{
+					"python": {"3.12": "3.12.16", "3.11": "3.11.17"},
+				},
+			},
+			wantInstall:   []string{"mise install python@3.12.16"},
+			wantUninstall: []string{"mise uninstall python@3.12.15"},
+		},
+		{
+			name:    "an old patch left after an upgrade",
+			desired: python,
+			actual: observed{
+				installed: map[string][]string{"python": {"3.11.17", "3.12.15", "3.12.16"}},
+				defaults:  map[string][]string{"python": {"3.12", "3.11"}},
+				resolved: map[string]map[string]string{
+					"python": {"3.12": "3.12.16", "3.11": "3.11.17"},
+				},
+			},
+			wantUninstall: []string{"mise uninstall python@3.12.15"},
+		},
+		{
+			name:    "two Python versions",
+			desired: python,
+			actual: observed{
+				resolved: pythonResolved,
+			},
+			wantInstall: []string{"mise install python@3.12.15", "mise install python@3.11.17"},
+			wantUse:     []string{"mise use -g python@3.12 python@3.11"},
+		},
+		{
+			name:    "the default list in the wrong order",
+			desired: python,
+			actual: observed{
+				installed: map[string][]string{"python": {"3.11.17", "3.12.15"}},
+				defaults:  map[string][]string{"python": {"3.11", "3.12"}},
+				resolved:  pythonResolved,
+			},
+			wantUse: []string{"mise use -g python@3.12 python@3.11"},
+		},
+		{
+			name:    "a tool installed but not in the desired state",
+			desired: python,
+			actual: observed{
+				installed: map[string][]string{
+					"deno":   {"2.9.7"},
+					"python": {"3.11.17", "3.12.15"},
+				},
+				defaults: map[string][]string{"python": {"3.12", "3.11"}},
+				resolved: pythonResolved,
+			},
+			wantUninstall: []string{"mise uninstall deno@2.9.7"},
+		},
+		{
+			name:    "latest",
+			desired: map[string][]string{"bun": {"latest"}},
+			actual: observed{
+				installed: map[string][]string{"bun": {"1.4.2"}},
+				defaults:  map[string][]string{"bun": {"latest"}},
+				resolved:  map[string]map[string]string{"bun": {"latest": "1.4.3"}},
+			},
+			wantInstall:   []string{"mise install bun@1.4.3"},
+			wantUninstall: []string{"mise uninstall bun@1.4.2"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := plan(tt.desired, tt.actual)
+			assertCommands(t, "install", got.install, tt.wantInstall)
+			assertCommands(t, "use", got.use, tt.wantUse)
+			assertCommands(t, "uninstall", got.uninstall, tt.wantUninstall)
+		})
+	}
+}
+
+func TestPlanReportsEachSpec(t *testing.T) {
+	got := plan(map[string][]string{"python": {"3.12", "3.11"}}, observed{
+		installed: map[string][]string{"python": {"3.12.15"}},
+		defaults:  map[string][]string{"python": {"3.12", "3.11"}},
+		resolved: map[string]map[string]string{
+			"python": {"3.12": "3.12.15", "3.11": "3.11.17"},
+		},
+	})
+	want := []string{
+		"✓ - python 3.12 → 3.12.15",
+		"✗ - python 3.11 → 3.11.17 is not installed",
+		"✓ - python defaults match config.yaml: 3.12, 3.11",
+	}
+	if !slices.Equal(got.report, want) {
+		t.Errorf("report:\n got %q\nwant %q", got.report, want)
+	}
+}
+
+func assertCommands(t *testing.T, kind string, got, want []string) {
+	t.Helper()
+	if !slices.Equal(got, want) {
+		t.Errorf("%s commands = %q, want %q", kind, got, want)
+	}
+}

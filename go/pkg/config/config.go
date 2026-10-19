@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path"
+	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -29,7 +30,8 @@ type packageConfig struct {
 		FormulaeBySection map[string][]string `yaml:"formulae"`
 		Casks             []string            `yaml:"casks"`
 	} `yaml:"homebrew"`
-	Npm []string `yaml:"npm"`
+	Mise map[string][]string `yaml:"mise"`
+	Npm  []string            `yaml:"npm"`
 }
 
 // LoadConfig loads and validates the configuration from the specified file
@@ -63,6 +65,7 @@ func ParseConfig(data []byte) (*Config, error) {
 
 	// After validation passes, flatten into final Config
 	var cfg Config
+	cfg.Mise = temp.Mise
 	cfg.Npm = temp.Npm
 
 	// Convert and flatten formulae sections and casks into []Package
@@ -91,6 +94,7 @@ func validateConfig(cfg *packageConfig) error {
 	}{
 		{"homebrew.formulae", cfg.Homebrew.FormulaeBySection == nil},
 		{"homebrew.casks", cfg.Homebrew.Casks == nil},
+		{"mise", cfg.Mise == nil},
 		{"npm", cfg.Npm == nil},
 	}
 	for _, r := range required {
@@ -147,12 +151,27 @@ func validateConfig(cfg *packageConfig) error {
 		}
 	}
 
+	// Validate mise version specs; their order is meaningful, so not sorted
+	for tool, specs := range cfg.Mise {
+		if len(specs) == 0 {
+			violations = append(violations, fmt.Sprintf("  ✗ - Tool %q: no version specs", tool))
+		}
+		for _, spec := range specs {
+			if !versionSpecPattern.MatchString(spec) {
+				violations = append(violations, fmt.Sprintf("  ✗ - Tool %q: invalid version spec %q: must be 'latest' or 'X[.Y[.Z...]]'", tool, spec))
+			}
+		}
+	}
+
 	// Validate no list declares the same entry twice
 	for section, formulae := range cfg.Homebrew.FormulaeBySection {
 		violations = append(violations, validateUnique(fmt.Sprintf("Section %q", section), formulae)...)
 	}
 	violations = append(violations, validateUnique("Casks", cfg.Homebrew.Casks)...)
 	violations = append(violations, validateUnique("NPM packages", cfg.Npm)...)
+	for tool, specs := range cfg.Mise {
+		violations = append(violations, validateUnique(fmt.Sprintf("Tool %q", tool), specs)...)
+	}
 
 	if len(violations) > 0 {
 		return fmt.Errorf("validation failed:\n%s", strings.Join(violations, "\n"))
@@ -207,3 +226,11 @@ func compareByBasename(i, j string) bool {
 	}
 	return iBase < jBase
 }
+
+// versionSpecPattern matches a mise version spec:
+// - "latest": the newest release
+// - "X[.Y[.Z...]]": the newest release matching the prefix:
+//   - "3" -> newest 3.x.x
+//   - "3.12" -> newest 3.12.x
+//   - "3.12.15" -> exact version
+var versionSpecPattern = regexp.MustCompile(`^(latest|\d+(\.\d+)*)$`)

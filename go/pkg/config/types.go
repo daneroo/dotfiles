@@ -9,5 +9,7 @@ type BrewPackage struct {
 // Config represents the complete configuration for all package managers
 type Config struct {
 	Homebrew []BrewPackage
-	Npm      []string
+	// Mise maps each versioned tool to its version specs; the first is the default
+	Mise map[string][]string
+	Npm  []string
 }

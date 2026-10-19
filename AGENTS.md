@@ -9,10 +9,11 @@ installed; `reconfig.sh` makes the machine match it.
   (GNU Stow links `core/` into `~`), then runs `go/cmd/reconfig`.
   `check.sh` is retired: it only says to run `reconfig.sh`.
 - `config.yaml`: desired state: Homebrew formulae (grouped in sections) and
-  casks, npm globals. Lists are sorted by basename, the part after the last `/`
-  (`westpoint-io/lazyrsync/lazyrsync` sorts as `lazyrsync`).
-- `go/`: `reconfig`, which reconciles Homebrew, npm globals, and cached shell
-  completions.
+  casks, mise versioned tools, npm globals. Lists are sorted by basename, the
+  part after the last `/` (`westpoint-io/lazyrsync/lazyrsync` sorts as
+  `lazyrsync`); mise version specs are not sorted, the first is the default.
+- `go/`: `reconfig`, which reconciles Homebrew, mise versioned tools, npm
+  globals, and cached shell completions.
 - `core/`: Stow package mirrored into `~`. Edit dotfiles here, never the
   symlinked copies in `~`.
 

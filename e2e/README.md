@@ -8,10 +8,10 @@ This directory contains end-to-end tests for the dotfiles repository using Docke
 
 The scenario runs `reconfig` in a fresh container from the official
 `ghcr.io/homebrew/ubuntu26.04` image, against its own small desired state,
-`e2e/config.yaml` (a few Linux-compatible formulae, no casks, one tiny
-npm global plus npm itself, which comes with node). The Ubuntu version
-matters: current bottles need the glibc of Ubuntu 24.04 or newer; on older
-images brew installs its own glibc and gcc first.
+`e2e/config.yaml` (a few Linux-compatible formulae, no casks, bun at `latest`
+through mise, one tiny npm global plus npm itself, which comes with node). The
+Ubuntu version matters: current bottles need the glibc of Ubuntu 24.04 or newer;
+on older images brew installs its own glibc and gcc first.
 
 Homebrew publishes its images on GitHub's registry (`ghcr.io`); the Docker Hub
 copies stopped updating in November 2025. `run.sh` builds with `--pull`, so
@@ -39,7 +39,7 @@ It prints how long each `reconfig` run and each printed command took, each
 step, and the whole scenario; `run.sh` prints the total, build included:
 
 1. First run reports exactly the desired formulae as missing and exits 0
-   (npm is reported as not installed, skipping).
+   (mise and npm are reported as not installed, skipping).
 2. Run the `brew install` line `reconfig` printed.
 3. Rerun: nothing missing, nothing extraneous.
 4. Install one formula not in the desired state; rerun: it is reported
@@ -47,6 +47,10 @@ step, and the whole scenario; `run.sh` prints the total, build included:
 5. Install node; rerun: `reconfig` prints `npm install -g semver` without
    installing it (and `npm install -g npm` when the npm that comes with node
    is outdated); run the printed combined line; rerun: nothing to do.
+6. Install mise; rerun: `reconfig` prints `mise use -g bun@latest` without
+   installing bun; run the printed line; rerun: nothing to do.
+7. Install an unwanted bun version; rerun: `reconfig` prints its
+   `mise uninstall` line.
 
 ## Manual Testing
 

@@ -25,6 +25,11 @@ This repo is for managing:
     - Detects missing packages
     - Identifies extraneous packages
     - Ensures transitive dependencies are maintained
+  - Manages versioned tools (Python, Bun) through mise
+    - Reports each version spec with the release it resolves to
+    - Prints `mise install` for missing versions, `mise use -g` when mise's
+      global defaults differ from `config.yaml`, and `mise uninstall` for
+      versions no spec resolves to; never runs them itself
   - Manages npm global packages
     - Desired packages: corepack, eslint, json, turbo, nx, etc.
     - Maintains shell completions
@@ -34,7 +39,7 @@ This repo is for managing:
     - Handles pnpm via corepack
   - Common features across all reconcilers:
     - Consistent ✓/✗ status reporting
-    - A missing tool (npm, a completion tool) is reported as
+    - A missing tool (mise, npm, a completion tool) is reported as
       `not installed, skipping`; only real errors exit non-zero
     - Idempotent reconciliation pattern
     - New implementation (1,677 lines of Go <--> 255 lines of bash)

@@ -12,6 +12,7 @@ CONFIG=e2e/config.yaml
 DESIRED_FORMULAE="hello jq tree"
 EXTRANEOUS_FORMULA=figlet
 NPM_GLOBAL=semver
+UNWANTED_BUN=1.1.0
 
 echo "Container: $(uname -sm), $(brew --version | head -1), bash ${BASH_VERSION}"
 
@@ -22,6 +23,7 @@ main() {
     run_reconfig
     assert_exit 0
     assert_no_output "## ASDF"
+    assert_section_output "Mise Section" "✗ - mise is not installed, skipping"
     assert_section_output "NPM Globals Section" "✗ - npm is not installed, skipping"
     assert_output "## CLI Completions Section"
     local install_line
@@ -73,6 +75,31 @@ main() {
     assert_no_output "Installing..."
     assert_no_output " npm install -g "
 
+    step "6. Once mise is present, reconfig prints the mise use line, which works"
+    brew install --formula mise >/dev/null 2>&1 || fail "brew install mise failed"
+    run_reconfig
+    assert_exit 0
+    assert_output "✓ - mise is installed"
+    assert_output_line " mise use -g bun@latest"
+    bun_installed && fail "reconfig installed bun; it should only print the command"
+    echo "✓ bun not installed by reconfig"
+    run_printed " mise use -g bun@latest"
+    bun_installed || fail "bun is not installed"
+    echo "✓ bun installed by mise"
+    echo "Rerunning: nothing to do"
+    run_reconfig
+    assert_exit 0
+    assert_output "✓ - No missing mise versions"
+    assert_output "✓ - No mise defaults to change"
+    assert_output "✓ - No unwanted mise versions"
+    assert_no_printed "mise "
+
+    step "7. A bun version no spec resolves to is reported with its uninstall line"
+    mise install "bun@$UNWANTED_BUN" >/dev/null 2>&1 || fail "mise install bun@$UNWANTED_BUN failed"
+    run_reconfig
+    assert_exit 0
+    assert_output_line " mise uninstall bun@$UNWANTED_BUN"
+
     echo
     end_step
     echo "All e2e steps passed in $(seconds_since "$scenario_start")"
@@ -110,6 +137,11 @@ seconds_since() {
 # package. Not `npm ls -g`: that also finds the semver bundled inside npm.
 npm_global_installed() {
     [ -d "$(npm root -g)/$NPM_GLOBAL" ]
+}
+
+# bun_installed reports whether mise has any bun version installed.
+bun_installed() {
+    mise ls --installed --json bun | grep -q '"version"'
 }
 
 # step ends the current step, then starts the next one.
@@ -159,6 +191,13 @@ assert_output_line() {
 assert_no_output() {
     if grep -qF -- "$1" "$OUT"; then fail "output has: $1"; fi
     echo "✓ output lacks: $1"
+}
+
+# assert_no_printed checks that reconfig printed no command line, one
+# space-indented, starting with the given text.
+assert_no_printed() {
+    if grep -q -- "^ $1" "$OUT"; then fail "printed a command: $1"; fi
+    echo "✓ printed no command: $1"
 }
 
 assert_equal() {

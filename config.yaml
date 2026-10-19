@@ -2,6 +2,7 @@
 
 # Configuration for package managers
 # - Homebrew (formulae and casks)
+# - mise (versioned tools)
 # - npm (global packages)
 
 homebrew:
@@ -13,6 +14,14 @@ homebrew:
   #   Example: "speedtest, teamookla/speedtest/" -> "teamookla/speedtest/speedtest"
   # - Moved Python stuff to its own section
   formulae:
+    bootstrap:
+      # What reconfig itself needs: go builds it, stow links core/ into ~,
+      # and mise and node (for npm) run the commands it prints
+      - go
+      - mise
+      - node
+      - stow
+
     main:
       - act
       - asciinema
@@ -24,6 +33,7 @@ homebrew:
       - b3sum
       - bash
       - bash-completion@2
+      # bun is managed by mise
       # bun, oven-sh/bun/
       - caddy
       # cmake is for local whisper-cpp build
@@ -48,7 +58,6 @@ homebrew:
       - git
       # - glances
       - gnu-tar
-      - go
       - gum
       # heroku/brew/heroku
       # heroku/brew/heroku-node
@@ -77,7 +86,6 @@ homebrew:
       # VSCode's nix.formatterPath is editor-global, so it needs a binary that
       # is always on PATH, not one scoped to a project devshell.
       - nixfmt
-      - node
       - ntfy
       - pnpm # using this instead of npm install -g pnpm
       - pstree
@@ -90,7 +98,6 @@ homebrew:
       - sqlite
       - starship
       # - stern
-      - stow
       - supabase/tap/supabase
       - syncthing
       # my new virtual machine manager - collima too?
@@ -177,6 +184,13 @@ homebrew:
     - vlc
     # Previously Microsoft Remote Desktop
     - windows-app
+
+mise:
+  # Versioned tools: the first version spec is the default
+  # - "latest": the newest release
+  # - "3.12": the newest 3.12.x release; "3.12.15": exactly that version
+  bun: ["latest"]
+  python: ["3.12", "3.11"]
 
 npm:
   # agentic opencode helper seems broken with npm - so I used bun

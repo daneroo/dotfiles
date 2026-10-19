@@ -20,6 +20,11 @@ done
 # brew's bash completion - assumes HOMEBREW_PREFIX is set - works for v2
 [[ -r "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh" ]] && . "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh"
 
+# mise shims on PATH: terminals, scripts and agents all get the version that
+# applies in their folder. Not `mise activate`: it updates PATH from the prompt,
+# which agents and scripts never show.
+export PATH="${MISE_DATA_DIR:-${XDG_DATA_HOME:-$HOME/.local/share}/mise}/shims:$PATH"
+
 # direnv hook - load environment from .envrc files
 # added for nix/flakes support
 if command -v direnv &>/dev/null; then
@@ -40,6 +45,11 @@ PNPM_COMPLETION_FILE=~/.config/bash_includes/pnpm_completion.bash
 # Generated during reconcile, cached in stow-managed directory for fast shell startup
 DOCKER_COMPLETION_FILE=~/.config/bash_includes/docker_completion.bash
 [[ -r "${DOCKER_COMPLETION_FILE}" ]] && . "${DOCKER_COMPLETION_FILE}"
+
+# mise completion
+# Generated during reconcile, cached in stow-managed directory for fast shell startup
+MISE_COMPLETION_FILE=~/.config/bash_includes/mise_completion.bash
+[[ -r "${MISE_COMPLETION_FILE}" ]] && . "${MISE_COMPLETION_FILE}"
 
 # Old .profile content
 # This is source'd from .bash_profile, since I installed rvm!

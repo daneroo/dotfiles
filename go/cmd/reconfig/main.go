@@ -10,6 +10,7 @@ import (
 	"github.com/daneroo/dotfiles/go/pkg/brewdeps/reconcile"
 	"github.com/daneroo/dotfiles/go/pkg/completions"
 	"github.com/daneroo/dotfiles/go/pkg/config"
+	"github.com/daneroo/dotfiles/go/pkg/mise"
 	"github.com/daneroo/dotfiles/go/pkg/npm"
 )
 
@@ -48,6 +49,13 @@ func main() {
 		handleError(err)
 	}
 
+	fmt.Printf("\n## Mise Section\n\n")
+	// Handle versioned tools
+	if err := mise.Reconcile(cfg.Mise); err != nil {
+		fmt.Printf("✗ - %v\n", err)
+		os.Exit(1)
+	}
+
 	fmt.Printf("\n## NPM Globals Section\n\n")
 	// Handle npm global packages
 	if err := npm.Reconcile(cfg.Npm); err != nil {
@@ -61,6 +69,7 @@ func main() {
 		{Name: "npm", Command: "npm", Args: []string{"completion"}, OutputFile: "./core/.config/bash_includes/npm_completion.sh"},
 		{Name: "pnpm", Command: "pnpm", Args: []string{"completion", "bash"}, OutputFile: "./core/.config/bash_includes/pnpm_completion.bash"},
 		{Name: "docker", Command: "docker", Args: []string{"completion", "bash"}, OutputFile: "./core/.config/bash_includes/docker_completion.bash"},
+		{Name: "mise", Command: "mise", Args: []string{"completion", "bash"}, OutputFile: "./core/.config/bash_includes/mise_completion.bash"},
 	}
 	for _, spec := range completionSpecs {
 		if err := completions.UpdateCachedCompletion(spec); err != nil {

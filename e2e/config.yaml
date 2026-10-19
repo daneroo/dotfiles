@@ -6,6 +6,8 @@ homebrew:
       - jq
       - tree
   casks: []
+mise:
+  bun: ["latest"]
 npm:
   - npm # comes with node
   - semver
