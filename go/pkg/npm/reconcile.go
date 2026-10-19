@@ -190,4 +190,3 @@ func deprecateCorepackPnpm() error {
 
 	return fmt.Errorf("pnpm not working after corepack preparation")
 }
-
