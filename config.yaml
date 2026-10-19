@@ -115,9 +115,9 @@ homebrew:
       - herdr
       - llmfit
       # - opencode # use tap below instead - macOS and Linux (official brew formula, updated less)
-      - openai-whisper
+      # - openai-whisper # no longer using : not sure if we ever did
       - anomalyco/tap/opencode # macOS and Linux (recommended, always up to date)
-      - whisper-cpp
+      - whisper.cpp # renamed from whisper-cpp
       # Alternative to whisper-cpp (As in MacWhisper) - removed because it was causing monotonicity violations
       # - whisperkit-cli
 
@@ -171,6 +171,8 @@ homebrew:
     - livebook
     - losslesscut
     - macwhisper
+    # Moonlioght is a streaming client for Sunshine (I us it on omarchy)
+    - moonlight
     - opencode-desktop
     # same as codexbar - with less bugs!
     - openusage
