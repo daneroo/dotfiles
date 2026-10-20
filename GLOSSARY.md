@@ -14,10 +14,24 @@ The software installed on the machine right now.
 _Avoid_: Current config
 
 **Reconcile**:
-Compare the actual state with the desired state, then print the commands that
-would close the gap: installs and removals alike. Reconciling never changes the
-machine itself.
+Observe the actual state, compare it with the desired state, and compute actions
+to close the gap. Execution of those actions follows the selected execution mode.
 _Avoid_: Sync, check deps
+
+**Reconciler**:
+The part of reconfig responsible for bringing a particular kind of actual state
+into agreement with its desired state, such as dotfile links or versioned tools.
+_Avoid_: Step, execution section, area
+
+**Plan**:
+The changes a reconciler proposes to bring its observed actual state toward the
+desired state.
+_Avoid_: Command dump
+
+**Action**:
+A change within a reconciler's plan, such as selecting a global tool version and
+installing what it needs.
+_Avoid_: Item, shell line
 
 **Section**:
 A named group of formulae in the desired state, such as `main` or `ai`.
@@ -39,10 +53,8 @@ side, one of them the default. Python and Bun are versioned tools.
 _Avoid_: Runtime, plugin, SDK
 
 **Stray**:
-A tool listed in mise's global config, `~/.config/mise/config.toml`, that the
-desired state doesn't list, typically one removed from `config.yaml`.
-Reconciling reports it and prints `mise unuse -g <tool>`, which removes only
-that line; the tool's installed versions get their own `mise uninstall`.
+A tool listed in mise's global configuration that the desired state doesn't
+list, typically one removed from `config.yaml`.
 _Avoid_: Orphan, leftover
 
 **Version spec**:
