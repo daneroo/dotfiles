@@ -15,7 +15,3 @@ Leave this section even when empty
       `cuelang.org/go` (embedded, so bootstrap needs no `cue` binary); drop the
       hand-written checks in `go/pkg/config`. Reconcile first with the README
       TODO that says "CUE has been declared a disaster area".
-
-## Repo
-
-- [x] rename-master-to-main — rename the default branch from `master` to `main`.
