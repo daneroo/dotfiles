@@ -13,7 +13,7 @@ import (
 
 func TestOutput(t *testing.T) {
 	x := proc.OS{}
-	out, err := x.Output(context.Background(), "sh", "-c", "echo out; echo diag >&2")
+	out, err := x.Output(context.Background(), proc.Command("sh", "-c", "echo out; echo diag >&2"))
 	if err != nil {
 		t.Fatalf("Output failed: %v", err)
 	}
@@ -22,7 +22,7 @@ func TestOutput(t *testing.T) {
 	}
 
 	// A failure still returns standard output, as npm outdated needs
-	out, err = x.Output(context.Background(), "sh", "-c", "echo partial; echo why >&2; exit 3")
+	out, err = x.Output(context.Background(), proc.Command("sh", "-c", "echo partial; echo why >&2; exit 3"))
 	if err == nil {
 		t.Fatal("Output succeeded for a failing program")
 	}
@@ -39,7 +39,7 @@ func TestOutput(t *testing.T) {
 func TestRunUsesNativeStreams(t *testing.T) {
 	var stdout, stderr strings.Builder
 	x := proc.OS{Stdin: strings.NewReader("answer\n"), Stdout: &stdout, Stderr: &stderr}
-	if err := x.Run(context.Background(), "sh", "-c", "read a; echo got $a; echo diag >&2"); err != nil {
+	if err := x.Run(context.Background(), proc.Command("sh", "-c", "read a; echo got $a; echo diag >&2")); err != nil {
 		t.Fatalf("Run failed: %v", err)
 	}
 	if stdout.String() != "got answer\n" || stderr.String() != "diag\n" {
@@ -58,7 +58,7 @@ func TestCancelInterruptsGracefully(t *testing.T) {
 		cancel()
 	}()
 	start := time.Now()
-	err := proc.OS{WaitDelay: 5 * time.Second}.Run(ctx, "sh", "-c", script, "sh", cleaned, ready)
+	err := proc.OS{WaitDelay: 5 * time.Second}.Run(ctx, proc.Command("sh", "-c", script, "sh", cleaned, ready))
 	if err == nil {
 		t.Error("Run of a cancelled program succeeded")
 	}
@@ -80,12 +80,27 @@ func TestCancelKillsAfterWaitDelay(t *testing.T) {
 		cancel()
 	}()
 	start := time.Now()
-	_, err := proc.OS{WaitDelay: 200 * time.Millisecond}.Output(ctx, "sh", "-c", script, "sh", ready)
+	_, err := proc.OS{WaitDelay: 200 * time.Millisecond}.Output(ctx, proc.Command("sh", "-c", script, "sh", ready))
 	if err == nil {
 		t.Error("Output of a cancelled program succeeded")
 	}
 	if took := time.Since(start); took > 3*time.Second {
 		t.Errorf("a program ignoring the interrupt took %v to be killed", took)
+	}
+}
+
+func TestEnv(t *testing.T) {
+	t.Setenv("PROC_TEST_INHERITED", "kept")
+	c := proc.Command("sh", "-c", `echo "$PROC_TEST_INHERITED $PROC_TEST_ADDED"`).WithEnv("PROC_TEST_ADDED=added")
+	out, err := proc.OS{}.Output(context.Background(), c)
+	if err != nil {
+		t.Fatalf("Output failed: %v", err)
+	}
+	if string(out) != "kept added\n" {
+		t.Errorf("environment = %q, want inherited and added variables", out)
+	}
+	if got, want := c.String(), `PROC_TEST_ADDED=added sh -c 'echo "$PROC_TEST_INHERITED $PROC_TEST_ADDED"'`; got != want {
+		t.Errorf("String = %s, want %s", got, want)
 	}
 }
 

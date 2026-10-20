@@ -33,8 +33,8 @@ func (f *fakeNpm) LookPath(name string) (string, error) {
 	return "/fake/bin/npm", nil
 }
 
-func (f *fakeNpm) Output(_ context.Context, name string, args ...string) ([]byte, error) {
-	cmd := proc.Format(name, args...)
+func (f *fakeNpm) Output(_ context.Context, c proc.Cmd) ([]byte, error) {
+	cmd := c.String()
 	if cmd == f.fail {
 		return nil, fmt.Errorf("%s failed: exit status 1", cmd)
 	}
@@ -62,8 +62,8 @@ func (f *fakeNpm) Output(_ context.Context, name string, args ...string) ([]byte
 	return nil, fmt.Errorf("unexpected command: %s", cmd)
 }
 
-func (f *fakeNpm) Run(_ context.Context, name string, args ...string) error {
-	cmd := proc.Format(name, args...)
+func (f *fakeNpm) Run(_ context.Context, c proc.Cmd) error {
+	cmd, args := c.String(), c.Args
 	f.runs = append(f.runs, cmd)
 	if cmd == f.fail {
 		return fmt.Errorf("%s failed: exit status 1", cmd)

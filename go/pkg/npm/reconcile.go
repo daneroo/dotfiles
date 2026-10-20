@@ -82,7 +82,7 @@ func Reconcile(desiredPackages []string) error {
 // getInstalledPackages returns a list of globally installed npm packages
 // by running npm ls -g --json and parsing the output
 func getInstalledPackages(ctx context.Context, x proc.Exec) ([]string, error) {
-	out, err := x.Output(ctx, "npm", "ls", "-g", "--json", "--depth=0")
+	out, err := x.Output(ctx, proc.Command("npm", "ls", "-g", "--json", "--depth=0"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list global packages: %w", err)
 	}
@@ -114,7 +114,7 @@ type outdatedInfo struct {
 // getOutdatedPackages returns the global packages that have a newer release,
 // keyed by name, by running npm outdated -g --json and parsing the output
 func getOutdatedPackages(ctx context.Context, x proc.Exec) (map[string]outdatedInfo, error) {
-	out, err := x.Output(ctx, "npm", "outdated", "-g", "--json")
+	out, err := x.Output(ctx, proc.Command("npm", "outdated", "-g", "--json"))
 	// npm outdated exits 1 when updates are available, still printing JSON
 	if err != nil && len(out) == 0 {
 		return nil, fmt.Errorf("failed to check for updates: %w", err)

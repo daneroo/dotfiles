@@ -47,20 +47,20 @@ func (r *Reconciler) Plan(ctx context.Context) (run.Plan, error) {
 	return planPackages(r.x, r.desired, actual, outdated), nil
 }
 
-// plan is the npm globals plan: its report and the npm arguments to run.
+// plan is the npm globals plan: its report and the npm commands to run.
 type plan struct {
 	report run.Report
 	x      proc.Exec
-	steps  [][]string
+	steps  []proc.Cmd
 }
 
 // Report describes the plan.
 func (p *plan) Report() run.Report { return p.report }
 
-// Apply runs npm for each step in order, stopping at the first failure.
+// Apply runs each step in order, stopping at the first failure.
 func (p *plan) Apply(ctx context.Context) error {
-	for _, args := range p.steps {
-		if err := p.x.Run(ctx, "npm", args...); err != nil {
+	for _, c := range p.steps {
+		if err := p.x.Run(ctx, c); err != nil {
 			return err
 		}
 	}
@@ -98,13 +98,15 @@ func planPackages(x proc.Exec, desired, actual []string, outdated map[string]out
 	p := &plan{x: x}
 	install := run.Group{Title: "Missing or outdated npm globals", Count: len(toInstall)}
 	if len(toInstall) > 0 {
-		p.steps = append(p.steps, append([]string{"install", "-g"}, toInstall...))
-		install.Actions = []string{proc.Format("npm", p.steps[len(p.steps)-1]...)}
+		c := proc.Command("npm", append([]string{"install", "-g"}, toInstall...)...)
+		p.steps = append(p.steps, c)
+		install.Actions = []string{c.String()}
 	}
 	uninstall := run.Group{Title: "Unwanted npm globals", Count: len(extra)}
 	if len(extra) > 0 {
-		p.steps = append(p.steps, append([]string{"uninstall", "-g"}, extra...))
-		uninstall.Actions = []string{proc.Format("npm", p.steps[len(p.steps)-1]...)}
+		c := proc.Command("npm", append([]string{"uninstall", "-g"}, extra...)...)
+		p.steps = append(p.steps, c)
+		uninstall.Actions = []string{c.String()}
 	}
 
 	paragraphs := [][]run.Note{{{Mark: run.OK, Text: "npm is installed"}}}
