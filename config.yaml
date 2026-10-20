@@ -191,7 +191,7 @@ mise:
   # - "lts": the newest long-term support release, for tools that have one (node)
   # - "3.12": the newest 3.12.x release; "3.12.15": exactly that version
   bun: ["latest"]
-  python: ["3.12", "3.11"]
+  python: ["3.14"]
 
 npm:
   # agentic opencode helper seems broken with npm - so I used bun
