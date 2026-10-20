@@ -4,11 +4,9 @@ Unscheduled work, grouped by theme. Keep entries brief; move growing detail to
 `thoughts/design/` or `thoughts/plans/`. An entry becomes a GitHub issue only
 when Daniel asks.
 
-## Now
+## Next
 
-- [ ] asdf-to-mise — promoted to issue #5.
-- [ ] claude-code-via-mise — consider managing Claude Code (and other npm-style
-      tools) as versioned tools through mise.
+Leave this section even when empty
 
 ## Config
 
@@ -20,4 +18,4 @@ when Daniel asks.
 
 ## Repo
 
-- [ ] rename-master-to-main — rename the default branch from `master` to `main`.
+- [x] rename-master-to-main — rename the default branch from `master` to `main`.
