@@ -2,6 +2,7 @@ package completions_test
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -157,8 +158,13 @@ func (f *fixture) generators() []completions.Generator {
 	}
 }
 
+// at is a Bun target at the path.
+func at(path string) completions.BunTarget {
+	return func(context.Context) (string, error) { return path, nil }
+}
+
 func (f *fixture) reconciler() *completions.Reconciler {
-	return completions.New(f.generators(), f.path("global", "completions", "bun"), proc.OS{})
+	return completions.New(f.generators(), at(f.path("global", "completions", "bun")), proc.OS{})
 }
 
 // reconcile runs the reconciler, with the fixture's root shown as $ROOT.
@@ -265,7 +271,7 @@ func TestBunLinkIsReplaced(t *testing.T) {
 	if err := os.Symlink("bun.completion.bash", f.path("global", "completions", "bun")); err != nil {
 		t.Fatal(err)
 	}
-	r := completions.New(nil, f.path("global", "completions", "bun"), proc.OS{})
+	r := completions.New(nil, at(f.path("global", "completions", "bun")), proc.OS{})
 	var out strings.Builder
 	res := run.Runner{Mode: run.Yolo, Out: &out}.Run(context.Background(), []run.Reconciler{r})
 	if !strings.Contains(out.String(), "is a symlink, to be replaced by a file") || res.ExitCode() != 0 {
@@ -377,7 +383,7 @@ func TestPartialWriteFailure(t *testing.T) {
 	}
 	var out strings.Builder
 	res := run.Runner{Mode: run.Yolo, Out: &out}.Run(context.Background(),
-		[]run.Reconciler{completions.New(gens, "", proc.OS{})})
+		[]run.Reconciler{completions.New(gens, at(""), proc.OS{})})
 	if res.Entries[0].Outcome != run.Failed || !strings.Contains(out.String(), "✗ - applying failed: failed to write "+f.path("locked", "two.bash")) {
 		t.Errorf("outcome %v, output:\n%s", res.Entries[0].Outcome, out.String())
 	}
@@ -389,6 +395,23 @@ func TestPartialWriteFailure(t *testing.T) {
 	}
 	if got := f.entries("locked"); len(got) != 1 {
 		t.Errorf("locked holds %q, want nothing", got)
+	}
+}
+
+// Failing to find Bun's target is a planning error, and later reconcilers
+// still plan.
+func TestBunTargetFailureIsAPlanningError(t *testing.T) {
+	f := newFixture(t)
+	failing := func(context.Context) (string, error) { return "", errors.New("failed to find Homebrew's prefix") }
+	applied := false
+	var out strings.Builder
+	res := run.Runner{Mode: run.Yolo, Out: &out}.Run(context.Background(),
+		[]run.Reconciler{completions.New(f.generators(), failing, proc.OS{}), recorder{&applied}})
+	if res.ExitCode() != 1 || !strings.Contains(out.String(), "✗ - planning failed: failed to find Homebrew's prefix") {
+		t.Errorf("exit code %d, output:\n%s", res.ExitCode(), out.String())
+	}
+	if len(res.Entries) != 2 || res.Entries[1].Outcome != run.Previewed || applied {
+		t.Errorf("entries %+v, applied %v; want the later reconciler previewed", res.Entries, applied)
 	}
 }
 

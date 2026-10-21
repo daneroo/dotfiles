@@ -12,8 +12,8 @@ import (
 
 // getInstalledPackages returns a list of globally installed npm packages
 // by running npm ls -g --json and parsing the output
-func getInstalledPackages(ctx context.Context, x proc.Exec) ([]string, error) {
-	out, err := x.Output(ctx, proc.Command("npm", "ls", "-g", "--json", "--depth=0"))
+func getInstalledPackages(ctx context.Context, x proc.Exec, npm launcher) ([]string, error) {
+	out, err := x.Output(ctx, npm("ls", "-g", "--json", "--depth=0"))
 	if err != nil {
 		return nil, fmt.Errorf("failed to list global packages: %w", err)
 	}
@@ -44,8 +44,8 @@ type outdatedInfo struct {
 
 // getOutdatedPackages returns the global packages that have a newer release,
 // keyed by name, by running npm outdated -g --json and parsing the output
-func getOutdatedPackages(ctx context.Context, x proc.Exec) (map[string]outdatedInfo, error) {
-	out, err := x.Output(ctx, proc.Command("npm", "outdated", "-g", "--json"))
+func getOutdatedPackages(ctx context.Context, x proc.Exec, npm launcher) (map[string]outdatedInfo, error) {
+	out, err := x.Output(ctx, npm("outdated", "-g", "--json"))
 	// npm outdated exits 1 when updates are available, still printing JSON
 	if err != nil && len(out) == 0 {
 		return nil, fmt.Errorf("failed to check for updates: %w", err)
@@ -57,6 +57,20 @@ func getOutdatedPackages(ctx context.Context, x proc.Exec) (map[string]outdatedI
 	}
 	if err := json.Unmarshal(out, &outdated); err != nil {
 		return nil, fmt.Errorf("failed to parse npm outdated output: %w", err)
+	}
+	// A failure also prints JSON, {"error": {"code": ..., "summary": ...}},
+	// which would read as a package named error
+	var failure struct {
+		Error *struct {
+			Code    string `json:"code"`
+			Summary string `json:"summary"`
+		} `json:"error"`
+	}
+	if json.Unmarshal(out, &failure) == nil && failure.Error != nil && (failure.Error.Code != "" || failure.Error.Summary != "") {
+		return nil, fmt.Errorf("failed to check for updates: npm %s: %s", failure.Error.Code, failure.Error.Summary)
+	}
+	if err != nil && len(outdated) == 0 {
+		return nil, fmt.Errorf("failed to check for updates: %w", err)
 	}
 	return outdated, nil
 }

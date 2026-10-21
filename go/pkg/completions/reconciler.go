@@ -36,14 +36,17 @@ type Generator struct {
 // scripts cached in the repository, and Bun's corrected global script.
 type Reconciler struct {
 	cached    []Generator
-	bunTarget string
+	bunTarget BunTarget
 	x         proc.Exec
 }
 
+// BunTarget finds, when planning, where Bun's corrected script goes: the
+// file "bun" in the global bash-completion directory. An empty path, as
+// without Homebrew, skips Bun with a note; an error is a planning error.
+type BunTarget func(ctx context.Context) (string, error)
+
 // New returns the completions reconciler for the cached generators and for
-// Bun's corrected script at bunTarget, the file "bun" in the global
-// bash-completion directory; an empty bunTarget, without Homebrew, skips
-// Bun with a note. Tools run through x.
+// Bun's corrected script, at the path bunTarget finds. Tools run through x.
 //
 // Bun gets its own target because of 2 upstream bugs:
 //   - bug 1: Bun names its script bun.completion.bash instead of "bun",
@@ -54,7 +57,7 @@ type Reconciler struct {
 //
 // Bun's own file is never written, so it stays as proof both bugs are still
 // unfixed.
-func New(cached []Generator, bunTarget string, x proc.Exec) *Reconciler {
+func New(cached []Generator, bunTarget BunTarget, x proc.Exec) *Reconciler {
 	return &Reconciler{cached: cached, bunTarget: bunTarget, x: x}
 }
 
@@ -81,16 +84,20 @@ func (r *Reconciler) Plan(ctx context.Context) (run.Plan, error) {
 			return nil, err
 		}
 	}
-	if r.bunTarget == "" {
+	target, err := r.bunTarget(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if target == "" {
 		p.notes = append(p.notes, run.Note{Mark: run.Info, Text: "bun: no Homebrew bash-completion directory, skipping its completions"})
-	} else if err := r.planBun(ctx, p); err != nil {
+	} else if err := r.planBun(ctx, p, target); err != nil {
 		return nil, err
 	}
 	return p, nil
 }
 
 // planBun compares Bun's fresh script, with bug 2 fixed, with its target.
-func (r *Reconciler) planBun(ctx context.Context, p *completionsPlan) error {
+func (r *Reconciler) planBun(ctx context.Context, p *completionsPlan, target string) error {
 	exe, ok := r.bunExecutable(ctx)
 	if !ok {
 		p.skip("bun")
@@ -104,7 +111,7 @@ func (r *Reconciler) planBun(ctx context.Context, p *completionsPlan) error {
 	if !fixed {
 		p.notes = append(p.notes, run.Note{Mark: run.Info, Text: "bun: its completion script no longer has the known regex bug, nothing to fix"})
 	}
-	return p.compare("bun", r.bunTarget, script)
+	return p.compare("bun", target, script)
 }
 
 // resolve finds a tool on PATH or, when the tool was installed earlier in

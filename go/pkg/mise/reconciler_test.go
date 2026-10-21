@@ -17,7 +17,8 @@ import (
 	"github.com/daneroo/dotfiles/go/pkg/run"
 )
 
-const globalFile = "/home/me/.config/mise/config.toml"
+// globalFile is mise's global config, which reconcile sets.
+func globalFile() string { return os.Getenv("MISE_GLOBAL_CONFIG_FILE") }
 
 // fakeMise is a controlled mise. Its global config maps each tool to its
 // requests; a request resolves to the newest release it names exactly or as
@@ -90,7 +91,7 @@ func (f *fakeMise) Output(_ context.Context, c proc.Cmd) ([]byte, error) {
 		out := map[string][]entry{}
 		for tool, requests := range f.global {
 			for _, r := range slices.Sorted(slices.Values(requests)) { // mise sorts them
-				out[tool] = append(out[tool], entry{Version: r, Source: source{globalFile}})
+				out[tool] = append(out[tool], entry{Version: r, Source: source{globalFile()}})
 			}
 		}
 		for tool, path := range f.foreign {
@@ -104,7 +105,7 @@ func (f *fakeMise) Output(_ context.Context, c proc.Cmd) ([]byte, error) {
 		}
 		requests, ok := f.global[tool]
 		if !ok {
-			return nil, fmt.Errorf("%s failed: exit status 1\nstderr: mise ERROR Key not found: tools.%s in %s", cmd, tool, globalFile)
+			return nil, fmt.Errorf("%s failed: exit status 1\nstderr: mise ERROR Key not found: tools.%s in %s", cmd, tool, globalFile())
 		}
 		if f.scalar[tool] {
 			return []byte(requests[0] + "\n"), nil
@@ -247,6 +248,18 @@ func TestFreshMachineThenUnchanged(t *testing.T) {
 	}
 }
 
+// An environment variable overriding a desired tool's version hides it from
+// mise's global view, so planning stops rather than compare the wrong thing.
+func TestEnvironmentOverrideIsAnError(t *testing.T) {
+	t.Setenv("MISE_BUN_VERSION", "1.4.2")
+	f := newFake()
+	f.installed["bun"] = []string{"1.4.2", "1.4.3"}
+	res, out := reconcile(t, run.Runner{Mode: run.Yolo}, f, desired)
+	if res.ExitCode() != 1 || !strings.Contains(out, "MISE_BUN_VERSION=1.4.2 overrides bun's global versions; unset it") || len(f.runs) != 0 {
+		t.Errorf("exit code %d, ran %q, output:\n%s", res.ExitCode(), f.runs, out)
+	}
+}
+
 // Mise cannot set a default in a missing global config, so the plan creates
 // it, empty, first.
 func TestMissingGlobalConfigIsCreated(t *testing.T) {
@@ -323,7 +336,7 @@ func TestCleanupOrder(t *testing.T) {
 	if !slices.Equal(f.runs, wantRuns) {
 		t.Errorf("ran %q, want %q", f.runs, wantRuns)
 	}
-	if !strings.Contains(out, "✗ - jq is a stray in mise's global config, "+globalFile+": config.yaml doesn't list it") {
+	if !strings.Contains(out, "✗ - jq is a stray in mise's global config, "+globalFile()+": config.yaml doesn't list it") {
 		t.Errorf("output:\n%s", out)
 	}
 	if res.ExitCode() != 0 || len(f.installed["jq"]) != 0 || f.global["jq"] != nil {
@@ -433,7 +446,16 @@ func TestPlanningErrors(t *testing.T) {
 			name:  "global versions from another file",
 			setup: func(f *fakeMise) { f.foreign["node"] = "/home/me/.tool-versions" },
 			want:  desired,
-			msg:   "node's global versions come from /home/me/.tool-versions",
+			msg:   "node's global versions come from /home/me/.tool-versions, not mise's global config",
+		},
+		{
+			name: "a desired tool's versions from another file too",
+			setup: func(f *fakeMise) {
+				f.global["bun"] = []string{"latest"}
+				f.foreign["bun"] = "/home/me/.config/mise/conf.d/bun.toml"
+			},
+			want: desired,
+			msg:  "bun's global versions come from /home/me/.config/mise/conf.d/bun.toml, not mise's global config",
 		},
 		{
 			name:  "mise ls fails",

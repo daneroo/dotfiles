@@ -127,6 +127,13 @@ func (o OS) Run(ctx context.Context, c Cmd) error {
 
 // command prepares a program that is interrupted, not killed, when the
 // context is cancelled, and killed once WaitDelay has passed.
+//
+// Only the program itself is signalled, not the processes it starts. Ctrl-C
+// in a terminal reaches them all anyway: the terminal interrupts its whole
+// foreground process group. Other cancellation, such as SIGTERM, relies on
+// the program to stop its children. Running programs in a process group of
+// their own would let the group be signalled, but would cut them off from
+// the terminal, where sudo asks for a password.
 func (o OS) command(ctx context.Context, c Cmd) *exec.Cmd {
 	cmd := exec.CommandContext(ctx, c.Name, c.Args...)
 	if len(c.Env) > 0 {

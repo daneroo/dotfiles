@@ -6,14 +6,25 @@ import (
 	"encoding/json"
 	"fmt"
 	"maps"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
 	"github.com/daneroo/dotfiles/go/pkg/proc"
 )
 
-// observe queries mise for the actual state of the versioned tools.
+// observe queries mise for the actual state of the versioned tools. A
+// desired tool whose version an environment variable overrides is an error:
+// mise's global view hides it, so reconfig would compare and edit the wrong
+// thing.
 func observe(ctx context.Context, x proc.Exec, desired map[string][]string) (observed, error) {
+	for _, tool := range slices.Sorted(maps.Keys(desired)) {
+		name := "MISE_" + strings.ToUpper(strings.ReplaceAll(tool, "-", "_")) + "_VERSION"
+		if v := os.Getenv(name); v != "" {
+			return observed{}, fmt.Errorf("%s=%s overrides %s's global versions; unset it: reconfig edits only mise's global config", name, v, tool)
+		}
+	}
 	installed, err := getInstalledVersions(ctx, x)
 	if err != nil {
 		return observed{}, err
@@ -65,9 +76,14 @@ func getInstalledVersions(ctx context.Context, x proc.Exec) (map[string][]string
 // which tools the global config lists and where it is, but sorts their
 // versions; so the ordered list comes from mise config get --global, which
 // reads the file reconfig edits. A global request from another file, such
-// as a .tool-versions, is an error: reconfig would not edit it.
+// as a .tool-versions or a conf.d file, is an error: reconfig would not edit
+// it, and the two views would disagree.
 func getGlobalDefaults(ctx context.Context, x proc.Exec) (map[string][]string, string, error) {
 	entries, err := miseLs(ctx, x, "--global")
+	if err != nil {
+		return nil, "", err
+	}
+	globalFile, err := globalConfigPath()
 	if err != nil {
 		return nil, "", err
 	}
@@ -79,6 +95,11 @@ func getGlobalDefaults(ctx context.Context, x proc.Exec) (map[string][]string, s
 			continue
 		}
 		source := versions[0].Source.Path
+		for _, v := range versions {
+			if !samePath(v.Source.Path, globalFile) {
+				return nil, "", fmt.Errorf("%s's global versions come from %s, not mise's global config %s: reconfig edits only that file", tool, v.Source.Path, globalFile)
+			}
+		}
 		specs, err := getConfiguredSpecs(ctx, x, tool)
 		if err != nil {
 			return nil, "", fmt.Errorf("%s's global versions come from %s, which reconfig cannot read as mise's global config file: %w", tool, source, err)
@@ -87,6 +108,16 @@ func getGlobalDefaults(ctx context.Context, x proc.Exec) (map[string][]string, s
 		defaults[tool] = specs
 	}
 	return defaults, globalConfig, nil
+}
+
+// samePath reports whether two paths name the same file, following links.
+func samePath(a, b string) bool {
+	if a == b {
+		return true
+	}
+	ra, errA := filepath.EvalSymlinks(a)
+	rb, errB := filepath.EvalSymlinks(b)
+	return errA == nil && errB == nil && ra == rb
 }
 
 // miseLs runs mise ls --json with a filter flag and parses the output

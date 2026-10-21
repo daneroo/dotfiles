@@ -68,17 +68,12 @@ func reconfig(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 	if opts.verbose {
 		x = verboseExec{Exec: x, out: stdout}
 	}
-	bun, err := bunTarget(ctx, x)
-	if err != nil {
-		fmt.Fprintf(stdout, "✗ - %v\n", err)
-		return 1
-	}
 	reconcilers := []run.Reconciler{
 		upgrade.New(x),
 		packages.New(cfg.Homebrew, x),
 		mise.New(cfg.Mise, x),
 		npm.New(cfg.Npm, x),
-		completions.New(generators(repo), bun, x),
+		completions.New(generators(repo), func(ctx context.Context) (string, error) { return bunTarget(ctx, x) }, x),
 		stow.New(repo, home, x),
 	}
 	runner := run.Runner{Mode: opts.mode, Interactive: interactive(stdin), In: stdin, Out: stdout, Prompt: stderr}
@@ -203,7 +198,8 @@ func generators(repo string) []completions.Generator {
 // bunTarget is where Bun's corrected completion goes: "bun" in Homebrew's
 // bash-completion directory, which bash-completion v2 loads on demand.
 // Without Homebrew there is none, and the completions reconciler reports
-// Bun's completion as skipped.
+// Bun's completion as skipped. It is found when the completions plan, so a
+// failure is that reconciler's planning error.
 func bunTarget(ctx context.Context, x proc.Exec) (string, error) {
 	prefix := os.Getenv("HOMEBREW_PREFIX")
 	if prefix == "" {

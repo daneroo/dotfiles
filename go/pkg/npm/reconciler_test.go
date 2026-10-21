@@ -20,11 +20,16 @@ import (
 // version, and installing a package installs its latest version.
 type fakeNpm struct {
 	missing bool
+	// viaMise puts npm off PATH, where only mise finds it, as for a node
+	// mise has just installed.
+	viaMise bool
 	// prefix is npm's global prefix; npm ls -g fails while it does not
 	// exist, and installing creates it.
 	prefix    string
 	installed map[string]string
 	latest    map[string]string
+	// outdatedOut, when set, is what npm outdated prints, exiting 1.
+	outdatedOut string
 	// fail makes the npm command with these arguments fail.
 	fail string
 	// runs records the commands that changed the state.
@@ -32,13 +37,29 @@ type fakeNpm struct {
 }
 
 func (f *fakeNpm) LookPath(name string) (string, error) {
-	if name != "npm" || f.missing {
-		return "", errors.New("not found")
+	switch {
+	case name == "npm" && !f.missing && !f.viaMise:
+		return "/fake/bin/npm", nil
+	case name == "mise" && f.viaMise:
+		return "/fake/bin/mise", nil
 	}
-	return "/fake/bin/npm", nil
+	return "", errors.New("not found")
+}
+
+// throughMise is the npm command mise exec runs, or c itself.
+func (f *fakeNpm) throughMise(c proc.Cmd) proc.Cmd {
+	if f.viaMise && c.Name == "mise" && len(c.Args) > 3 && strings.Join(c.Args[:3], " ") == "exec -- npm" &&
+		slices.Equal(c.Env, []string{"MISE_EXEC_AUTO_INSTALL=false"}) {
+		return proc.Command("npm", c.Args[3:]...)
+	}
+	return c
 }
 
 func (f *fakeNpm) Output(_ context.Context, c proc.Cmd) ([]byte, error) {
+	if f.viaMise && c.String() == "mise which npm" {
+		return []byte("/home/me/.local/share/mise/installs/node/24/bin/npm\n"), nil
+	}
+	c = f.throughMise(c)
 	cmd := c.String()
 	if cmd == f.fail {
 		return nil, fmt.Errorf("%s failed: exit status 1", cmd)
@@ -56,6 +77,9 @@ func (f *fakeNpm) Output(_ context.Context, c proc.Cmd) ([]byte, error) {
 		}
 		return json.Marshal(map[string]any{"dependencies": deps})
 	case "npm outdated -g --json":
+		if f.outdatedOut != "" {
+			return []byte(f.outdatedOut), errors.New("exit status 1")
+		}
 		outdated := map[string]map[string]string{}
 		for pkg, v := range f.installed {
 			if latest, ok := f.latest[pkg]; ok && latest != v {
@@ -73,8 +97,9 @@ func (f *fakeNpm) Output(_ context.Context, c proc.Cmd) ([]byte, error) {
 }
 
 func (f *fakeNpm) Run(_ context.Context, c proc.Cmd) error {
+	f.runs = append(f.runs, c.String())
+	c = f.throughMise(c)
 	cmd, args := c.String(), c.Args
-	f.runs = append(f.runs, cmd)
 	if cmd == f.fail {
 		return fmt.Errorf("%s failed: exit status 1", cmd)
 	}
@@ -204,6 +229,38 @@ func TestObservationFailureIsAnError(t *testing.T) {
 	}
 }
 
+// npm outdated failing with its JSON error, or with no output it can use,
+// is a planning error: nothing is uninstalled.
+func TestOutdatedFailureIsAnError(t *testing.T) {
+	for name, output := range map[string]string{
+		"error JSON": `{"error": {"code": "E401", "summary": "Unable to authenticate"}}`,
+		"empty JSON": `{}`,
+	} {
+		t.Run(name, func(t *testing.T) {
+			f := newFake()
+			f.outdatedOut = output
+			res, out := reconcile(t, run.Yolo, f)
+			if res.ExitCode() != 1 || !strings.Contains(out, "✗ - planning failed: failed to check for updates") {
+				t.Errorf("exit code %d, output:\n%s", res.ExitCode(), out)
+			}
+			if len(f.runs) != 0 {
+				t.Errorf("ran %q after a failed observation", f.runs)
+			}
+		})
+	}
+}
+
+// A package named error is still a package.
+func TestPackageNamedError(t *testing.T) {
+	f := newFake()
+	f.installed["error"] = "7.0.0"
+	f.outdatedOut = `{"error": {"current": "7.0.0", "wanted": "7.0.0", "latest": "10.4.0"}}`
+	res, out := reconcile(t, run.DryRun, f)
+	if res.ExitCode() != 0 || !strings.Contains(out, "✗ - npm: error is unwanted\n") {
+		t.Errorf("exit code %d, want the package reported:\n%s", res.ExitCode(), out)
+	}
+}
+
 // A failed install stops the plan: nothing is uninstalled after it.
 func TestInstallFailureStopsRemovals(t *testing.T) {
 	f := newFake()
@@ -238,6 +295,29 @@ func TestMissingGlobalPrefix(t *testing.T) {
 	res, out = reconcile(t, run.Yolo, f)
 	if res.Entries[0].Status != run.Unchanged {
 		t.Errorf("rerun status = %v, want unchanged:\n%s", res.Entries[0].Status, out)
+	}
+}
+
+// npm that came with a node mise installed, off PATH, runs through mise.
+func TestNpmThroughMise(t *testing.T) {
+	f := newFake()
+	f.viaMise = true
+	res, out := reconcile(t, run.Yolo, f)
+	for _, want := range []string{
+		"✓ - npm is installed, through mise\n",
+		" MISE_EXEC_AUTO_INSTALL=false mise exec -- npm install -g json prettier\n",
+		" MISE_EXEC_AUTO_INSTALL=false mise exec -- npm uninstall -g leftpad\n",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output lacks %q:\n%s", want, out)
+		}
+	}
+	if res.ExitCode() != 0 || f.installed["prettier"] == "" {
+		t.Errorf("exit code %d, installed %v; want prettier installed", res.ExitCode(), f.installed)
+	}
+	wantRuns := []string{"MISE_EXEC_AUTO_INSTALL=false mise exec -- npm install -g json prettier", "MISE_EXEC_AUTO_INSTALL=false mise exec -- npm uninstall -g leftpad"}
+	if !slices.Equal(f.runs, wantRuns) {
+		t.Errorf("ran %q, want %q", f.runs, wantRuns)
 	}
 }
 
