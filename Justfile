@@ -21,8 +21,8 @@ fmt:
 e2e:
     ./e2e/run.sh
 
-# Reconcile this machine with config.yaml, asking before each plan (options pass through: just reconcile -n).
-reconcile *args:
+# Reconcile this machine with config.yaml, asking before each plan (options pass through: just reconfig -n).
+reconfig *args:
     ./reconfig.sh "$@"
 
 [private]

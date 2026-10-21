@@ -82,7 +82,7 @@ _Systems under control:_ `galois, davinci, shannon, dirac, goedel, feynman`
 Regular maintenance (_idempotent_):
 
 ```bash
-just reconcile # or ./reconfig.sh
+just reconfig # or ./reconfig.sh
 ```
 
 ## TODO

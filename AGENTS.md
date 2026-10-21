@@ -30,7 +30,7 @@ Commands live in the `Justfile`; run `just` to list them.
 - `just e2e` runs the end-to-end scenario in a fresh Homebrew container against
   its own staged desired states, `e2e/config*.yaml` (needs Docker, takes
   minutes).
-- `just reconcile` runs `./reconfig.sh` (options pass through), which asks
+- `just reconfig` runs `./reconfig.sh` (options pass through), which asks
   before applying each plan and changes the machine when approved. Ask before
   running it, in any mode: even `--dry-run` refreshes Homebrew's metadata.
   Validate with tests and the e2e scenario, never by reconciling this machine.
