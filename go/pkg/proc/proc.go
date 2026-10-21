@@ -38,6 +38,9 @@ type Cmd struct {
 	Env []string
 	// Dir is the working directory; empty means the caller's.
 	Dir string
+	// Stderr, when set, also receives the standard error captured by
+	// Output, for programs such as stow that report on it.
+	Stderr io.Writer
 }
 
 // Command returns the command for the program and arguments.
@@ -94,6 +97,9 @@ func (o OS) Output(ctx context.Context, c Cmd) ([]byte, error) {
 	cmd := o.command(ctx, c)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
+	if c.Stderr != nil {
+		cmd.Stderr = io.MultiWriter(&stderr, c.Stderr)
+	}
 	if err := cmd.Run(); err != nil {
 		return stdout.Bytes(), fmt.Errorf("%s failed: %w\nstderr: %s", c, err, stderr.String())
 	}

@@ -118,6 +118,19 @@ func TestDir(t *testing.T) {
 	}
 }
 
+func TestOutputStderr(t *testing.T) {
+	var stderr strings.Builder
+	c := proc.Command("sh", "-c", "echo out; echo diag >&2")
+	c.Stderr = &stderr
+	out, err := proc.OS{}.Output(context.Background(), c)
+	if err != nil {
+		t.Fatalf("Output failed: %v", err)
+	}
+	if string(out) != "out\n" || stderr.String() != "diag\n" {
+		t.Errorf("stdout = %q, stderr = %q; want them apart", out, stderr.String())
+	}
+}
+
 func TestFormat(t *testing.T) {
 	got := proc.Format("mise", "use", "-g", "node@>=20, <22", "it's")
 	want := `mise use -g 'node@>=20, <22' 'it'\''s'`
