@@ -27,7 +27,7 @@ func TestPlan(t *testing.T) {
 				resolved: map[string]map[string]string{"bun": {"latest": "1.4.3"}},
 			},
 			wantInstall: []string{"mise install bun@1.4.3"},
-			wantUse:     []string{"mise use -g bun@latest"},
+			wantUse:     []string{"mise config set --global --type string tools.bun latest"},
 		},
 		{
 			name:    "actual state matches desired state",
@@ -70,7 +70,7 @@ func TestPlan(t *testing.T) {
 				resolved: pythonResolved,
 			},
 			wantInstall: []string{"mise install python@3.12.15", "mise install python@3.11.17"},
-			wantUse:     []string{"mise use -g python@3.12 python@3.11"},
+			wantUse:     []string{"mise config set --global --type string tools.python 3.12", "mise config set --global --append --type string tools.python 3.11"},
 		},
 		{
 			name:    "the default list in the wrong order",
@@ -80,7 +80,7 @@ func TestPlan(t *testing.T) {
 				defaults:  map[string][]string{"python": {"3.11", "3.12"}},
 				resolved:  pythonResolved,
 			},
-			wantUse: []string{"mise use -g python@3.12 python@3.11"},
+			wantUse: []string{"mise config set --global --type string tools.python 3.12", "mise config set --global --append --type string tools.python 3.11"},
 		},
 		{
 			name:    "a tool installed but not in the desired state",
@@ -121,17 +121,17 @@ func TestPlan(t *testing.T) {
 				resolved: pythonResolved,
 			},
 			wantUninstall: []string{"mise uninstall bun@1.4.3"},
-			wantUnuse:     []string{"mise unuse -g bun"},
+			wantUnuse:     []string{"mise unuse --global --no-prune bun"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := plan(tt.desired, tt.actual)
-			assertCommands(t, "install", got.install, tt.wantInstall)
-			assertCommands(t, "use", got.use, tt.wantUse)
-			assertCommands(t, "uninstall", got.uninstall, tt.wantUninstall)
-			assertCommands(t, "unuse", got.unuse, tt.wantUnuse)
+			groups := newPlan(nil, plan(tt.desired, tt.actual), "").report.Groups
+			assertCommands(t, "install", groups[0].Actions, tt.wantInstall)
+			assertCommands(t, "use", groups[1].Actions, tt.wantUse)
+			assertCommands(t, "uninstall", groups[2].Actions, tt.wantUninstall)
+			assertCommands(t, "unuse", groups[3].Actions, tt.wantUnuse)
 		})
 	}
 }
@@ -149,8 +149,8 @@ func TestPlanReportsEachSpec(t *testing.T) {
 		"✗ - python 3.11 → 3.11.17 is not installed",
 		"✓ - python defaults match config.yaml: 3.12, 3.11",
 	}
-	if !slices.Equal(got.report, want) {
-		t.Errorf("report:\n got %q\nwant %q", got.report, want)
+	if lines := reportLines(got); !slices.Equal(lines, want) {
+		t.Errorf("report:\n got %q\nwant %q", lines, want)
 	}
 }
 
@@ -162,9 +162,18 @@ func TestPlanReportsAStray(t *testing.T) {
 	want := []string{
 		"✗ - bun is a stray in mise's global config, /Users/daniel/.config/mise/config.toml: config.yaml doesn't list it",
 	}
-	if !slices.Equal(got.report, want) {
-		t.Errorf("report:\n got %q\nwant %q", got.report, want)
+	if lines := reportLines(got); !slices.Equal(lines, want) {
+		t.Errorf("report:\n got %q\nwant %q", lines, want)
 	}
+}
+
+// reportLines renders the plan's report lines as the runner shows them.
+func reportLines(p planned) []string {
+	var lines []string
+	for _, n := range p.report {
+		lines = append(lines, string(n.Mark)+" - "+n.Text)
+	}
+	return lines
 }
 
 func assertCommands(t *testing.T, kind string, got, want []string) {

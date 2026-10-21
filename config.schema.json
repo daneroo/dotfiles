@@ -2,6 +2,9 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "required": ["homebrew", "mise", "npm"],
+  "definitions": {
+    "versionSpec": { "type": "string", "minLength": 1 }
+  },
   "properties": {
     "homebrew": {
       "type": "object",
@@ -28,13 +31,16 @@
     "mise": {
       "type": "object",
       "additionalProperties": {
-        "type": "array",
-        "minItems": 1,
-        "uniqueItems": true,
-        "items": {
-          "type": "string",
-          "pattern": "^(latest|lts|\\d+(\\.\\d+)*)$"
-        }
+        "description": "One version spec, or a list whose first is the default. Mise interprets each spec, such as latest, lts, 3.12 or >=20, <22; options objects are not supported.",
+        "oneOf": [
+          { "$ref": "#/definitions/versionSpec" },
+          {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "$ref": "#/definitions/versionSpec" }
+          }
+        ]
       }
     },
     "npm": {

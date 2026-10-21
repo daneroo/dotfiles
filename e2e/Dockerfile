@@ -17,7 +17,7 @@ FROM ghcr.io/homebrew/ubuntu26.04:latest
 COPY --from=builder /tmp/reconfig /usr/local/bin/
 
 # Copy dotfiles repository into container, owned by the user reconfig runs
-# as, so it can write the cached completions (mise's file is new there)
+# as, so it can write the cached completions
 COPY --chown=linuxbrew:linuxbrew . /home/linuxbrew/.dotfiles
 WORKDIR /home/linuxbrew/.dotfiles
 

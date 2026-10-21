@@ -5,6 +5,8 @@ import (
 	"maps"
 	"slices"
 	"strings"
+
+	"github.com/daneroo/dotfiles/go/pkg/run"
 )
 
 // observed is the actual state of the versioned tools, as mise reports it.
@@ -19,22 +21,40 @@ type observed struct {
 	globalConfig string
 }
 
-// planned is what reconciling prints: a report line per check, then the
-// commands that close the gap, grouped by kind.
+// planned is the result of comparing: a report line per check, then the
+// changes that close the gap, grouped by kind.
 type planned struct {
-	report    []string
-	install   []string
-	use       []string
-	uninstall []string
-	unuse     []string
+	report []run.Note
+	// install holds the concrete versions the specs resolved to, so applying
+	// never resolves a spec again.
+	install []toolVersion
+	// align holds the tools whose global default list must become the specs.
+	align     []toolSpecs
+	uninstall []toolVersion
+	// unuse holds the strays to remove from mise's global config.
+	unuse []string
+}
+
+// toolVersion is one concrete version of a tool, such as python@3.12.15.
+type toolVersion struct {
+	tool, version string
+}
+
+// String renders the version as mise names it.
+func (v toolVersion) String() string { return v.tool + "@" + v.version }
+
+// toolSpecs is a tool's version specs, in config order.
+type toolSpecs struct {
+	tool  string
+	specs []string
 }
 
 // plan compares the desired version specs with the actual state and returns
-// the report lines and the mise commands that reconcile the differences:
-//   - a resolved version that isn't installed → mise install <tool>@<version>
-//   - a global default list that differs from the specs → mise use -g <tool>@<spec> ...
-//   - an installed version that no spec resolves to → mise uninstall <tool>@<version>
-//   - a stray in mise's global config, a tool that config.yaml doesn't list → mise unuse -g <tool>
+// the report lines and the changes that reconcile the differences:
+//   - a resolved version that isn't installed → install it
+//   - a global default list that differs from the specs → align it
+//   - an installed version that no spec resolves to → uninstall it
+//   - a stray in mise's global config, a tool that config.yaml doesn't list → unuse it
 //
 // Tools are taken in name order, so the output is stable.
 func plan(desired map[string][]string, actual observed) planned {
@@ -47,23 +67,23 @@ func plan(desired map[string][]string, actual observed) planned {
 		for _, spec := range specs {
 			version := actual.resolved[tool][spec]
 			if slices.Contains(installed, version) {
-				p.report = append(p.report, fmt.Sprintf("✓ - %s %s → %s", tool, spec, version))
+				p.report = append(p.report, note(run.OK, "%s %s → %s", tool, spec, version))
 				continue
 			}
-			p.report = append(p.report, fmt.Sprintf("✗ - %s %s → %s is not installed", tool, spec, version))
+			p.report = append(p.report, note(run.Problem, "%s %s → %s is not installed", tool, spec, version))
 			// Two specs, such as 3.12 and latest, may resolve to one version
 			if !slices.Contains(queued, version) {
 				queued = append(queued, version)
-				p.install = append(p.install, fmt.Sprintf("mise install %s@%s", tool, version))
+				p.install = append(p.install, toolVersion{tool, version})
 			}
 		}
 
 		defaults := actual.defaults[tool]
 		if slices.Equal(defaults, specs) {
-			p.report = append(p.report, fmt.Sprintf("✓ - %s defaults match config.yaml: %s", tool, strings.Join(specs, ", ")))
+			p.report = append(p.report, note(run.OK, "%s defaults match config.yaml: %s", tool, strings.Join(specs, ", ")))
 		} else {
-			p.report = append(p.report, fmt.Sprintf("✗ - %s defaults are %s, config.yaml wants %s", tool, listOrNone(defaults), strings.Join(specs, ", ")))
-			p.use = append(p.use, useCommand(tool, specs))
+			p.report = append(p.report, note(run.Problem, "%s defaults are %s, config.yaml wants %s", tool, listOrNone(defaults), strings.Join(specs, ", ")))
+			p.align = append(p.align, toolSpecs{tool, specs})
 		}
 	}
 
@@ -72,18 +92,18 @@ func plan(desired map[string][]string, actual observed) planned {
 			if resolvesTo(actual.resolved[tool], desired[tool], version) {
 				continue
 			}
-			p.report = append(p.report, fmt.Sprintf("✗ - %s %s is installed but no version spec resolves to it", tool, version))
-			p.uninstall = append(p.uninstall, fmt.Sprintf("mise uninstall %s@%s", tool, version))
+			p.report = append(p.report, note(run.Problem, "%s %s is installed but no version spec resolves to it", tool, version))
+			p.uninstall = append(p.uninstall, toolVersion{tool, version})
 		}
 	}
 
-	// mise unuse -g only removes the stray's line; its versions are uninstalled above
+	// Unusing only removes the stray's line; its versions are uninstalled above
 	for _, tool := range slices.Sorted(maps.Keys(actual.defaults)) {
 		if _, ok := desired[tool]; ok {
 			continue
 		}
-		p.report = append(p.report, fmt.Sprintf("✗ - %s is a stray in mise's global config, %s: config.yaml doesn't list it", tool, actual.globalConfig))
-		p.unuse = append(p.unuse, "mise unuse -g "+tool)
+		p.report = append(p.report, note(run.Problem, "%s is a stray in mise's global config, %s: config.yaml doesn't list it", tool, actual.globalConfig))
+		p.unuse = append(p.unuse, tool)
 	}
 
 	return p
@@ -99,14 +119,9 @@ func resolvesTo(resolved map[string]string, specs []string, version string) bool
 	return false
 }
 
-// useCommand returns the mise use -g command that sets a tool's global
-// default list to its specs, in config order.
-func useCommand(tool string, specs []string) string {
-	args := make([]string, len(specs))
-	for i, spec := range specs {
-		args[i] = tool + "@" + spec
-	}
-	return "mise use -g " + strings.Join(args, " ")
+// note makes a report line.
+func note(m run.Mark, format string, args ...any) run.Note {
+	return run.Note{Mark: m, Text: fmt.Sprintf(format, args...)}
 }
 
 // listOrNone joins the items for a report line, or says (none).

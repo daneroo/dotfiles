@@ -1,9 +1,15 @@
 # Desired state for the e2e scenario (see e2e/test.sh): small, Linux-compatible.
+# It declares its own prerequisites as formulae: mise, node (for npm), and
+# stow, which links the repository's core into the home directory. One YOLO
+# run installs them and then uses them.
 homebrew:
   formulae:
     e2e:
       - hello
       - jq
+      - mise
+      - node
+      - stow
       - tree
   casks: []
 mise:

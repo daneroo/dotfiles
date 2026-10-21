@@ -16,10 +16,9 @@ package schema
 //
 // 3. Format Validation:
 //    - Homebrew formulae: must be either "name" or "org/repo/name"
-//    - mise version specs, in order (the first is the default), each one of:
-//      * "latest": the newest release
-//      * "lts": the newest long-term support release (node)
-//      * A version prefix: "X[.Y[.Z...]]" (e.g., "3", "3.12", "3.12.15")
+//    - mise version specs: one spec, or a list whose first is the default.
+//      Mise interprets each spec, e.g. "latest", "lts", "3.12", ">=20, <22";
+//      options objects are not supported
 //    - NPM packages: list of package names
 
 import (
@@ -44,6 +43,14 @@ testValidConfigs: {
 		}
 		npm: []
 	}
+	test1Scalars: #Config & {
+		homebrew: {}
+		mise: {
+			bun:  "latest"
+			node: ">=20, <22" // a native expression, interpreted by mise
+		}
+		npm: []
+	}
 }
 // Main configuration schema
 #Config: {
@@ -55,8 +62,8 @@ testValidConfigs: {
 		casks: [...#Formula]
 	}
 
-	// mise versioned tools, each with its version specs
-	mise!: [string]: [#VersionSpec, ...#VersionSpec] & list.UniqueItems()
+	// mise versioned tools, each with one version spec or a list of them
+	mise!: [string]: #VersionSpec | ([#VersionSpec, ...#VersionSpec] & list.UniqueItems())
 
 	// Global NPM packages
 	npm!: [...string]
@@ -68,8 +75,8 @@ testValidConfigs: {
 	out:   strings.Split(input, "/")[-1]
 }
 
-// Valid version spec: latest, lts or a version prefix
-#VersionSpec: string & =~"^(latest|lts|\\d+(\\.\\d+)*)$"
+// A version spec is any non-empty string: mise interprets it
+#VersionSpec: string & !=""
 
 // Valid formula format (either "name" or "tap/repo/name")
 #Formula: string & =~"^([^/]+|[^/]+/[^/]+/[^/]+)$"

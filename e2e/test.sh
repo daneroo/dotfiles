@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 # The e2e scenario, run inside a fresh Homebrew container (see run.sh).
-# It reconciles against e2e/config.yaml and asserts output, exit codes,
-# and the resulting machine state at every step.
+# It reconciles against the staged desired states e2e/config.yaml and
+# e2e/config.stray.yaml, and asserts output, exit codes, and the resulting
+# machine state at every step. reconfig applies its own plans: nothing it
+# prints is run.
 set -uo pipefail
 
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -9,137 +11,225 @@ REPO_ROOT="$(cd "$DIR/.." && pwd)"
 cd "$REPO_ROOT"
 
 CONFIG=e2e/config.yaml
-DESIRED_FORMULAE="hello jq tree"
+STRAY_CONFIG=e2e/config.stray.yaml
+DESIRED_FORMULAE="hello jq mise node stow tree"
 EXTRANEOUS_FORMULA=figlet
 NPM_GLOBAL=semver
-UNWANTED_BUN=1.1.0
 STRAY_TOOL=jq
+STRAY_VERSION=1.7.1
+MISE_CONFIG="$HOME/.config/mise/config.toml"
+MISE_COMMENT="# kept by reconfig"
+MISE_SETTING="jobs = 2"
+# A completion file reconfig generates into the repository; removed first,
+# so it is new and Stow must link it in the same run.
+GENERATED=core/.config/bash_includes/mise_completion.bash
+BUN_COMPLETION="$(brew --prefix)/share/bash-completion/completions/bun"
+# core/.npmrc moves npm's global prefix here once Stow links it; set from the
+# start, so npm globals stay in one place, as on a machine already linked.
+export NPM_CONFIG_PREFIX="$HOME/.npm-global"
 
 echo "Container: $(uname -sm), $(brew --version | head -1), bash ${BASH_VERSION}"
 
 main() {
     local scenario_start=$EPOCHREALTIME
 
-    step "1. A fresh machine reports exactly the desired formulae as missing"
-    run_reconfig
+    step "0. Setup: a new generated file, and an unfolded ~/.config/bash_includes"
+    rm "$GENERATED" || fail "cannot remove $GENERATED"
+    mkdir -p ~/.config/bash_includes
+    echo "# not managed by reconfig" >~/.config/bash_includes/local.sh
+    echo "✓ removed $GENERATED; ~/.config/bash_includes is a directory, not a link"
+    local fresh
+    fresh=$(snapshot)
+
+    step "1. Help, and conflicting modes are a usage error"
+    run_reconfig --help
     assert_exit 0
-    assert_no_output "## ASDF"
+    assert_output "Usage: reconfig [options]"
+    run_reconfig -n -y
+    assert_exit 2
+    assert_output "--dry-run and --yolo cannot be used together"
+
+    step "2. An explicit dry run on a fresh machine shows the plans and changes nothing"
+    run_reconfig --dry-run -c "$CONFIG"
+    assert_exit 0
+    assert_output " - mode: dry-run"
+    local install_line
+    install_line=$(grep '^ HOMEBREW_NO_AUTOREMOVE=1 brew install --formula ' "$OUT" | tail -1)
+    assert_equal "missing formulae" "$DESIRED_FORMULAE" "$(words_sorted "${install_line# HOMEBREW_NO_AUTOREMOVE=1 brew install --formula }")"
+    assert_section_output "Homebrew Packages Section" "△ - Dry run: not applied"
     assert_section_output "Mise Section" "✗ - mise is not installed, skipping"
     assert_section_output "NPM Globals Section" "✗ - npm is not installed, skipping"
-    assert_output "## CLI Completions Section"
-    local install_line
-    install_line=$(grep '^ brew install --formula ' "$OUT" | tail -1)
-    assert_equal "missing formulae" "$DESIRED_FORMULAE" "$(words_sorted "${install_line# brew install --formula }")"
+    assert_section_output "Stow Section" "✗ - stow is not installed, skipping"
+    assert_none_applied
+    assert_unchanged "$fresh"
 
-    step "2. The printed brew install line works"
-    run_printed "$install_line"
+    step "3. Without a terminal, the default mode previews only, even when input says y"
+    run_reconfig_with_input y -c "$CONFIG"
+    assert_exit 0
+    assert_output "△ - Input is not interactive: previewing only, as with --dry-run"
+    assert_output " - mode: confirm"
+    assert_none_applied
+    assert_unchanged "$fresh"
+
+    step "4. YOLO installs the prerequisites and uses them; existing dotfiles conflict with Stow"
+    run_reconfig --yolo -c "$CONFIG"
+    assert_exit 1
+    for name in "Homebrew Packages" "Mise" "NPM Globals" "CLI Completions"; do
+        assert_output "✓ - $name applied"
+    done
+    assert_section_output "Stow Section" "✗ - planning failed: stow cannot link core"
+    assert_output "over existing target .bashrc"
     for f in $DESIRED_FORMULAE; do
         brew list --formula "$f" >/dev/null 2>&1 || fail "$f is not installed"
     done
     echo "✓ installed: $DESIRED_FORMULAE"
-
-    step "3. A rerun has nothing missing and nothing extraneous"
-    run_reconfig
-    assert_exit 0
-    assert_output "✓ - No missing casks/formulae"
-    assert_output "✓ - No extraneous casks/formulae"
-
-    step "4. A formula outside the desired state is reported extraneous"
-    brew install --formula "$EXTRANEOUS_FORMULA" >/dev/null 2>&1 || fail "brew install $EXTRANEOUS_FORMULA failed"
-    run_reconfig
-    assert_exit 0
-    assert_output "✓ - No missing casks/formulae"
-    assert_output " brew uninstall --formula $EXTRANEOUS_FORMULA"
-
-    step "5. Once node is present, reconfig prints the npm install line, which works"
-    brew install --formula node >/dev/null 2>&1 || fail "brew install node failed"
-    run_reconfig
-    assert_exit 0
-    assert_output "✓ - npm is installed"
-    assert_output "✗ - npm: $NPM_GLOBAL is missing"
-    npm_global_installed && fail "reconfig installed $NPM_GLOBAL; it should only print the command"
-    echo "✓ npm global not installed by reconfig: $NPM_GLOBAL"
-    assert_output_line " npm install -g $NPM_GLOBAL"
-    # The combined line may also update npm itself, when the npm that comes
-    # with node is outdated.
-    local npm_install_line
-    npm_install_line=$(grep '^ npm install -g ' "$OUT" | tail -1)
-    run_printed "$npm_install_line"
-    npm_global_installed || fail "npm global $NPM_GLOBAL is not installed"
-    echo "✓ npm global installed: $NPM_GLOBAL"
-    echo "Rerunning: nothing to do"
-    run_reconfig
-    assert_exit 0
-    assert_output "✓ - $NPM_GLOBAL"
-    assert_output "✓ - No missing or outdated npm globals"
-    assert_output "✓ - No unwanted npm globals"
-    assert_no_output "Installing..."
-    assert_no_output " npm install -g "
-
-    step "6. Once mise is present, reconfig prints the mise use line, which works"
-    brew install --formula mise >/dev/null 2>&1 || fail "brew install mise failed"
-    run_reconfig
-    assert_exit 0
-    assert_output "✓ - mise is installed"
-    assert_output_line " mise use -g bun@latest"
-    bun_installed && fail "reconfig installed bun; it should only print the command"
-    echo "✓ bun not installed by reconfig"
-    run_printed " mise use -g bun@latest"
     bun_installed || fail "bun is not installed"
     echo "✓ bun installed by mise"
-    echo "Rerunning: nothing to do"
-    run_reconfig
-    assert_exit 0
-    assert_output "✓ - No missing mise versions"
-    assert_output "✓ - No mise defaults to change"
-    assert_output "✓ - No unwanted mise versions"
-    assert_no_printed "mise "
+    npm_global_installed || fail "npm global $NPM_GLOBAL is not installed"
+    echo "✓ npm global installed: $NPM_GLOBAL"
+    [ -f "$GENERATED" ] || fail "$GENERATED was not generated"
+    echo "✓ generated: $GENERATED"
+    assert_bun_completion
+    [ -L ~/.bashrc ] && fail "~/.bashrc was replaced despite the conflict"
+    echo "✓ ~/.bashrc left as it was"
 
-    step "7. A bun version no spec resolves to is reported with its uninstall line"
-    mise install "bun@$UNWANTED_BUN" >/dev/null 2>&1 || fail "mise install bun@$UNWANTED_BUN failed"
-    run_reconfig
+    step "5. With the conflicting dotfiles moved aside, YOLO links core, including the new file"
+    mv ~/.bashrc ~/.bashrc.orig && mv ~/.profile ~/.profile.orig || fail "cannot move dotfiles aside"
+    run_reconfig -y -c "$CONFIG"
     assert_exit 0
-    assert_output_line " mise uninstall bun@$UNWANTED_BUN"
+    assert_output_line " LINK: .config/bash_includes/mise_completion.bash => ../../.dotfiles/core/.config/bash_includes/mise_completion.bash"
+    assert_output "✓ - Stow applied"
+    assert_resolves ~/.bashrc "$REPO_ROOT/core/.bashrc"
+    assert_resolves ~/.config/bash_includes/mise_completion.bash "$REPO_ROOT/$GENERATED"
+    [ -L ~/.config/bash_includes/local.sh ] && fail "local.sh became a link"
+    echo "✓ ~/.config/bash_includes/local.sh left as it was"
 
-    step "8. A stray in mise's global config is reported with its unuse line, which works"
-    # Adds the line to mise's global config without installing the tool
-    mise config set -f ~/.config/mise/config.toml "tools.$STRAY_TOOL" 1.7.1 || fail "mise config set failed"
-    run_reconfig
+    step "6. A YOLO rerun has nothing to apply"
+    run_reconfig -y -c "$CONFIG"
+    assert_exit 0
+    assert_unchanged_run
+
+    step "7. A staged desired state adds jq through mise, beside unrelated settings"
+    # Unrelated parts of mise's global config, which reconfig's edits keep
+    printf '%s\n' "" "$MISE_COMMENT" "[settings]" "$MISE_SETTING" >>"$MISE_CONFIG" || fail "cannot add settings to $MISE_CONFIG"
+    echo "✓ added to $MISE_CONFIG: $MISE_COMMENT, [settings] $MISE_SETTING"
+    run_reconfig -y -c "$STRAY_CONFIG"
+    assert_exit 0
+    assert_output "✓ - Mise applied"
+    mise config get --global "tools.$STRAY_TOOL" >/dev/null || fail "$STRAY_TOOL is not in mise's global config"
+    echo "✓ $STRAY_TOOL is in mise's global config"
+
+    step "8. Back to config.yaml, with an unwanted formula: a dry run shows the cleanup"
+    brew install --formula "$EXTRANEOUS_FORMULA" >/dev/null 2>&1 || fail "brew install $EXTRANEOUS_FORMULA failed"
+    run_reconfig -n -c "$CONFIG"
     assert_exit 0
     assert_output "✗ - $STRAY_TOOL is a stray in mise's global config"
-    assert_output_line " mise unuse -g $STRAY_TOOL"
-    run_printed " mise unuse -g $STRAY_TOOL"
-    echo "Rerunning: no stray"
-    run_reconfig
+    assert_output_line " mise uninstall $STRAY_TOOL@$STRAY_VERSION"
+    assert_output_line " mise unuse --global --no-prune $STRAY_TOOL"
+    assert_output_line " HOMEBREW_NO_AUTOREMOVE=1 brew uninstall --formula $EXTRANEOUS_FORMULA"
+    assert_none_applied
+
+    step "9. YOLO cleans up, and a rerun has nothing to apply"
+    run_reconfig -y -c "$CONFIG"
     assert_exit 0
-    assert_output "✓ - No strays in mise's global config"
-    assert_no_printed "mise unuse"
+    if mise config get --global "tools.$STRAY_TOOL" >/dev/null 2>&1; then
+        fail "$STRAY_TOOL is still in mise's global config"
+    fi
+    if mise ls --installed --json "$STRAY_TOOL" | grep -q '"version"'; then
+        fail "$STRAY_TOOL is still installed by mise"
+    fi
+    if brew list --formula "$EXTRANEOUS_FORMULA" >/dev/null 2>&1; then
+        fail "$EXTRANEOUS_FORMULA is still installed"
+    fi
+    echo "✓ removed: the $STRAY_TOOL stray, its version, and $EXTRANEOUS_FORMULA"
+    for line in "$MISE_COMMENT" "[settings]" "$MISE_SETTING"; do
+        grep -qxF -- "$line" "$MISE_CONFIG" || fail "$MISE_CONFIG lost: $line"
+    done
+    echo "✓ $MISE_CONFIG kept its comment and settings"
+    run_reconfig -y -c "$CONFIG"
+    assert_exit 0
+    assert_unchanged_run
 
     echo
     end_step
     echo "All e2e steps passed in $(seconds_since "$scenario_start")"
 }
 
-# run_reconfig runs reconfig against the e2e desired state, saving its
-# output in $OUT and its exit code in $CODE, then prints how long it took.
+# run_reconfig runs reconfig with the given arguments and no input, saving
+# its output in $OUT and its exit code in $CODE, then prints how long it
+# took.
 run_reconfig() {
+    run_reconfig_with_input "" "$@"
+}
+
+# run_reconfig_with_input runs reconfig as run_reconfig does, piping the
+# first argument to it as input.
+run_reconfig_with_input() {
+    local input=$1
+    shift
     OUT=$(mktemp)
+    echo "Running: reconfig $*"
     local start=$EPOCHREALTIME
-    reconfig -c "$CONFIG" >"$OUT" 2>&1
-    CODE=$?
+    if [ -n "$input" ]; then
+        echo "$input" | reconfig "$@" >"$OUT" 2>&1
+        CODE=${PIPESTATUS[1]}
+    else
+        reconfig "$@" </dev/null >"$OUT" 2>&1
+        CODE=$?
+    fi
     local took
     took=$(seconds_since "$start")
     sed 's/^/  | /' "$OUT"
     echo "- exited after $took"
 }
 
-# run_printed runs a command line that reconfig printed, failing the scenario
-# if it fails, then prints how long it took.
-run_printed() {
-    echo "Running:$1"
-    local start=$EPOCHREALTIME
-    eval "$1" || fail "printed line failed:$1"
-    echo "- exited after $(seconds_since "$start")"
+# snapshot describes what reconfig manages and a dry run must not change:
+# the repository's core files, links in the home directory, and Bun's
+# global completion.
+snapshot() {
+    find core -type f -exec sha256sum {} + | sort
+    find ~ \( -path ~/.linuxbrew -o -path ~/.cache \) -prune -o -type l -printf '%p -> %l\n' | sort
+    ls -l "$BUN_COMPLETION" 2>&1
+}
+
+# assert_unchanged checks that the snapshot is the given one.
+assert_unchanged() {
+    [ "$(snapshot)" = "$1" ] || fail "managed files changed: $(diff <(echo "$1") <(snapshot))"
+    echo "✓ no managed file, link or completion changed"
+}
+
+# assert_none_applied checks that the run applied no plan.
+assert_none_applied() {
+    if grep -q '^✓ - .* applied$' "$OUT"; then fail "a plan was applied: $(grep '^✓ - .* applied$' "$OUT")"; fi
+    echo "✓ nothing applied"
+}
+
+# assert_unchanged_run checks that every reconciler found nothing to do.
+assert_unchanged_run() {
+    assert_none_applied
+    for line in "All formulae and casks are up to date" "No missing formulae" "No unwanted formulae" \
+        "No missing mise versions" "No mise defaults to change" "No unwanted mise versions" \
+        "No strays in mise's global config" "No missing or outdated npm globals" \
+        "No unwanted npm globals" "No completion files to write" "No stow operations"; do
+        assert_output_line "✓ - $line"
+    done
+}
+
+# assert_bun_completion checks Bun's global completion: a file, not a link,
+# with its regex bug fixed once.
+assert_bun_completion() {
+    [ -f "$BUN_COMPLETION" ] && [ ! -L "$BUN_COMPLETION" ] || fail "$BUN_COMPLETION is not a file"
+    local fixes
+    fixes=$(grep -o 'return; local re_prev_script=' "$BUN_COMPLETION" | wc -l)
+    [ "$fixes" -eq 1 ] || fail "$BUN_COMPLETION has $fixes regex fixes, want 1"
+    echo "✓ bun completion written, fixed once: $BUN_COMPLETION"
+}
+
+# assert_resolves checks that a link leads to the given file.
+assert_resolves() {
+    [ -L "$1" ] || [ -L "$(dirname "$1")" ] || fail "$1 is not linked"
+    [ "$(readlink -f "$1")" = "$2" ] || fail "$1 resolves to $(readlink -f "$1"), want $2"
+    echo "✓ $1 -> $2"
 }
 
 # seconds_since prints the time elapsed since the given $EPOCHREALTIME, as
@@ -201,18 +291,6 @@ assert_section_output() {
 assert_output_line() {
     grep -qxF -- "$1" "$OUT" || fail "output lacks line: $1"
     echo "✓ output has line: $1"
-}
-
-assert_no_output() {
-    if grep -qF -- "$1" "$OUT"; then fail "output has: $1"; fi
-    echo "✓ output lacks: $1"
-}
-
-# assert_no_printed checks that reconfig printed no command line, one
-# space-indented, starting with the given text.
-assert_no_printed() {
-    if grep -q -- "^ $1" "$OUT"; then fail "printed a command: $1"; fi
-    echo "✓ printed no command: $1"
 }
 
 assert_equal() {

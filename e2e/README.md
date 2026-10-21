@@ -7,10 +7,12 @@ This directory contains end-to-end tests for the dotfiles repository using Docke
 ## Overview
 
 The scenario runs `reconfig` in a fresh container from the official
-`ghcr.io/homebrew/ubuntu26.04` image, against its own small desired state,
-`e2e/config.yaml` (a few Linux-compatible formulae, no casks, bun at `latest`
-through mise, one tiny npm global plus npm itself, which comes with node). The
-Ubuntu version matters: current bottles need the glibc of Ubuntu 24.04 or newer;
+`ghcr.io/homebrew/ubuntu26.04` image, against its own small staged desired
+states. `e2e/config.yaml` has a few Linux-compatible formulae, including its
+own prerequisites (mise, node for npm, and stow), no casks, bun at `latest`
+through mise, and one tiny npm global plus npm itself, which comes with node.
+`e2e/config.stray.yaml` adds jq through mise, so going back leaves a stray.
+The Ubuntu version matters: current bottles need the glibc of Ubuntu 24.04 or newer;
 on older images brew installs its own glibc and gcc first.
 
 Homebrew publishes its images on GitHub's registry (`ghcr.io`); the Docker Hub
@@ -34,25 +36,36 @@ It takes a few minutes, mostly `brew update` and installing node.
 
 ## Test Workflow
 
-`e2e/test.sh` asserts output, exit codes, and installed packages at each step.
-It prints how long each `reconfig` run and each printed command took, each
-step, and the whole scenario; `run.sh` prints the total, build included:
+`e2e/test.sh` asserts output, exit codes, and the machine state at each step.
+`reconfig` applies its own plans; the scenario never runs the commands it
+prints. It prints how long each `reconfig` run took, each step, and the whole
+scenario; `run.sh` prints the total, build included:
 
-1. First run reports exactly the desired formulae as missing and exits 0
-   (mise and npm are reported as not installed, skipping).
-2. Run the `brew install` line `reconfig` printed.
-3. Rerun: nothing missing, nothing extraneous.
-4. Install one formula not in the desired state; rerun: it is reported
-   extraneous.
-5. Install node; rerun: `reconfig` prints `npm install -g semver` without
-   installing it (and `npm install -g npm` when the npm that comes with node
-   is outdated); run the printed combined line; rerun: nothing to do.
-6. Install mise; rerun: `reconfig` prints `mise use -g bun@latest` without
-   installing bun; run the printed line; rerun: nothing to do.
-7. Install an unwanted bun version; rerun: `reconfig` prints its
-   `mise uninstall` line.
-8. Add a stray to mise's global config (a tool `e2e/config.yaml` doesn't
-   list); rerun: `reconfig` prints `mise unuse -g jq`; run it; rerun: no stray.
+0. Setup: remove the committed `mise_completion.bash`, so generating it makes
+   a new file, and make `~/.config/bash_includes` a real directory, so Stow
+   must link that new file on its own (an unfolded layout).
+1. `--help` exits 0; `-n -y` is a usage error, exit 2.
+2. `--dry-run` on the fresh machine: exactly the desired formulae are missing,
+   mise, npm and stow are not installed, nothing is applied, and no managed
+   file, link or completion changes.
+3. The default mode with piped input (`y`) announces that input is not
+   interactive and previews only: nothing changes.
+4. `--yolo` installs the formulae, then uses the new mise, npm and stow in the
+   same run: bun through mise, the npm globals, the completions (Bun's written
+   once fixed); the container's own `~/.bashrc` makes Stow's plan fail with a
+   conflict, exit 1, linking nothing.
+5. With the conflicting dotfiles moved aside, `--yolo` links `core/`,
+   including the newly generated completion file.
+6. A `--yolo` rerun has nothing to apply.
+7. A comment and a `[settings]` entry are added to mise's global config;
+   `--yolo` with `config.stray.yaml` installs jq through mise.
+8. Back to `config.yaml`, with an unwanted formula installed directly: a dry
+   run shows the stray, its unwanted version, and the formula to uninstall.
+9. `--yolo` removes them, keeping the comment and settings, and a rerun has
+   nothing to apply.
+
+Prompts, declines, errors and cancellation are covered with controlled
+processes by the Go tests (`just ci`).
 
 ## Manual Testing
 

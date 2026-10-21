@@ -248,16 +248,53 @@ npm: []`,
 			msgIncludes: []string{"missing required", "mise"},
 		},
 		{
-			name: "invalid mise version spec",
+			name: "empty mise version spec",
 			yaml: `
 homebrew:
   formulae:
     main: []
   casks: []
 mise:
-  python: ["3.12.x"]
+  python: ["3.12", ""]
 npm: []`,
-			msgIncludes: []string{`Tool "python"`, `invalid version spec "3.12.x"`},
+			msgIncludes: []string{`Tool "python": empty version spec`},
+		},
+		{
+			name: "mise options object",
+			yaml: `
+homebrew:
+  formulae:
+    main: []
+  casks: []
+mise:
+  python:
+    version: "3.12"
+npm: []`,
+			msgIncludes: []string{"options objects are not supported"},
+		},
+		{
+			name: "mise options object in a list",
+			yaml: `
+homebrew:
+  formulae:
+    main: []
+  casks: []
+mise:
+  python: [{version: "3.12"}]
+npm: []`,
+			msgIncludes: []string{"a version spec must be a string"},
+		},
+		{
+			name: "mise tool with a null spec",
+			yaml: `
+homebrew:
+  formulae:
+    main: []
+  casks: []
+mise:
+  bun:
+npm: []`,
+			msgIncludes: []string{`Tool "bun": no version specs`},
 		},
 		{
 			name: "mise tool with no version specs",
@@ -367,6 +404,35 @@ npm: [same-package, same-package]`,
 	}
 }
 
+// Mise interprets version specs, so config.yaml keeps them exactly as
+// written: a single string becomes a one-spec list, numbers keep their text,
+// and commas are part of the spec.
+func TestParseConfigKeepsMiseSpecsLiteral(t *testing.T) {
+	cfg, err := ParseConfig([]byte(`
+homebrew:
+  formulae:
+    main: []
+  casks: []
+mise:
+  bun: latest
+  node: ">=20, <22"
+  python: [3.10, "3.12.x", lts]
+npm: []`))
+	if err != nil {
+		t.Fatalf("ParseConfig() rejected a valid config: %v", err)
+	}
+	want := map[string][]string{
+		"bun":    {"latest"},
+		"node":   {">=20, <22"},
+		"python": {"3.10", "3.12.x", "lts"},
+	}
+	for tool, specs := range want {
+		if got := cfg.Mise[tool]; !slices.Equal(got, specs) {
+			t.Errorf("mise %s specs = %q, want %q", tool, got, specs)
+		}
+	}
+}
+
 func TestParseConfigKeepsMiseSpecOrder(t *testing.T) {
 	cfg, err := ParseConfig([]byte(`
 homebrew:
@@ -391,8 +457,10 @@ func TestLoadConfigAcceptsRepoConfig(t *testing.T) {
 	}
 }
 
-func TestLoadConfigAcceptsE2EConfig(t *testing.T) {
-	if _, err := LoadConfig("../../../e2e/config.yaml"); err != nil {
-		t.Errorf("e2e/config.yaml is invalid: %v", err)
+func TestLoadConfigAcceptsE2EConfigs(t *testing.T) {
+	for _, name := range []string{"config.yaml", "config.stray.yaml"} {
+		if _, err := LoadConfig("../../../e2e/" + name); err != nil {
+			t.Errorf("e2e/%s is invalid: %v", name, err)
+		}
 	}
 }
