@@ -1,10 +1,15 @@
+// Package npm reconciles npm global packages.
 package npm
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"slices"
 	"sort"
+	"strings"
 
 	"github.com/daneroo/dotfiles/go/pkg/proc"
 	"github.com/daneroo/dotfiles/go/pkg/run"
@@ -31,10 +36,21 @@ func (r *Reconciler) Name() string { return "NPM Globals" }
 //     latest release)
 //   - an unwanted package is uninstalled, after the installs
 //
-// A missing npm makes the plan unavailable.
+// A missing npm makes the plan unavailable. A global prefix that does not
+// exist yet, such as one .npmrc names before the first global install, holds
+// no packages: npm ls -g fails for it.
 func (r *Reconciler) Plan(ctx context.Context) (run.Plan, error) {
 	if _, err := r.x.LookPath("npm"); err != nil {
 		return run.UnavailablePlan("npm is not installed, skipping"), nil
+	}
+	prefix, err := r.x.Output(ctx, proc.Command("npm", "prefix", "-g"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to find the global prefix: %w", err)
+	}
+	if _, err := os.Stat(strings.TrimSpace(string(prefix))); errors.Is(err, fs.ErrNotExist) {
+		p := planPackages(r.x, r.desired, nil, nil)
+		p.report.Paragraphs[0] = append(p.report.Paragraphs[0], run.Note{Mark: run.Info, Text: fmt.Sprintf("npm's global prefix %s does not exist yet: no globals are installed", strings.TrimSpace(string(prefix)))})
+		return p, nil
 	}
 	actual, err := getInstalledPackages(ctx, r.x)
 	if err != nil {

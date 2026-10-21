@@ -1,0 +1,19 @@
+# A later stage of the e2e scenario (see e2e/test.sh): config.yaml plus jq
+# through mise. Going back to config.yaml leaves jq a stray in mise's global
+# config, with an unwanted version.
+homebrew:
+  formulae:
+    e2e:
+      - hello
+      - jq
+      - mise
+      - node
+      - stow
+      - tree
+  casks: []
+mise:
+  bun: ["latest"]
+  jq: ["1.7.1"]
+npm:
+  - npm # comes with node
+  - semver

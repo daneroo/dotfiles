@@ -10,64 +10,7 @@ import (
 	"strings"
 
 	"github.com/daneroo/dotfiles/go/pkg/proc"
-	"github.com/daneroo/dotfiles/go/pkg/tool"
 )
-
-// Reconcile compares the desired version specs of each versioned tool with
-// what mise has installed and with mise's global default versions, and prints
-// the mise commands that would close the gap. It never installs, uninstalls or
-// sets defaults itself:
-// 1. Check if mise is installed (a missing tool is skipped, not an error)
-// 2. Observe the actual state: installed versions, global defaults, and the
-// newest release matching each version spec
-// 3. Plan: compare with the desired state
-// 4. Print the report and the commands: installs before uninstalls
-func Reconcile(desired map[string][]string) error {
-	if !tool.Installed("mise") {
-		return nil
-	}
-	fmt.Printf("✓ - mise is installed\n")
-
-	actual, err := observe(context.Background(), proc.OS{}, desired)
-	if err != nil {
-		return err
-	}
-	p := plan(desired, actual)
-
-	fmt.Printf("\n") // separator
-	for _, n := range p.report {
-		fmt.Printf("%s - %s\n", n.Mark, n.Text)
-	}
-
-	install, use, uninstall, unuse := printedCommands(p)
-	fmt.Printf("\n") // separator
-	showCommands(install, "missing mise versions")
-	showCommands(use, "mise defaults to change")
-	showCommands(uninstall, "unwanted mise versions")
-	showCommands(unuse, "strays in mise's global config")
-	return nil
-}
-
-// printedCommands returns the commands Reconcile prints for a plan.
-func printedCommands(p planned) (install, use, uninstall, unuse []string) {
-	for _, v := range p.install {
-		install = append(install, "mise install "+v.String())
-	}
-	for _, a := range p.align {
-		args := make([]string, len(a.specs))
-		for i, spec := range a.specs {
-			args[i] = a.tool + "@" + spec
-		}
-		use = append(use, "mise use -g "+strings.Join(args, " "))
-	}
-	for _, v := range p.uninstall {
-		uninstall = append(uninstall, "mise uninstall "+v.String())
-	}
-	for _, t := range p.unuse {
-		unuse = append(unuse, "mise unuse -g "+t)
-	}
-	return install, use, uninstall, unuse
-}
 
 // observe queries mise for the actual state of the versioned tools.
 func observe(ctx context.Context, x proc.Exec, desired map[string][]string) (observed, error) {
@@ -208,23 +151,4 @@ func resolveSpec(ctx context.Context, x proc.Exec, tool, spec string) (string, e
 		return "", fmt.Errorf("version spec %q for %s matches no release\nCommand:\n%s", spec, tool, proc.Format("mise", "latest", arg))
 	}
 	return version, nil
-}
-
-// showCommands prints one kind of mise command, one per line, or a ✓ line
-// when there are none.
-//
-// Example output:
-//
-//	✗ - Missing mise versions: (2)
-//	 mise install python@3.12.15
-//	 mise install python@3.11.17
-func showCommands(cmds []string, label string) {
-	if len(cmds) == 0 {
-		fmt.Printf("✓ - No %s\n", label)
-		return
-	}
-	fmt.Printf("✗ - %s%s: (%d)\n", strings.ToUpper(label[:1]), label[1:], len(cmds))
-	for _, cmd := range cmds {
-		fmt.Printf(" %s\n", cmd)
-	}
 }

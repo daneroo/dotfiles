@@ -18,9 +18,9 @@ fmt:
 e2e:
     ./e2e/run.sh
 
-# Reconcile this machine with config.yaml. Changes the machine (installs packages).
-reconcile:
-    ./reconfig.sh
+# Reconcile this machine with config.yaml, asking before each plan (options pass through: just reconcile -n).
+reconcile *args:
+    ./reconfig.sh {{args}}
 
 [private]
 _fmt-check:

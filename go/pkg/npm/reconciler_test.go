@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -17,7 +19,10 @@ import (
 // fakeNpm is a controlled npm: its global packages are a map from name to
 // version, and installing a package installs its latest version.
 type fakeNpm struct {
-	missing   bool
+	missing bool
+	// prefix is npm's global prefix; npm ls -g fails while it does not
+	// exist, and installing creates it.
+	prefix    string
 	installed map[string]string
 	latest    map[string]string
 	// fail makes the npm command with these arguments fail.
@@ -39,7 +44,12 @@ func (f *fakeNpm) Output(_ context.Context, c proc.Cmd) ([]byte, error) {
 		return nil, fmt.Errorf("%s failed: exit status 1", cmd)
 	}
 	switch cmd {
+	case "npm prefix -g":
+		return []byte(f.prefix + "\n"), nil
 	case "npm ls -g --json --depth=0":
+		if _, err := os.Stat(f.prefix); err != nil {
+			return nil, fmt.Errorf("%s failed: exit status 254\nstderr: npm error enoent", cmd)
+		}
 		deps := map[string]map[string]string{}
 		for pkg, v := range f.installed {
 			deps[pkg] = map[string]string{"version": v}
@@ -71,6 +81,11 @@ func (f *fakeNpm) Run(_ context.Context, c proc.Cmd) error {
 	if len(args) < 2 || args[1] != "-g" {
 		return fmt.Errorf("unexpected command: %s", cmd)
 	}
+	if args[0] == "install" {
+		if err := os.MkdirAll(f.prefix, 0o755); err != nil {
+			return err
+		}
+	}
 	for _, pkg := range args[2:] {
 		switch args[0] {
 		case "install":
@@ -88,6 +103,7 @@ func (f *fakeNpm) Run(_ context.Context, c proc.Cmd) error {
 // wants json, prettier and serve.
 func newFake() *fakeNpm {
 	return &fakeNpm{
+		prefix:    os.TempDir(),
 		installed: map[string]string{"json": "11.0.0", "leftpad": "1.0.0", "serve": "14.2.4"},
 		latest:    map[string]string{"json": "11.1.0", "leftpad": "1.3.0", "prettier": "3.6.2", "serve": "14.2.4"},
 	}
@@ -198,6 +214,30 @@ func TestInstallFailureStopsRemovals(t *testing.T) {
 	}
 	if res.Entries[0].Outcome != run.Failed || res.ExitCode() != 1 {
 		t.Errorf("outcome %v, exit code %d; want failed, 1", res.Entries[0].Outcome, res.ExitCode())
+	}
+}
+
+// A global prefix that does not exist yet holds no packages; installing
+// creates it, and a rerun observes it.
+func TestMissingGlobalPrefix(t *testing.T) {
+	f := newFake()
+	f.prefix = filepath.Join(t.TempDir(), ".npm-global")
+	f.installed = map[string]string{}
+	res, out := reconcile(t, run.Yolo, f)
+	for _, want := range []string{
+		"△ - npm's global prefix " + f.prefix + " does not exist yet: no globals are installed\n",
+		" npm install -g json prettier serve\n",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("output lacks %q:\n%s", want, out)
+		}
+	}
+	if res.ExitCode() != 0 {
+		t.Fatalf("exit code %d: %v", res.ExitCode(), res.Err)
+	}
+	res, out = reconcile(t, run.Yolo, f)
+	if res.Entries[0].Status != run.Unchanged {
+		t.Errorf("rerun status = %v, want unchanged:\n%s", res.Entries[0].Status, out)
 	}
 }
 

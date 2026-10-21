@@ -27,7 +27,7 @@ func TestPlan(t *testing.T) {
 				resolved: map[string]map[string]string{"bun": {"latest": "1.4.3"}},
 			},
 			wantInstall: []string{"mise install bun@1.4.3"},
-			wantUse:     []string{"mise use -g bun@latest"},
+			wantUse:     []string{"mise config set --global --type string tools.bun latest"},
 		},
 		{
 			name:    "actual state matches desired state",
@@ -70,7 +70,7 @@ func TestPlan(t *testing.T) {
 				resolved: pythonResolved,
 			},
 			wantInstall: []string{"mise install python@3.12.15", "mise install python@3.11.17"},
-			wantUse:     []string{"mise use -g python@3.12 python@3.11"},
+			wantUse:     []string{"mise config set --global --type string tools.python 3.12", "mise config set --global --append --type string tools.python 3.11"},
 		},
 		{
 			name:    "the default list in the wrong order",
@@ -80,7 +80,7 @@ func TestPlan(t *testing.T) {
 				defaults:  map[string][]string{"python": {"3.11", "3.12"}},
 				resolved:  pythonResolved,
 			},
-			wantUse: []string{"mise use -g python@3.12 python@3.11"},
+			wantUse: []string{"mise config set --global --type string tools.python 3.12", "mise config set --global --append --type string tools.python 3.11"},
 		},
 		{
 			name:    "a tool installed but not in the desired state",
@@ -121,17 +121,17 @@ func TestPlan(t *testing.T) {
 				resolved: pythonResolved,
 			},
 			wantUninstall: []string{"mise uninstall bun@1.4.3"},
-			wantUnuse:     []string{"mise unuse -g bun"},
+			wantUnuse:     []string{"mise unuse --global --no-prune bun"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			install, use, uninstall, unuse := printedCommands(plan(tt.desired, tt.actual))
-			assertCommands(t, "install", install, tt.wantInstall)
-			assertCommands(t, "use", use, tt.wantUse)
-			assertCommands(t, "uninstall", uninstall, tt.wantUninstall)
-			assertCommands(t, "unuse", unuse, tt.wantUnuse)
+			groups := newPlan(nil, plan(tt.desired, tt.actual), "").report.Groups
+			assertCommands(t, "install", groups[0].Actions, tt.wantInstall)
+			assertCommands(t, "use", groups[1].Actions, tt.wantUse)
+			assertCommands(t, "uninstall", groups[2].Actions, tt.wantUninstall)
+			assertCommands(t, "unuse", groups[3].Actions, tt.wantUnuse)
 		})
 	}
 }
@@ -167,7 +167,7 @@ func TestPlanReportsAStray(t *testing.T) {
 	}
 }
 
-// reportLines renders the plan's report lines as Reconcile prints them.
+// reportLines renders the plan's report lines as the runner shows them.
 func reportLines(p planned) []string {
 	var lines []string
 	for _, n := range p.report {

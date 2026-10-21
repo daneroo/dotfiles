@@ -33,6 +33,24 @@ A change within a reconciler's plan, such as selecting a global tool version and
 installing what it needs.
 _Avoid_: Item, shell line
 
+**Report**:
+What a plan shows before anything is applied: observations, then its actions
+grouped by kind. It is only displayed; the plan keeps the arguments it runs.
+_Avoid_: Output, printed commands
+
+**Unavailable**:
+A plan that could not be made, because of a missing tool or an unmet
+prerequisite, such as pending Homebrew upgrades before package changes. It is
+reported and skipped; it is not an error.
+_Avoid_: Failed, blocked
+
+**Execution mode**:
+Whether the runner applies actionable plans: confirm (the default; ask before
+each one), dry run (apply none), or YOLO (apply all without asking). Without a
+terminal, confirm previews only, as a dry run does. A decline or a real error
+turns the rest of the run into a dry run.
+_Avoid_: Force, check mode
+
 **Section**:
 A named group of formulae in the desired state, such as `main` or `ai`.
 _Avoid_: Category, group
@@ -44,7 +62,8 @@ _Avoid_: Alphabetical order
 
 **Missing tool**:
 A package manager or completion tool that isn't installed, so its part of the
-desired state is reported and skipped rather than reconciled.
+desired state is reported and skipped rather than reconciled: its plan, or that
+part of it, is unavailable.
 _Avoid_: Missing dependency
 
 **Versioned tool**:

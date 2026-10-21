@@ -10,19 +10,6 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// GlobalMutableState holds the ONLY piece of global state we allow in the entire codebase.
-// We made exactly ONE exception to the "no global state" rule:
-// - Verbose: because passing it through every single function would be impractical
-// NEVER add anything else here. No, really. Don't even think about it.
-type GlobalMutableState struct {
-	Verbose bool
-}
-
-// Global is the ONLY global variable in the entire codebase
-var Global = GlobalMutableState{
-	Verbose: false,
-}
-
 // internal type for parsing - holds the sectioned structure from YAML
 type packageConfig struct {
 	Homebrew struct {

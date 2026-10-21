@@ -24,6 +24,19 @@ const (
 	Yolo
 )
 
+// String names the mode as its command-line option does.
+func (m Mode) String() string {
+	switch m {
+	case Confirm:
+		return "confirm"
+	case DryRun:
+		return "dry-run"
+	case Yolo:
+		return "yolo"
+	}
+	return fmt.Sprintf("Mode(%d)", int(m))
+}
+
 // Runner observes, reports and applies reconcilers in sequence, so each one
 // observes the actual state its predecessors left.
 type Runner struct {

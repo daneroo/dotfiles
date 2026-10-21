@@ -14,48 +14,55 @@ This repo is for managing:
 - Entry point: `reconfig.sh`
   - `check.sh` is retired: it only says to run `reconfig.sh`
   - Minimal bootstrap checks (brew, go installation)
-  - Orchestrates the reconciliation process
-  - Manages dotfiles via `installDotLinks.sh`
-    - Uses **GNU Stow** to safely manage symlinks for bash configuration files.
-  - Delegates all dependency management to Go implementation
+  - Builds and runs the Go implementation, forwarding its arguments
 
-- Core functionality (Go implementation `go/cmd/reconfig/main.go`):
-  - Manages Homebrew packages
-    - Validates installed formulae and casks against desired state
-    - Detects missing packages
-    - Identifies extraneous packages
-    - Ensures transitive dependencies are maintained
-  - Manages versioned tools (Python, Bun) through mise
-    - Reports each version spec with the release it resolves to
-    - Prints `mise install` for missing versions, `mise use -g` when mise's
-      global defaults differ from `config.yaml`, `mise uninstall` for
-      versions no spec resolves to, and `mise unuse -g` for a stray (a tool
-      in mise's global config that `config.yaml` doesn't list); never runs
-      them itself
-  - Manages npm global packages
-    - Desired packages: corepack, eslint, json, turbo, nx, etc.
-    - Maintains shell completions
-    - Reports missing, outdated and unwanted packages
-    - Prints the `npm install -g` and `npm uninstall -g` commands to run;
-      never installs or updates anything itself
-    - Handles pnpm via corepack
+- Core functionality (Go implementation `go/cmd/reconfig/main.go`): each
+  reconciler observes the machine, compares it with `config.yaml`, and shows its
+  plan; the execution mode decides whether the plan is applied. In order:
+  - Homebrew upgrades: `brew update`, then upgrades outdated formulae and
+    casks (pinned ones excepted) and runs `brew cleanup`
+  - Homebrew packages: installs missing formulae and casks and uninstalls
+    unwanted ones, keeping every dependency of a desired package; waits for
+    pending upgrades, since they can change dependencies
+  - Versioned tools (Python, Bun) through mise: installs the versions each
+    version spec resolves to, sets mise's global defaults to `config.yaml`'s
+    specs, in order, uninstalls versions no spec resolves to, and removes
+    strays (tools in mise's global config that `config.yaml` doesn't list)
+  - npm global packages: installs missing or outdated ones, uninstalls
+    unwanted ones
+  - Shell completions: caches npm, pnpm, docker and mise completions in
+    `core/.config/bash_includes`, and writes Bun's corrected completion to
+    Homebrew's bash-completion directory; only changed files are written
+  - Dotfiles: **GNU Stow** links `core/` into `~`; dead links in `~` are
+    reported, never changed
   - Common features across all reconcilers:
-    - Consistent ✓/✗ status reporting
-    - A missing tool (mise, npm, a completion tool) is reported as
+    - Consistent ✓/✗/△ status reporting
+    - A missing tool (mise, npm, stow, a completion tool) is reported as
       `not installed, skipping`; only real errors exit non-zero
-    - Idempotent reconciliation pattern
-    - New implementation (1,677 lines of Go <--> 255 lines of bash)
+    - Idempotent: a rerun after applying has nothing to do
+
+Execution modes:
+
+```bash
+./reconfig.sh            # ask before applying each plan
+./reconfig.sh --dry-run  # or -n: show every plan, apply nothing
+./reconfig.sh --yolo     # or -y: apply every plan without asking
+./reconfig.sh --help     # all options
+```
+
+Without a terminal (piped input, cron), the default mode previews only, as
+`--dry-run` does. Declining a plan, or any error, previews the rest of the run.
 
 ### Desired State and Migration Plan
 
 - Code Modernization
   - [x] Successfully bloated (6.5x) a 255-line bash script into 1,677 lines of Go. Because type safety. 🎉
   - [x] Port `installDotLinks.sh` to use GNU Stow (improved bash logic)
-  - [ ] (not now) Port `installDotLinks.sh` logic to Go
+  - [x] Port `installDotLinks.sh` logic to Go (the Stow reconciler)
   - [ ] (future) Migrate to **Chezmoi** for native secrets and templating support
   - [ ] (feature) Detect and propose removing unused taps
   - [ ] Improve Go implementation
-    - [ ] Better abstractions for reconciliation loop
+    - [x] Better abstractions for reconciliation loop (`go/pkg/run`)
     - [ ] More tests, but be practical
   - [ ] Implement proper UX
     - [ ] Progress indicators for long-running operations

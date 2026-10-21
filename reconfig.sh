@@ -24,14 +24,15 @@ else
 fi
 
 echo
-./installDotLinks.sh
-
-echo
 echo "# Dependencies"
-go run ./go/cmd/reconfig
+# Built rather than go run, which reports every failure as exit status 1:
+# reconfig exits 2 for a usage error and 130 when interrupted.
+BIN_DIR="$(mktemp -d)" || exit 1
+trap 'rm -rf "$BIN_DIR"' EXIT
+go build -o "$BIN_DIR/reconfig" ./go/cmd/reconfig || exit 1
+"$BIN_DIR/reconfig" "$@"
 code=$?
 if [ $code -ne 0 ]; then
     echo "Exiting: reconfig failed with error code: ${code}"
-    exit "${code}"
 fi
-
+exit "${code}"

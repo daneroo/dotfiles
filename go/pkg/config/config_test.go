@@ -457,8 +457,10 @@ func TestLoadConfigAcceptsRepoConfig(t *testing.T) {
 	}
 }
 
-func TestLoadConfigAcceptsE2EConfig(t *testing.T) {
-	if _, err := LoadConfig("../../../e2e/config.yaml"); err != nil {
-		t.Errorf("e2e/config.yaml is invalid: %v", err)
+func TestLoadConfigAcceptsE2EConfigs(t *testing.T) {
+	for _, name := range []string{"config.yaml", "config.stray.yaml"} {
+		if _, err := LoadConfig("../../../e2e/" + name); err != nil {
+			t.Errorf("e2e/%s is invalid: %v", name, err)
+		}
 	}
 }

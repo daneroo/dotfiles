@@ -6,6 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -138,6 +140,12 @@ func (f *fakeMise) Run(_ context.Context, c proc.Cmd) error {
 		return fmt.Errorf("%s failed: exit status 1", cmd)
 	}
 	a := c.Args
+	if len(a) > 2 && a[0] == "config" && a[1] == "set" {
+		// mise reports a missing global config as not trusted
+		if _, err := os.Stat(os.Getenv("MISE_GLOBAL_CONFIG_FILE")); err != nil {
+			return fmt.Errorf("%s failed: Config files in %s are not trusted", cmd, os.Getenv("MISE_GLOBAL_CONFIG_FILE"))
+		}
+	}
 	switch {
 	case len(a) == 2 && a[0] == "install":
 		tool, version, _ := strings.Cut(a[1], "@")
@@ -177,8 +185,17 @@ func (f *fakeMise) Run(_ context.Context, c proc.Cmd) error {
 
 var desired = map[string][]string{"bun": {"latest"}, "python": {"3.12", "3.11"}}
 
+// reconcile runs the reconciler. Mise's global config is an existing
+// temporary file, unless the test chose a temporary path of its own.
 func reconcile(t *testing.T, r run.Runner, f *fakeMise, want map[string][]string) (run.Result, string) {
 	t.Helper()
+	if !strings.HasPrefix(os.Getenv("MISE_GLOBAL_CONFIG_FILE"), os.TempDir()) {
+		path := filepath.Join(t.TempDir(), "config.toml")
+		if err := os.WriteFile(path, nil, 0o644); err != nil {
+			t.Fatal(err)
+		}
+		t.Setenv("MISE_GLOBAL_CONFIG_FILE", path)
+	}
 	var out strings.Builder
 	r.Out = &out
 	res := r.Run(context.Background(), []run.Reconciler{mise.New(want, f)})
@@ -227,6 +244,36 @@ func TestFreshMachineThenUnchanged(t *testing.T) {
 	res, out = reconcile(t, run.Runner{Mode: run.Yolo}, f, desired)
 	if len(f.runs) != 0 || res.Entries[0].Status != run.Unchanged {
 		t.Errorf("rerun ran %q with status %v:\n%s", f.runs, res.Entries[0].Status, out)
+	}
+}
+
+// Mise cannot set a default in a missing global config, so the plan creates
+// it, empty, first.
+func TestMissingGlobalConfigIsCreated(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "mise", "config.toml")
+	t.Setenv("MISE_GLOBAL_CONFIG_FILE", path)
+	f := newFake()
+	res, out := reconcile(t, run.Runner{Mode: run.Yolo}, f, map[string][]string{"bun": {"latest"}})
+	want := "✗ - Mise defaults to change: (1)\n create empty " + path + "\n mise config set --global --type string tools.bun latest\n"
+	if !strings.Contains(out, want) {
+		t.Errorf("output lacks %q:\n%s", want, out)
+	}
+	if res.ExitCode() != 0 {
+		t.Fatalf("exit code %d: %v", res.ExitCode(), res.Err)
+	}
+	if _, err := os.Stat(path); err != nil {
+		t.Errorf("global config not created: %v", err)
+	}
+	if got := f.global["bun"]; !slices.Equal(got, []string{"latest"}) {
+		t.Errorf("global bun = %q, want [latest]", got)
+	}
+
+	// A dry run creates nothing
+	path = filepath.Join(t.TempDir(), "config.toml")
+	t.Setenv("MISE_GLOBAL_CONFIG_FILE", path)
+	_, out = reconcile(t, run.Runner{Mode: run.DryRun}, newFake(), map[string][]string{"bun": {"latest"}})
+	if _, err := os.Stat(path); !errors.Is(err, os.ErrNotExist) || !strings.Contains(out, " create empty "+path+"\n") {
+		t.Errorf("dry run created %s (%v), or did not preview it:\n%s", path, err, out)
 	}
 }
 

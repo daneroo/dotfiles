@@ -1,3 +1,5 @@
+// Package completions keeps Bash completion scripts current: scripts cached
+// in the repository, and Bun's corrected global script.
 package completions
 
 import (
