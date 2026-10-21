@@ -36,6 +36,8 @@ type Cmd struct {
 	// Env adds variables, such as HOMEBREW_NO_AUTOREMOVE=1, to the
 	// inherited environment.
 	Env []string
+	// Dir is the working directory; empty means the caller's.
+	Dir string
 }
 
 // Command returns the command for the program and arguments.
@@ -46,6 +48,12 @@ func Command(name string, args ...string) Cmd {
 // WithEnv returns the command with the variables added to its environment.
 func (c Cmd) WithEnv(vars ...string) Cmd {
 	c.Env = append(slices.Clip(c.Env), vars...)
+	return c
+}
+
+// WithDir returns the command run in the directory.
+func (c Cmd) WithDir(dir string) Cmd {
+	c.Dir = dir
 	return c
 }
 
@@ -118,6 +126,7 @@ func (o OS) command(ctx context.Context, c Cmd) *exec.Cmd {
 	if len(c.Env) > 0 {
 		cmd.Env = append(os.Environ(), c.Env...)
 	}
+	cmd.Dir = c.Dir
 	cmd.Cancel = func() error { return cmd.Process.Signal(os.Interrupt) }
 	cmd.WaitDelay = o.WaitDelay
 	if cmd.WaitDelay == 0 {

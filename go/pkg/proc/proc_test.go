@@ -104,6 +104,20 @@ func TestEnv(t *testing.T) {
 	}
 }
 
+func TestDir(t *testing.T) {
+	dir, err := filepath.EvalSymlinks(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	out, err := proc.OS{}.Output(context.Background(), proc.Command("pwd").WithDir(dir))
+	if err != nil {
+		t.Fatalf("Output failed: %v", err)
+	}
+	if got := strings.TrimSpace(string(out)); got != dir {
+		t.Errorf("working directory = %s, want %s", got, dir)
+	}
+}
+
 func TestFormat(t *testing.T) {
 	got := proc.Format("mise", "use", "-g", "node@>=20, <22", "it's")
 	want := `mise use -g 'node@>=20, <22' 'it'\''s'`
