@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"flag"
+	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -111,10 +113,17 @@ func TestInteractive(t *testing.T) {
 	}
 }
 
-// A directory without core is not the dotfiles repository.
+// Only the root of the dotfiles repository, by its go.mod, is accepted: not
+// another directory, even one with a core directory.
 func TestTargetsNeedTheRepository(t *testing.T) {
 	var stdout, stderr strings.Builder
 	dir := t.TempDir()
+	if err := os.Mkdir(dir+"/core", 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(dir+"/go.mod", []byte("module example.com/other\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
 	if err := os.WriteFile(dir+"/config.yaml", []byte("homebrew: {formulae: {main: [jq]}, casks: []}\nmise: {}\nnpm: []\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -129,7 +138,7 @@ func TestTargetsNeedTheRepository(t *testing.T) {
 	if code := reconfig([]string{"-n"}, os.Stdin, &stdout, &stderr); code != 1 {
 		t.Errorf("exit code = %d, want 1", code)
 	}
-	if !strings.Contains(stdout.String(), "has no core directory; run reconfig.sh") {
+	if !strings.Contains(stdout.String(), "is not the root of the dotfiles repository; run reconfig.sh") {
 		t.Errorf("output lacks the reason:\n%s", stdout.String())
 	}
 }
@@ -143,5 +152,80 @@ func TestVerboseShowsObservations(t *testing.T) {
 	}
 	if got, want := out.String(), "△ - observing: echo hi\n"; got != want {
 		t.Errorf("output = %q, want %q", got, want)
+	}
+}
+
+// The repository's own root is accepted.
+func TestTargetsAcceptTheRepositoryRoot(t *testing.T) {
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := filepath.Join(wd, "..", "..", "..")
+	if err := os.Chdir(root); err != nil {
+		t.Fatal(err)
+	}
+	defer os.Chdir(wd)
+	repo, _, err := targets()
+	if err != nil {
+		t.Fatalf("targets() failed at the repository root: %v", err)
+	}
+	if want, _ := filepath.Abs(root); repo != want {
+		t.Errorf("repo = %s, want %s", repo, want)
+	}
+}
+
+// fakeBrew is a brew whose --prefix prints prefix, or fails.
+type fakeBrew struct {
+	missing bool
+	prefix  string
+	fail    bool
+}
+
+func (f fakeBrew) LookPath(name string) (string, error) {
+	if f.missing {
+		return "", errors.New("not found")
+	}
+	return "/fake/bin/" + name, nil
+}
+
+func (f fakeBrew) Output(_ context.Context, c proc.Cmd) ([]byte, error) {
+	if c.String() != "brew --prefix" {
+		return nil, fmt.Errorf("unexpected command: %s", c)
+	}
+	if f.fail {
+		return nil, errors.New("brew --prefix failed: exit status 1")
+	}
+	return []byte(f.prefix + "\n"), nil
+}
+
+func (f fakeBrew) Run(context.Context, proc.Cmd) error { return errors.New("unexpected run") }
+
+func TestBunTarget(t *testing.T) {
+	for _, tc := range []struct {
+		name, env string
+		brew      fakeBrew
+		want      string
+		wantErr   string
+	}{
+		{name: "HOMEBREW_PREFIX", env: "/env/brew", brew: fakeBrew{fail: true}, want: "/env/brew/share/bash-completion/completions/bun"},
+		{name: "brew --prefix", brew: fakeBrew{prefix: "/opt/homebrew"}, want: "/opt/homebrew/share/bash-completion/completions/bun"},
+		{name: "no brew", brew: fakeBrew{missing: true}, want: ""},
+		{name: "brew --prefix fails", brew: fakeBrew{fail: true}, wantErr: "failed to find Homebrew's prefix: brew --prefix failed"},
+		{name: "brew --prefix prints nothing", brew: fakeBrew{}, wantErr: "brew --prefix printed nothing"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Setenv("HOMEBREW_PREFIX", tc.env)
+			got, err := bunTarget(context.Background(), tc.brew)
+			if tc.wantErr != "" {
+				if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
+					t.Fatalf("bunTarget() = %q, %v; want an error with %q", got, err, tc.wantErr)
+				}
+				return
+			}
+			if err != nil || got != tc.want {
+				t.Errorf("bunTarget() = %q, %v; want %q", got, err, tc.want)
+			}
+		})
 	}
 }

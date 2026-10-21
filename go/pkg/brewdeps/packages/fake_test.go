@@ -57,7 +57,7 @@ func (f *fakeBrew) Output(_ context.Context, c proc.Cmd) ([]byte, error) {
 	}
 	switch {
 	case cmd == "brew outdated --json=v2":
-		var outdated []map[string]any
+		outdated := []map[string]any{} // brew prints a list, never null
 		for _, name := range slices.Sorted(maps.Keys(f.formulae)) {
 			if p := f.formulae[name]; p.installed && p.outdated {
 				outdated = append(outdated, map[string]any{"name": name, "installed_versions": []string{"1"}, "current_version": "2"})

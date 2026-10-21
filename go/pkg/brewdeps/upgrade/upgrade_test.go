@@ -248,6 +248,9 @@ func TestObservationErrors(t *testing.T) {
 		{name: "update fails", fail: "brew update", want: "brew update failed"},
 		{name: "outdated fails", fail: "brew outdated --json=v2", want: "brew outdated --json=v2 failed"},
 		{name: "malformed", outdatedJSON: "Error: not JSON", want: "failed to parse brew outdated output"},
+		{name: "empty object", outdatedJSON: "{}", want: "incomplete brew outdated output"},
+		{name: "null", outdatedJSON: "null", want: "incomplete brew outdated output"},
+		{name: "no casks list", outdatedJSON: `{"formulae": []}`, want: "incomplete brew outdated output"},
 		{
 			name:         "no installed version",
 			outdatedJSON: `{"formulae": [{"name": "hello", "installed_versions": [], "current_version": "2.12.2"}], "casks": []}`,

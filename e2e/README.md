@@ -57,10 +57,12 @@ scenario; `run.sh` prints the total, build included:
 5. With the conflicting dotfiles moved aside, `--yolo` links `core/`,
    including the newly generated completion file.
 6. A `--yolo` rerun has nothing to apply.
-7. `--yolo` with `config.stray.yaml` installs jq through mise.
-8. Back to `config.yaml`, with an extraneous formula installed directly: a dry
+7. A comment and a `[settings]` entry are added to mise's global config;
+   `--yolo` with `config.stray.yaml` installs jq through mise.
+8. Back to `config.yaml`, with an unwanted formula installed directly: a dry
    run shows the stray, its unwanted version, and the formula to uninstall.
-9. `--yolo` removes them, and a rerun has nothing to apply.
+9. `--yolo` removes them, keeping the comment and settings, and a rerun has
+   nothing to apply.
 
 Prompts, declines, errors and cancellation are covered with controlled
 processes by the Go tests (`just ci`).

@@ -68,12 +68,17 @@ func reconfig(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 	if opts.verbose {
 		x = verboseExec{Exec: x, out: stdout}
 	}
+	bun, err := bunTarget(ctx, x)
+	if err != nil {
+		fmt.Fprintf(stdout, "✗ - %v\n", err)
+		return 1
+	}
 	reconcilers := []run.Reconciler{
 		upgrade.New(x),
 		packages.New(cfg.Homebrew, x),
 		mise.New(cfg.Mise, x),
 		npm.New(cfg.Npm, x),
-		completions.New(generators(repo), bunTarget(ctx, x), x),
+		completions.New(generators(repo), bun, x),
 		stow.New(repo, home, x),
 	}
 	runner := run.Runner{Mode: opts.mode, Interactive: interactive(stdin), In: stdin, Out: stdout, Prompt: stderr}
@@ -155,20 +160,24 @@ Without --dry-run or --yolo, reconfig asks before applying each plan. When
 input is not a terminal, it shows every plan and applies nothing, as with
 --dry-run. A declined plan or an error does the same for the rest of the run.
 
-Run it from the dotfiles repository, as reconfig.sh does: it links the
-repository's core directory into the home directory.
+Run it from the root of the dotfiles repository, as reconfig.sh does: it links
+the repository's core directory into the home directory.
 `, programName)
 }
 
-// targets returns the dotfiles repository, the working directory, and the
-// home directory its core package is linked into.
+// module identifies the dotfiles repository's root: its go.mod declares it.
+const module = "module github.com/daneroo/dotfiles"
+
+// targets returns the dotfiles repository, which must be the working
+// directory, and the home directory its core package is linked into.
 func targets() (repo, home string, err error) {
 	repo, err = os.Getwd()
 	if err != nil {
 		return "", "", err
 	}
-	if info, err := os.Stat(filepath.Join(repo, stow.Package)); err != nil || !info.IsDir() {
-		return "", "", fmt.Errorf("%s is not the dotfiles repository: it has no %s directory; run reconfig.sh", repo, stow.Package)
+	mod, err := os.ReadFile(filepath.Join(repo, "go.mod"))
+	if err != nil || !strings.HasPrefix(string(mod), module+"\n") {
+		return "", "", fmt.Errorf("%s is not the root of the dotfiles repository; run reconfig.sh", repo)
 	}
 	home, err = os.UserHomeDir()
 	if err != nil {
@@ -193,20 +202,24 @@ func generators(repo string) []completions.Generator {
 
 // bunTarget is where Bun's corrected completion goes: "bun" in Homebrew's
 // bash-completion directory, which bash-completion v2 loads on demand.
-// Without Homebrew, Bun's completion is left out.
-func bunTarget(ctx context.Context, x proc.Exec) string {
+// Without Homebrew there is none, and the completions reconciler reports
+// Bun's completion as skipped.
+func bunTarget(ctx context.Context, x proc.Exec) (string, error) {
 	prefix := os.Getenv("HOMEBREW_PREFIX")
 	if prefix == "" {
 		if _, err := x.LookPath("brew"); err != nil {
-			return ""
+			return "", nil
 		}
 		out, err := x.Output(ctx, proc.Command("brew", "--prefix"))
 		if err != nil {
-			return ""
+			return "", fmt.Errorf("failed to find Homebrew's prefix: %w", err)
 		}
 		prefix = strings.TrimSpace(string(out))
+		if prefix == "" {
+			return "", fmt.Errorf("failed to find Homebrew's prefix: brew --prefix printed nothing")
+		}
 	}
-	return filepath.Join(prefix, "share", "bash-completion", "completions", "bun")
+	return filepath.Join(prefix, "share", "bash-completion", "completions", "bun"), nil
 }
 
 // interactive reports whether input is a terminal, where someone can answer

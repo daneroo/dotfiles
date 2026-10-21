@@ -4,6 +4,7 @@
 package upgrade
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -81,18 +82,23 @@ func Observe(ctx context.Context, x proc.Exec) (Outdated, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Pointers tell a missing list, which is incomplete output, from an
+	// empty one: nothing outdated.
 	var response struct {
-		Formulae []outdatedEntry `json:"formulae"`
-		Casks    []outdatedEntry `json:"casks"`
+		Formulae *[]outdatedEntry `json:"formulae"`
+		Casks    *[]outdatedEntry `json:"casks"`
 	}
 	if err := json.Unmarshal(out, &response); err != nil {
 		return nil, fmt.Errorf("failed to parse brew outdated output: %w", err)
+	}
+	if response.Formulae == nil || response.Casks == nil {
+		return nil, fmt.Errorf("incomplete brew outdated output, without its formulae and casks lists: %s", bytes.TrimSpace(out))
 	}
 	var outdated Outdated
 	for _, group := range []struct {
 		entries []outdatedEntry
 		isCask  bool
-	}{{response.Formulae, false}, {response.Casks, true}} {
+	}{{*response.Formulae, false}, {*response.Casks, true}} {
 		for _, e := range group.entries {
 			if e.Name == "" || len(e.InstalledVersions) == 0 || e.CurrentVersion == "" {
 				return nil, fmt.Errorf("incomplete brew outdated entry: %+v", e)

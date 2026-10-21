@@ -3,6 +3,9 @@
 # Install just on macOS:
 # brew install just
 
+# Recipes receive their arguments as "$@", so arguments with spaces stay whole.
+set positional-arguments
+
 # Show this helpful listing.
 default:
     @just --list --unsorted
@@ -20,7 +23,7 @@ e2e:
 
 # Reconcile this machine with config.yaml, asking before each plan (options pass through: just reconcile -n).
 reconcile *args:
-    ./reconfig.sh {{args}}
+    ./reconfig.sh "$@"
 
 [private]
 _fmt-check:

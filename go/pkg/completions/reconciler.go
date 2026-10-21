@@ -42,8 +42,8 @@ type Reconciler struct {
 
 // New returns the completions reconciler for the cached generators and for
 // Bun's corrected script at bunTarget, the file "bun" in the global
-// bash-completion directory; an empty bunTarget leaves Bun out. Tools run
-// through x.
+// bash-completion directory; an empty bunTarget, without Homebrew, skips
+// Bun with a note. Tools run through x.
 //
 // Bun gets its own target because of 2 upstream bugs:
 //   - bug 1: Bun names its script bun.completion.bash instead of "bun",
@@ -81,10 +81,10 @@ func (r *Reconciler) Plan(ctx context.Context) (run.Plan, error) {
 			return nil, err
 		}
 	}
-	if r.bunTarget != "" {
-		if err := r.planBun(ctx, p); err != nil {
-			return nil, err
-		}
+	if r.bunTarget == "" {
+		p.notes = append(p.notes, run.Note{Mark: run.Info, Text: "bun: no Homebrew bash-completion directory, skipping its completions"})
+	} else if err := r.planBun(ctx, p); err != nil {
+		return nil, err
 	}
 	return p, nil
 }

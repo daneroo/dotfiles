@@ -17,6 +17,9 @@ EXTRANEOUS_FORMULA=figlet
 NPM_GLOBAL=semver
 STRAY_TOOL=jq
 STRAY_VERSION=1.7.1
+MISE_CONFIG="$HOME/.config/mise/config.toml"
+MISE_COMMENT="# kept by reconfig"
+MISE_SETTING="jobs = 2"
 # A completion file reconfig generates into the repository; removed first,
 # so it is new and Stow must link it in the same run.
 GENERATED=core/.config/bash_includes/mise_completion.bash
@@ -106,14 +109,17 @@ main() {
     assert_exit 0
     assert_unchanged_run
 
-    step "7. A staged desired state adds jq through mise"
+    step "7. A staged desired state adds jq through mise, beside unrelated settings"
+    # Unrelated parts of mise's global config, which reconfig's edits keep
+    printf '%s\n' "" "$MISE_COMMENT" "[settings]" "$MISE_SETTING" >>"$MISE_CONFIG" || fail "cannot add settings to $MISE_CONFIG"
+    echo "✓ added to $MISE_CONFIG: $MISE_COMMENT, [settings] $MISE_SETTING"
     run_reconfig -y -c "$STRAY_CONFIG"
     assert_exit 0
     assert_output "✓ - Mise applied"
     mise config get --global "tools.$STRAY_TOOL" >/dev/null || fail "$STRAY_TOOL is not in mise's global config"
     echo "✓ $STRAY_TOOL is in mise's global config"
 
-    step "8. Back to config.yaml, with an extraneous formula: a dry run shows the cleanup"
+    step "8. Back to config.yaml, with an unwanted formula: a dry run shows the cleanup"
     brew install --formula "$EXTRANEOUS_FORMULA" >/dev/null 2>&1 || fail "brew install $EXTRANEOUS_FORMULA failed"
     run_reconfig -n -c "$CONFIG"
     assert_exit 0
@@ -136,6 +142,10 @@ main() {
         fail "$EXTRANEOUS_FORMULA is still installed"
     fi
     echo "✓ removed: the $STRAY_TOOL stray, its version, and $EXTRANEOUS_FORMULA"
+    for line in "$MISE_COMMENT" "[settings]" "$MISE_SETTING"; do
+        grep -qxF -- "$line" "$MISE_CONFIG" || fail "$MISE_CONFIG lost: $line"
+    done
+    echo "✓ $MISE_CONFIG kept its comment and settings"
     run_reconfig -y -c "$CONFIG"
     assert_exit 0
     assert_unchanged_run
