@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"regexp"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -30,8 +29,37 @@ type packageConfig struct {
 		FormulaeBySection map[string][]string `yaml:"formulae"`
 		Casks             []string            `yaml:"casks"`
 	} `yaml:"homebrew"`
-	Mise map[string][]string `yaml:"mise"`
-	Npm  []string            `yaml:"npm"`
+	Mise map[string]versionSpecs `yaml:"mise"`
+	Npm  []string                `yaml:"npm"`
+}
+
+// versionSpecs is a versioned tool's version specs in config.yaml: one
+// string, or a list of strings whose first is the default. Each is kept
+// exactly as written, for mise to interpret: python: 3.10 stays "3.10".
+type versionSpecs []string
+
+// UnmarshalYAML accepts a string or a list of strings. Mise's options
+// objects, such as { version = "3.12", os = ["linux"] }, are not supported.
+func (v *versionSpecs) UnmarshalYAML(n *yaml.Node) error {
+	switch n.Kind {
+	case yaml.ScalarNode:
+		*v = versionSpecs{}
+		if n.Tag != "!!null" {
+			*v = versionSpecs{n.Value}
+		}
+		return nil
+	case yaml.SequenceNode:
+		specs := versionSpecs{}
+		for _, item := range n.Content {
+			if item.Kind != yaml.ScalarNode || item.Tag == "!!null" {
+				return fmt.Errorf("line %d: a version spec must be a string", item.Line)
+			}
+			specs = append(specs, item.Value)
+		}
+		*v = specs
+		return nil
+	}
+	return fmt.Errorf("line %d: version specs must be a string or a list of strings; options objects are not supported", n.Line)
 }
 
 // LoadConfig loads and validates the configuration from the specified file
@@ -65,7 +93,10 @@ func ParseConfig(data []byte) (*Config, error) {
 
 	// After validation passes, flatten into final Config
 	var cfg Config
-	cfg.Mise = temp.Mise
+	cfg.Mise = make(map[string][]string, len(temp.Mise))
+	for tool, specs := range temp.Mise {
+		cfg.Mise[tool] = specs
+	}
 	cfg.Npm = temp.Npm
 
 	// Convert and flatten formulae sections and casks into []Package
@@ -151,14 +182,15 @@ func validateConfig(cfg *packageConfig) error {
 		}
 	}
 
-	// Validate mise version specs; their order is meaningful, so not sorted
+	// Validate mise version specs; their order is meaningful, so not sorted.
+	// Only their structure is checked: mise interprets them when reconciling.
 	for tool, specs := range cfg.Mise {
 		if len(specs) == 0 {
 			violations = append(violations, fmt.Sprintf("  ✗ - Tool %q: no version specs", tool))
 		}
 		for _, spec := range specs {
-			if !versionSpecPattern.MatchString(spec) {
-				violations = append(violations, fmt.Sprintf("  ✗ - Tool %q: invalid version spec %q: must be 'latest', 'lts' or 'X[.Y[.Z...]]'", tool, spec))
+			if strings.TrimSpace(spec) == "" {
+				violations = append(violations, fmt.Sprintf("  ✗ - Tool %q: empty version spec", tool))
 			}
 		}
 	}
@@ -226,13 +258,3 @@ func compareByBasename(i, j string) bool {
 	}
 	return iBase < jBase
 }
-
-// versionSpecPattern matches a mise version spec:
-// - "latest": the newest release
-// - "lts": the newest long-term support release, for tools that have one
-// (node); for others mise finds no release, which reconciling reports
-// - "X[.Y[.Z...]]": the newest release matching the prefix:
-//   - "3" -> newest 3.x.x
-//   - "3.12" -> newest 3.12.x
-//   - "3.12.15" -> exact version
-var versionSpecPattern = regexp.MustCompile(`^(latest|lts|\d+(\.\d+)*)$`)

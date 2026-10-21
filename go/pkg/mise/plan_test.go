@@ -127,11 +127,11 @@ func TestPlan(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := plan(tt.desired, tt.actual)
-			assertCommands(t, "install", got.install, tt.wantInstall)
-			assertCommands(t, "use", got.use, tt.wantUse)
-			assertCommands(t, "uninstall", got.uninstall, tt.wantUninstall)
-			assertCommands(t, "unuse", got.unuse, tt.wantUnuse)
+			install, use, uninstall, unuse := printedCommands(plan(tt.desired, tt.actual))
+			assertCommands(t, "install", install, tt.wantInstall)
+			assertCommands(t, "use", use, tt.wantUse)
+			assertCommands(t, "uninstall", uninstall, tt.wantUninstall)
+			assertCommands(t, "unuse", unuse, tt.wantUnuse)
 		})
 	}
 }
@@ -149,8 +149,8 @@ func TestPlanReportsEachSpec(t *testing.T) {
 		"✗ - python 3.11 → 3.11.17 is not installed",
 		"✓ - python defaults match config.yaml: 3.12, 3.11",
 	}
-	if !slices.Equal(got.report, want) {
-		t.Errorf("report:\n got %q\nwant %q", got.report, want)
+	if lines := reportLines(got); !slices.Equal(lines, want) {
+		t.Errorf("report:\n got %q\nwant %q", lines, want)
 	}
 }
 
@@ -162,9 +162,18 @@ func TestPlanReportsAStray(t *testing.T) {
 	want := []string{
 		"✗ - bun is a stray in mise's global config, /Users/daniel/.config/mise/config.toml: config.yaml doesn't list it",
 	}
-	if !slices.Equal(got.report, want) {
-		t.Errorf("report:\n got %q\nwant %q", got.report, want)
+	if lines := reportLines(got); !slices.Equal(lines, want) {
+		t.Errorf("report:\n got %q\nwant %q", lines, want)
 	}
+}
+
+// reportLines renders the plan's report lines as Reconcile prints them.
+func reportLines(p planned) []string {
+	var lines []string
+	for _, n := range p.report {
+		lines = append(lines, string(n.Mark)+" - "+n.Text)
+	}
+	return lines
 }
 
 func assertCommands(t *testing.T, kind string, got, want []string) {

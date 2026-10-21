@@ -2,14 +2,14 @@
 package mise
 
 import (
-	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"maps"
-	"os/exec"
 	"slices"
 	"strings"
 
+	"github.com/daneroo/dotfiles/go/pkg/proc"
 	"github.com/daneroo/dotfiles/go/pkg/tool"
 )
 
@@ -28,32 +28,54 @@ func Reconcile(desired map[string][]string) error {
 	}
 	fmt.Printf("✓ - mise is installed\n")
 
-	actual, err := observe(desired)
+	actual, err := observe(context.Background(), proc.OS{}, desired)
 	if err != nil {
 		return err
 	}
 	p := plan(desired, actual)
 
 	fmt.Printf("\n") // separator
-	for _, line := range p.report {
-		fmt.Println(line)
+	for _, n := range p.report {
+		fmt.Printf("%s - %s\n", n.Mark, n.Text)
 	}
 
+	install, use, uninstall, unuse := printedCommands(p)
 	fmt.Printf("\n") // separator
-	showCommands(p.install, "missing mise versions")
-	showCommands(p.use, "mise defaults to change")
-	showCommands(p.uninstall, "unwanted mise versions")
-	showCommands(p.unuse, "strays in mise's global config")
+	showCommands(install, "missing mise versions")
+	showCommands(use, "mise defaults to change")
+	showCommands(uninstall, "unwanted mise versions")
+	showCommands(unuse, "strays in mise's global config")
 	return nil
 }
 
+// printedCommands returns the commands Reconcile prints for a plan.
+func printedCommands(p planned) (install, use, uninstall, unuse []string) {
+	for _, v := range p.install {
+		install = append(install, "mise install "+v.String())
+	}
+	for _, a := range p.align {
+		args := make([]string, len(a.specs))
+		for i, spec := range a.specs {
+			args[i] = a.tool + "@" + spec
+		}
+		use = append(use, "mise use -g "+strings.Join(args, " "))
+	}
+	for _, v := range p.uninstall {
+		uninstall = append(uninstall, "mise uninstall "+v.String())
+	}
+	for _, t := range p.unuse {
+		unuse = append(unuse, "mise unuse -g "+t)
+	}
+	return install, use, uninstall, unuse
+}
+
 // observe queries mise for the actual state of the versioned tools.
-func observe(desired map[string][]string) (observed, error) {
-	installed, err := getInstalledVersions()
+func observe(ctx context.Context, x proc.Exec, desired map[string][]string) (observed, error) {
+	installed, err := getInstalledVersions(ctx, x)
 	if err != nil {
 		return observed{}, err
 	}
-	defaults, globalConfig, err := getGlobalDefaults()
+	defaults, globalConfig, err := getGlobalDefaults(ctx, x)
 	if err != nil {
 		return observed{}, err
 	}
@@ -61,7 +83,7 @@ func observe(desired map[string][]string) (observed, error) {
 	for _, tool := range slices.Sorted(maps.Keys(desired)) {
 		resolved[tool] = map[string]string{}
 		for _, spec := range desired[tool] {
-			version, err := resolveSpec(tool, spec)
+			version, err := resolveSpec(ctx, x, tool, spec)
 			if err != nil {
 				return observed{}, err
 			}
@@ -81,8 +103,8 @@ type lsEntry struct {
 
 // getInstalledVersions returns each tool's installed versions, by running
 // mise ls --installed --json
-func getInstalledVersions() (map[string][]string, error) {
-	entries, err := miseLs("--installed")
+func getInstalledVersions(ctx context.Context, x proc.Exec) (map[string][]string, error) {
+	entries, err := miseLs(ctx, x, "--installed")
 	if err != nil {
 		return nil, err
 	}
@@ -98,31 +120,35 @@ func getInstalledVersions() (map[string][]string, error) {
 // getGlobalDefaults returns, for each tool in mise's global config, its
 // version specs in config order, and the config's path. mise ls --global says
 // which tools the global config lists and where it is, but sorts their
-// versions; so the ordered list comes from mise config get on that file.
-func getGlobalDefaults() (map[string][]string, string, error) {
-	entries, err := miseLs("--global")
+// versions; so the ordered list comes from mise config get --global, which
+// reads the file reconfig edits. A global request from another file, such
+// as a .tool-versions, is an error: reconfig would not edit it.
+func getGlobalDefaults(ctx context.Context, x proc.Exec) (map[string][]string, string, error) {
+	entries, err := miseLs(ctx, x, "--global")
 	if err != nil {
 		return nil, "", err
 	}
 	defaults := map[string][]string{}
 	var globalConfig string
-	for tool, versions := range entries {
+	for _, tool := range slices.Sorted(maps.Keys(entries)) {
+		versions := entries[tool]
 		if len(versions) == 0 || versions[0].Source.Path == "" {
 			continue
 		}
-		globalConfig = versions[0].Source.Path
-		specs, err := getConfiguredSpecs(globalConfig, tool)
+		source := versions[0].Source.Path
+		specs, err := getConfiguredSpecs(ctx, x, tool)
 		if err != nil {
-			return nil, "", err
+			return nil, "", fmt.Errorf("%s's global versions come from %s, which reconfig cannot read as mise's global config file: %w", tool, source, err)
 		}
+		globalConfig = source
 		defaults[tool] = specs
 	}
 	return defaults, globalConfig, nil
 }
 
 // miseLs runs mise ls --json with a filter flag and parses the output
-func miseLs(filter string) (map[string][]lsEntry, error) {
-	out, err := runMise("ls", filter, "--json")
+func miseLs(ctx context.Context, x proc.Exec, filter string) (map[string][]lsEntry, error) {
+	out, err := x.Output(ctx, proc.Command("mise", "ls", filter, "--json"))
 	if err != nil {
 		return nil, err
 	}
@@ -133,64 +159,55 @@ func miseLs(filter string) (map[string][]lsEntry, error) {
 	return entries, nil
 }
 
-// getConfiguredSpecs returns a tool's version specs in one mise config file,
-// in order, by running mise config get
-func getConfiguredSpecs(configFile, tool string) ([]string, error) {
-	out, err := runMise("config", "get", "-f", configFile, "tools."+tool)
+// getConfiguredSpecs returns a tool's version specs in mise's global config,
+// in order, by running mise config get --global
+func getConfiguredSpecs(ctx context.Context, x proc.Exec, tool string) ([]string, error) {
+	out, err := x.Output(ctx, proc.Command("mise", "config", "get", "--global", "tools."+tool))
 	if err != nil {
 		return nil, err
 	}
 	specs, err := parseConfiguredSpecs(string(out))
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse %s versions in %s: %w", tool, configFile, err)
+		return nil, fmt.Errorf("failed to parse %s versions in mise's global config: %w", tool, err)
 	}
 	return specs, nil
 }
 
 // parseConfiguredSpecs parses what mise config get prints for a tool: either
-// one spec (latest) or an array (["3.12", "3.11"])
+// one spec (latest) or an array (["3.12", "3.11"]). An options object, such
+// as { version = "3.12" }, is not supported: aligning it would lose options.
 func parseConfiguredSpecs(out string) ([]string, error) {
 	value := strings.TrimSpace(out)
+	if value == "" || strings.HasPrefix(value, "{") {
+		return nil, fmt.Errorf("unsupported value %q: reconfig handles a string or a list of strings", value)
+	}
 	if !strings.HasPrefix(value, "[") {
 		return []string{value}, nil
 	}
 	var specs []string
 	if err := json.Unmarshal([]byte(value), &specs); err != nil {
-		return nil, fmt.Errorf("%q: %w", value, err)
+		return nil, fmt.Errorf("unsupported value %q: reconfig handles a string or a list of strings: %w", value, err)
 	}
 	return specs, nil
 }
 
 // resolveSpec returns the newest release matching a version spec, by running
 // mise latest <tool>[@<spec>]. A spec that matches no release is an error.
-func resolveSpec(tool, spec string) (string, error) {
+func resolveSpec(ctx context.Context, x proc.Exec, tool, spec string) (string, error) {
 	arg := tool + "@" + spec
 	if spec == "latest" {
 		arg = tool
 	}
-	out, err := runMise("latest", arg)
+	out, err := x.Output(ctx, proc.Command("mise", "latest", arg))
 	if err != nil {
 		return "", err
 	}
 	// mise latest prints nothing, and exits 0, when no release matches
 	version := strings.TrimSpace(string(out))
 	if version == "" {
-		return "", fmt.Errorf("version spec %q for %s matches no release\nCommand:\nmise latest %s", spec, tool, arg)
+		return "", fmt.Errorf("version spec %q for %s matches no release\nCommand:\n%s", spec, tool, proc.Format("mise", "latest", arg))
 	}
 	return version, nil
-}
-
-// runMise runs mise with the arguments and returns its standard output; a
-// failure reports the command and mise's standard error.
-func runMise(args ...string) ([]byte, error) {
-	var stderr bytes.Buffer
-	cmd := exec.Command("mise", args...)
-	cmd.Stderr = &stderr
-	out, err := cmd.Output()
-	if err != nil {
-		return nil, fmt.Errorf("mise %s failed: %w\nstderr: %s", strings.Join(args, " "), err, stderr.String())
-	}
-	return out, nil
 }
 
 // showCommands prints one kind of mise command, one per line, or a ✓ line
