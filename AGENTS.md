@@ -14,7 +14,8 @@ installed; `reconfig.sh` makes the machine match it.
   part after the last `/` (`westpoint-io/lazyrsync/lazyrsync` sorts as
   `lazyrsync`); mise version specs are not sorted, the first is the default.
 - `go/`: `reconfig`, which reconciles, in order: Homebrew upgrades, Homebrew
-  packages, mise versioned tools, npm globals, shell completions, and Stow
+  packages, mise versioned tools, npm globals, completion scripts (written to
+  bash-completion's per-user directory, never into the repository), and Stow
   links of `core/` into `~`. `go/pkg/run` is the runner; `go/pkg/proc` runs
   native programs.
 - `core/`: Stow package mirrored into `~`. Edit dotfiles here, never the

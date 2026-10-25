@@ -35,6 +35,8 @@ homebrew:
       - bash-completion@2
       # bun is managed by mise
       # bun, oven-sh/bun/
+      # Installed from Homebrew, bun's own completion would load at shell start
+      # and shadow the corrected one reconfig writes
       - caddy
       # cmake is for local whisper-cpp build
       - cmake

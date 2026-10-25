@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"flag"
-	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -172,60 +171,5 @@ func TestTargetsAcceptTheRepositoryRoot(t *testing.T) {
 	}
 	if want, _ := filepath.Abs(root); repo != want {
 		t.Errorf("repo = %s, want %s", repo, want)
-	}
-}
-
-// fakeBrew is a brew whose --prefix prints prefix, or fails.
-type fakeBrew struct {
-	missing bool
-	prefix  string
-	fail    bool
-}
-
-func (f fakeBrew) LookPath(name string) (string, error) {
-	if f.missing {
-		return "", errors.New("not found")
-	}
-	return "/fake/bin/" + name, nil
-}
-
-func (f fakeBrew) Output(_ context.Context, c proc.Cmd) ([]byte, error) {
-	if c.String() != "brew --prefix" {
-		return nil, fmt.Errorf("unexpected command: %s", c)
-	}
-	if f.fail {
-		return nil, errors.New("brew --prefix failed: exit status 1")
-	}
-	return []byte(f.prefix + "\n"), nil
-}
-
-func (f fakeBrew) Run(context.Context, proc.Cmd) error { return errors.New("unexpected run") }
-
-func TestBunTarget(t *testing.T) {
-	for _, tc := range []struct {
-		name, env string
-		brew      fakeBrew
-		want      string
-		wantErr   string
-	}{
-		{name: "HOMEBREW_PREFIX", env: "/env/brew", brew: fakeBrew{fail: true}, want: "/env/brew/share/bash-completion/completions/bun"},
-		{name: "brew --prefix", brew: fakeBrew{prefix: "/opt/homebrew"}, want: "/opt/homebrew/share/bash-completion/completions/bun"},
-		{name: "no brew", brew: fakeBrew{missing: true}, want: ""},
-		{name: "brew --prefix fails", brew: fakeBrew{fail: true}, wantErr: "failed to find Homebrew's prefix: brew --prefix failed"},
-		{name: "brew --prefix prints nothing", brew: fakeBrew{}, wantErr: "brew --prefix printed nothing"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Setenv("HOMEBREW_PREFIX", tc.env)
-			got, err := bunTarget(context.Background(), tc.brew)
-			if tc.wantErr != "" {
-				if err == nil || !strings.Contains(err.Error(), tc.wantErr) {
-					t.Fatalf("bunTarget() = %q, %v; want an error with %q", got, err, tc.wantErr)
-				}
-				return
-			}
-			if err != nil || got != tc.want {
-				t.Errorf("bunTarget() = %q, %v; want %q", got, err, tc.want)
-			}
-		})
 	}
 }

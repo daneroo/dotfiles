@@ -18,6 +18,8 @@ for homebrew_pfx in /usr/local /opt/homebrew; do
 done
 
 # brew's bash completion - assumes HOMEBREW_PREFIX is set - works for v2
+# Loads each tool's completion on demand, on its first Tab, including those
+# reconfig writes to ~/.local/share/bash-completion/completions
 [[ -r "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh" ]] && . "${HOMEBREW_PREFIX}/etc/profile.d/bash_completion.sh"
 
 # mise shims on PATH: terminals, scripts and agents all get the version that
@@ -31,26 +33,6 @@ if command -v direnv &>/dev/null; then
   eval "$(direnv hook bash)"
 fi
 
-# NPM completion
-# Generated during reconcile, cached in stow-managed directory for fast shell startup
-NPM_COMPLETION_FILE=~/.config/bash_includes/npm_completion.sh
-[[ -r "${NPM_COMPLETION_FILE}" ]] && . "${NPM_COMPLETION_FILE}"
-
-# PNPM completion
-# Generated during reconcile, cached in stow-managed directory for fast shell startup
-PNPM_COMPLETION_FILE=~/.config/bash_includes/pnpm_completion.bash
-[[ -r "${PNPM_COMPLETION_FILE}" ]] && . "${PNPM_COMPLETION_FILE}"
-
-# Docker completion
-# Generated during reconcile, cached in stow-managed directory for fast shell startup
-DOCKER_COMPLETION_FILE=~/.config/bash_includes/docker_completion.bash
-[[ -r "${DOCKER_COMPLETION_FILE}" ]] && . "${DOCKER_COMPLETION_FILE}"
-
-# mise completion
-# Generated during reconcile, cached in stow-managed directory for fast shell startup
-MISE_COMPLETION_FILE=~/.config/bash_includes/mise_completion.bash
-[[ -r "${MISE_COMPLETION_FILE}" ]] && . "${MISE_COMPLETION_FILE}"
-
 # Old .profile content
 # This is source'd from .bash_profile, since I installed rvm!
 
@@ -59,9 +41,6 @@ MISE_COMPLETION_FILE=~/.config/bash_includes/mise_completion.bash
 if [ -f ${HOMEBREW_PREFIX}/opt/kube-ps1/share/kube-ps1.sh ]; then
   . ${HOMEBREW_PREFIX}/opt/kube-ps1/share/kube-ps1.sh
 fi
-
-# brew install awscli / aws completion
-complete -C aws_completer aws
 
 # /usr/local/bin is already supplied by /etc/paths via path_helper, so
 # prepending it here only served to push it ahead of ${HOMEBREW_PREFIX}/bin.

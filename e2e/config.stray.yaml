@@ -4,6 +4,7 @@
 homebrew:
   formulae:
     e2e:
+      - bash-completion@2
       - hello
       - jq
       - mise

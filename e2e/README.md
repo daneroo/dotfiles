@@ -9,7 +9,8 @@ This directory contains end-to-end tests for the dotfiles repository using Docke
 The scenario runs `reconfig` in a fresh container from the official
 `ghcr.io/homebrew/ubuntu26.04` image, against its own small staged desired
 states. `e2e/config.yaml` has a few Linux-compatible formulae, including its
-own prerequisites (mise, node for npm, and stow), no casks, bun at `latest`
+own prerequisites (mise, node for npm, and stow) and bash-completion@2, which
+proves bash loads the completion scripts reconfig writes, no casks, bun at `latest`
 through mise, and one tiny npm global plus npm itself, which comes with node.
 `e2e/config.stray.yaml` adds jq through mise, so going back leaves a stray.
 The Ubuntu version matters: current bottles need the glibc of Ubuntu 24.04 or newer;
@@ -41,9 +42,6 @@ It takes a few minutes, mostly `brew update` and installing node.
 prints. It prints how long each `reconfig` run took, each step, and the whole
 scenario; `run.sh` prints the total, build included:
 
-0. Setup: remove the committed `mise_completion.bash`, so generating it makes
-   a new file, and make `~/.config/bash_includes` a real directory, so Stow
-   must link that new file on its own (an unfolded layout).
 1. `--help` exits 0; `-n -y` is a usage error, exit 2.
 2. `--dry-run` on the fresh machine: exactly the desired formulae are missing,
    mise, npm and stow are not installed, nothing is applied, and no managed
@@ -51,11 +49,12 @@ scenario; `run.sh` prints the total, build included:
 3. The default mode with piped input (`y`) announces that input is not
    interactive and previews only: nothing changes.
 4. `--yolo` installs the formulae, then uses the new mise, npm and stow in the
-   same run: bun through mise, the npm globals, the completions (Bun's written
-   once fixed); the container's own `~/.bashrc` makes Stow's plan fail with a
+   same run: bun through mise, the npm globals, the completion scripts for bun,
+   mise and npm in `~/.local/share/bash-completion/completions` (marked, Bun's
+   fixed once, loaded by bash on demand, nothing written into the
+   repository); the container's own `~/.bashrc` makes Stow's plan fail with a
    conflict, exit 1, linking nothing.
-5. With the conflicting dotfiles moved aside, `--yolo` links `core/`,
-   including the newly generated completion file.
+5. With the conflicting dotfiles moved aside, `--yolo` links `core/`.
 6. A `--yolo` rerun has nothing to apply.
 7. A comment and a `[settings]` entry are added to mise's global config;
    `--yolo` with `config.stray.yaml` installs jq through mise.

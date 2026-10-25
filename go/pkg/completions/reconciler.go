@@ -1,5 +1,6 @@
-// Package completions keeps Bash completion scripts current: scripts cached
-// in the repository, and Bun's corrected global script.
+// Package completions keeps Bash completion scripts current in
+// bash-completion's per-user directory, where bash loads each one on demand,
+// the first time its command is completed.
 package completions
 
 import (
@@ -17,101 +18,176 @@ import (
 	"github.com/daneroo/dotfiles/go/pkg/run"
 )
 
-// Generator is a tool whose Bash completion script is cached in the
-// repository, so shells source a file instead of running the tool at startup.
-type Generator struct {
-	// Name is the tool's display name, such as "docker".
+// Marker is the first line of every script reconfig writes, which tells its
+// scripts from those other installers put in the same directory.
+const Marker = "# Written by reconfig (daneroo/dotfiles); changes are overwritten on its next run.\n"
+
+// Tool is a command whose completion script reconfig writes, in a file named
+// after the command.
+type Tool struct {
+	// Name is the command completed, and the script's file name, such as
+	// "docker".
 	Name string
-	// Command is the executable, such as "docker".
+	// Command is the executable the script needs, such as "docker"; a
+	// missing one skips the tool.
 	Command string
-	// Args make the tool print its Bash completion script, such as
+	// Args make Command print its Bash completion script, such as
 	// ["completion", "bash"].
 	Args []string
-	// Target is the cached script's path, such as
-	// "<repo>/core/.config/bash_includes/docker_completion.bash".
-	Target string
+	// Script, when set, is the whole script, written instead of running
+	// Command, such as aws's, which asks aws_completer on each Tab.
+	Script string
+	// bun marks Bun's own generation, isolated and with bug 2 fixed.
+	bun bool
 }
 
-// Reconciler keeps completion scripts current under the run.Runner: the
-// scripts cached in the repository, and Bun's corrected global script.
-type Reconciler struct {
-	cached    []Generator
-	bunTarget BunTarget
-	x         proc.Exec
-}
-
-// BunTarget finds, when planning, where Bun's corrected script goes: the
-// file "bun" in the global bash-completion directory. An empty path, as
-// without Homebrew, skips Bun with a note; an error is a planning error.
-type BunTarget func(ctx context.Context) (string, error)
-
-// New returns the completions reconciler for the cached generators and for
-// Bun's corrected script, at the path bunTarget finds. Tools run through x.
-//
-// Bun gets its own target because of 2 upstream bugs:
-//   - bug 1: Bun names its script bun.completion.bash instead of "bun",
-//     which bash-completion v2's on-demand loader needs.
-//     https://github.com/oven-sh/bun/issues/671
+// Bun is Bun's tool. Its script is generated in isolation and corrected,
+// because of 2 upstream bugs:
+//   - bug 1: bun completions writes its script itself, named
+//     bun.completion.bash instead of "bun", which bash-completion's on-demand
+//     loader needs. https://github.com/oven-sh/bun/issues/671
 //   - bug 2: a broken regex prints "invalid regular expression" on every
 //     bun run <Tab>. https://github.com/oven-sh/bun/issues/24847
-//
-// Bun's own file is never written, so it stays as proof both bugs are still
-// unfixed.
-func New(cached []Generator, bunTarget BunTarget, x proc.Exec) *Reconciler {
-	return &Reconciler{cached: cached, bunTarget: bunTarget, x: x}
+var Bun = Tool{Name: "bun", Command: "bun", bun: true}
+
+// Dir is bash-completion's per-user directory, which it searches first when
+// it loads a script on demand: under XDG_DATA_HOME, or under home's
+// .local/share when that is unset or empty. BASH_COMPLETION_USER_DIR, a list
+// that replaces it, is not followed.
+func Dir(home string) string {
+	data := os.Getenv("XDG_DATA_HOME")
+	if data == "" {
+		data = filepath.Join(home, ".local", "share")
+	}
+	return filepath.Join(data, "bash-completion", "completions")
+}
+
+// Reconciler keeps the tools' completion scripts current in one directory
+// under the run.Runner.
+type Reconciler struct {
+	dir   string
+	tools []Tool
+	x     proc.Exec
+}
+
+// New returns the completions reconciler for the tools' scripts in dir.
+// Tools run through x.
+func New(dir string, tools []Tool, x proc.Exec) *Reconciler {
+	return &Reconciler{dir: dir, tools: tools, x: x}
 }
 
 // Name is the reconciler's stable name.
 func (r *Reconciler) Name() string { return "CLI Completions" }
 
-// Plan generates each script in memory and compares it with its target. It
-// writes no target and creates no target directory. A missing tool is
-// skipped; a failed generation is an error.
+// Plan generates each script in memory and compares it with its target, then
+// plans to remove the marked scripts of tools no longer listed. It writes no
+// target and creates no directory. A missing tool is skipped, its script
+// kept; a failed generation is an error.
 func (r *Reconciler) Plan(ctx context.Context) (run.Plan, error) {
 	p := &completionsPlan{}
-	for _, g := range r.cached {
-		cmd, ok := r.resolve(ctx, g.Command)
-		if !ok {
-			p.skip(g.Name)
-			continue
-		}
-		cmd.Args = g.Args
-		script, err := generate(ctx, r.x, g.Name, cmd)
+	listed := map[string]bool{}
+	for _, t := range r.tools {
+		listed[t.Name] = true
+		script, ok, err := r.script(ctx, p, t)
 		if err != nil {
 			return nil, err
 		}
-		if err := p.compare(g.Name, g.Target, script); err != nil {
+		if !ok {
+			p.skip(t.Name)
+			continue
+		}
+		if err := p.compare(t.Name, filepath.Join(r.dir, t.Name), script); err != nil {
 			return nil, err
 		}
 	}
-	target, err := r.bunTarget(ctx)
+	unlisted, err := unlistedScripts(r.dir, listed)
 	if err != nil {
 		return nil, err
 	}
-	if target == "" {
-		p.notes = append(p.notes, run.Note{Mark: run.Info, Text: "bun: no Homebrew bash-completion directory, skipping its completions"})
-	} else if err := r.planBun(ctx, p, target); err != nil {
-		return nil, err
+	for _, name := range unlisted {
+		path := filepath.Join(r.dir, name)
+		p.notes = append(p.notes, run.Note{Mark: run.Problem, Text: fmt.Sprintf("%s completions are no longer listed (%s)", name, path)})
+		p.removes = append(p.removes, path)
 	}
 	return p, nil
 }
 
-// planBun compares Bun's fresh script, with bug 2 fixed, with its target.
-func (r *Reconciler) planBun(ctx context.Context, p *completionsPlan, target string) error {
+// unlistedScripts names the marked scripts in dir whose tools are not
+// listed. Unmarked files, links and directories are never reconfig's.
+func unlistedScripts(dir string, listed map[string]bool) ([]string, error) {
+	entries, err := os.ReadDir(dir)
+	if errors.Is(err, fs.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("failed to list completions in %s: %w", dir, err)
+	}
+	var names []string
+	for _, e := range entries {
+		if listed[e.Name()] || !e.Type().IsRegular() {
+			continue
+		}
+		marked, err := hasMarker(filepath.Join(dir, e.Name()))
+		if err != nil {
+			return nil, err
+		}
+		if marked {
+			names = append(names, e.Name())
+		}
+	}
+	return names, nil
+}
+
+// hasMarker reports whether the file starts with the Marker.
+func hasMarker(path string) (bool, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return false, fmt.Errorf("failed to read %s: %w", path, err)
+	}
+	defer f.Close()
+	head := make([]byte, len(Marker))
+	n, err := io.ReadFull(f, head)
+	if err != nil && !errors.Is(err, io.ErrUnexpectedEOF) && !errors.Is(err, io.EOF) {
+		return false, fmt.Errorf("failed to read %s: %w", path, err)
+	}
+	return string(head[:n]) == Marker, nil
+}
+
+// script produces a tool's marked script; ok is false when the tool is
+// missing.
+func (r *Reconciler) script(ctx context.Context, p *completionsPlan, t Tool) (script []byte, ok bool, err error) {
+	if t.bun {
+		script, ok, err = r.bunScript(ctx, p)
+	} else {
+		var cmd proc.Cmd
+		if cmd, ok = r.resolve(ctx, t.Command); ok && t.Script != "" {
+			script = []byte(t.Script)
+		} else if ok {
+			cmd.Args = t.Args
+			script, err = generate(ctx, r.x, t.Name, cmd)
+		}
+	}
+	if !ok || err != nil {
+		return nil, ok, err
+	}
+	return append([]byte(Marker), script...), true, nil
+}
+
+// bunScript generates Bun's script with bug 2 fixed.
+func (r *Reconciler) bunScript(ctx context.Context, p *completionsPlan) ([]byte, bool, error) {
 	exe, ok := r.bunExecutable(ctx)
 	if !ok {
-		p.skip("bun")
-		return nil
+		return nil, false, nil
 	}
 	script, err := generateBun(ctx, r.x, exe)
 	if err != nil {
-		return err
+		return nil, true, err
 	}
 	script, fixed := fixBun(script)
 	if !fixed {
 		p.notes = append(p.notes, run.Note{Mark: run.Info, Text: "bun: its completion script no longer has the known regex bug, nothing to fix"})
 	}
-	return p.compare("bun", target, script)
+	return script, true, nil
 }
 
 // resolve finds a tool on PATH or, when the tool was installed earlier in
@@ -248,11 +324,12 @@ func prependPath(dir string) string {
 	return "PATH=" + dir + string(os.PathListSeparator) + os.Getenv("PATH")
 }
 
-// completionsPlan is the completions plan: its notes and the approved
-// scripts to write.
+// completionsPlan is the completions plan: its notes, and the approved
+// scripts to write and to remove.
 type completionsPlan struct {
-	notes  []run.Note
-	writes []write
+	notes   []run.Note
+	writes  []write
+	removes []string
 }
 
 // write is a script to write to its target.
@@ -297,19 +374,23 @@ func (p *completionsPlan) compare(name, target string, script []byte) error {
 
 // Report describes the plan.
 func (p *completionsPlan) Report() run.Report {
-	g := run.Group{Title: "Completion files to write"}
+	writes := run.Group{Title: "Completion files to write"}
 	for _, w := range p.writes {
-		g.Actions = append(g.Actions, "write "+w.target)
+		writes.Actions = append(writes.Actions, "write "+w.target)
 	}
-	r := run.Report{Groups: []run.Group{g}}
+	removes := run.Group{Title: "Completion files to remove"}
+	for _, path := range p.removes {
+		removes.Actions = append(removes.Actions, "remove "+path)
+	}
+	r := run.Report{Groups: []run.Group{writes, removes}}
 	if len(p.notes) > 0 {
 		r.Paragraphs = [][]run.Note{p.notes}
 	}
 	return r
 }
 
-// Apply writes the approved scripts to the changed targets, in order,
-// stopping at the first failure.
+// Apply writes the approved scripts to the changed targets, then removes the
+// unlisted ones, in order, stopping at the first failure.
 func (p *completionsPlan) Apply(ctx context.Context) error {
 	for _, w := range p.writes {
 		if err := ctx.Err(); err != nil {
@@ -317,6 +398,14 @@ func (p *completionsPlan) Apply(ctx context.Context) error {
 		}
 		if err := replaceFile(w.target, w.script); err != nil {
 			return err
+		}
+	}
+	for _, path := range p.removes {
+		if err := ctx.Err(); err != nil {
+			return err
+		}
+		if err := os.Remove(path); err != nil && !errors.Is(err, fs.ErrNotExist) {
+			return fmt.Errorf("failed to remove %s: %w", path, err)
 		}
 	}
 	return nil

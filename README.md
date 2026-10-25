@@ -30,9 +30,11 @@ This repo is for managing:
     strays (tools in mise's global config that `config.yaml` doesn't list)
   - npm global packages: installs missing or outdated ones, uninstalls
     unwanted ones
-  - Shell completions: caches npm, pnpm, docker and mise completions in
-    `core/.config/bash_includes`, and writes Bun's corrected completion to
-    Homebrew's bash-completion directory; only changed files are written
+  - Shell completions: writes the completion scripts of aws, bun (corrected),
+    docker, mise, npm and pnpm to bash-completion's per-user directory,
+    `~/.local/share/bash-completion/completions`, where bash loads each on
+    demand, on its first Tab; only changed files are written, and scripts of
+    tools no longer listed are removed. Other files there are never touched
   - Dotfiles: **GNU Stow** links `core/` into `~`; dead links in `~` are
     reported, never changed
   - Common features across all reconcilers:
@@ -77,7 +79,9 @@ Without a terminal (piped input, cron), the default mode previews only, as
 
 ## Operating
 
-_Systems under control:_ `galois, davinci, shannon, dirac, goedel, feynman`
+_Systems under control:_ `galois`, the only macOS machine. The others
+(davinci, shannon, dirac, goedel, feynman) are not macOS and are moving to
+other setups, such as nix and omarchy; reconfig does not manage them.
 
 Regular maintenance (_idempotent_):
 
