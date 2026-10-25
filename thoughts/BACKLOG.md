@@ -8,6 +8,8 @@ when Daniel asks.
 
 Leave this section even when empty
 
+- [ ] reconfig-output — concise output: expand on unexpected or --verbose
+
 ## Config
 
 - [ ] cue-config-schema — make `config.cue` the single schema for `config.yaml`:
