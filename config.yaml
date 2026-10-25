@@ -115,7 +115,7 @@ homebrew:
       - yt-dlp
 
     ai:
-      - gemini-cli
+      # - gemini-cli # deprecated - and replaced by antigravity-cli - which we don't use yet/
       - herdr
       - llmfit
       # - opencode # use tap below instead - macOS and Linux (official brew formula, updated less)
@@ -201,8 +201,6 @@ npm:
   # - agentic-cli
   # - corepack - deprecated
   - eslint
-  #  - moved to gemini-cli formula
-  # - "@google/gemini-cli"
   - json
   - npm
   - nx
