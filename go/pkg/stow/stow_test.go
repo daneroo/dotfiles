@@ -278,27 +278,10 @@ func TestRelativePathsAreErrors(t *testing.T) {
 	}
 }
 
-// generates stands in for the completions reconciler, writing a new file
-// into the package.
-type generates struct{ f *fixture }
-
-func (g generates) Name() string { return "Generator" }
-
-func (g generates) Plan(context.Context) (run.Plan, error) { return g, nil }
-
-func (g generates) Report() run.Report {
-	return run.Report{Groups: []run.Group{{Title: "Files to write", Actions: []string{"write two.sh"}}}}
-}
-
-func (g generates) Apply(context.Context) error {
-	g.f.write(".dotfiles/core/.config/inc/two.sh", "two\n")
-	return nil
-}
-
-// A file generated earlier in the run is linked in the same run, whether
-// home's .config is one folded link, which already shows the new file, or a
-// directory of links, which needs a new link.
-func TestGeneratedFilesAreLinked(t *testing.T) {
+// A file added to the package is linked, whether home's .config is one
+// folded link, which already shows the new file, or a real directory of
+// links, which needs a new link and keeps its other files.
+func TestNewPackageFilesAreLinked(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		layout func(f *fixture)
@@ -321,7 +304,8 @@ func TestGeneratedFilesAreLinked(t *testing.T) {
 			if folded := info.Mode()&fs.ModeSymlink != 0; folded != (tc.op == "") {
 				t.Fatalf(".config folded = %v, want the %s layout", folded, tc.name)
 			}
-			res, out := f.reconcile(run.Runner{Mode: run.Yolo}, generates{f}, f.reconciler(proc.OS{}))
+			f.write(".dotfiles/core/.config/inc/two.sh", "two\n")
+			res, out := f.reconcile(run.Runner{Mode: run.Yolo}, f.reconciler(proc.OS{}))
 			if res.ExitCode() != 0 {
 				t.Fatalf("exit code %d, output:\n%s", res.ExitCode(), out)
 			}
@@ -330,6 +314,9 @@ func TestGeneratedFilesAreLinked(t *testing.T) {
 			}
 			if got := f.read(".config/inc/two.sh"); got != "two\n" {
 				t.Errorf("two.sh = %q, want it linked", got)
+			}
+			if tc.op != "" && f.read(".config/inc/other") != "not stowed\n" {
+				t.Error("the unfolded directory's other file changed")
 			}
 		})
 	}

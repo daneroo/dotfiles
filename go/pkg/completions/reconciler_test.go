@@ -2,7 +2,6 @@ package completions_test
 
 import (
 	"context"
-	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,9 +19,8 @@ import (
 // its bin directory, and TMPDIR, where scratch goes, is its own.
 //
 //	bin/       on PATH: docker, mise, and the few programs the scripts use
-//	installs/  where mise installs tools, off PATH: bun and newtool
-//	repo/      the cached completion targets
-//	global/    the global bash-completion directory, not created yet
+//	installs/    where mise installs tools, off PATH: bun and newtool
+//	completions/ the per-user completions directory, not created yet
 type fixture struct {
 	t    *testing.T
 	root string
@@ -35,7 +33,7 @@ func newFixture(t *testing.T) *fixture {
 		t.Fatal(err)
 	}
 	f := &fixture{t: t, root: root}
-	for _, dir := range []string{"bin", "tmp", "repo"} {
+	for _, dir := range []string{"bin", "tmp"} {
 		f.mkdir(dir)
 	}
 	for _, name := range []string{"sh", "ln", "dirname", "sleep"} {
@@ -148,23 +146,22 @@ func (f *fixture) assertScratchRemoved() {
 	}
 }
 
-// generators are the fixture's cached completions: docker on PATH, newtool
+// marker is the first line of every script reconfig writes.
+const marker = "# Written by reconfig (daneroo/dotfiles); changes are overwritten on its next run.\n"
+
+// tools are the fixture's tools: bun through mise, docker on PATH, newtool
 // only through mise, and pnpm missing.
-func (f *fixture) generators() []completions.Generator {
-	return []completions.Generator{
-		{Name: "docker", Command: "docker", Args: []string{"completion", "bash"}, Target: f.path("repo", "docker_completion.bash")},
-		{Name: "newtool", Command: "newtool", Args: []string{"completion", "bash"}, Target: f.path("repo", "newtool_completion.bash")},
-		{Name: "pnpm", Command: "pnpm", Args: []string{"completion", "bash"}, Target: f.path("repo", "pnpm_completion.bash")},
+func (f *fixture) tools() []completions.Tool {
+	return []completions.Tool{
+		completions.Bun,
+		{Name: "docker", Command: "docker", Args: []string{"completion", "bash"}},
+		{Name: "newtool", Command: "newtool", Args: []string{"completion", "bash"}},
+		{Name: "pnpm", Command: "pnpm", Args: []string{"completion", "bash"}},
 	}
 }
 
-// at is a Bun target at the path.
-func at(path string) completions.BunTarget {
-	return func(context.Context) (string, error) { return path, nil }
-}
-
 func (f *fixture) reconciler() *completions.Reconciler {
-	return completions.New(f.generators(), at(f.path("global", "completions", "bun")), proc.OS{})
+	return completions.New(f.path("completions"), f.tools(), proc.OS{})
 }
 
 // reconcile runs the reconciler, with the fixture's root shown as $ROOT.
@@ -174,26 +171,27 @@ func (f *fixture) reconcile(ctx context.Context, mode run.Mode, more ...run.Reco
 	return res, strings.ReplaceAll(out.String(), f.root, "$ROOT")
 }
 
-// Fresh scripts are written only where they differ, without diagnostics,
-// and a rerun finds nothing to do.
+// Fresh scripts are written marked, only where they differ, without
+// diagnostics, and a rerun finds nothing to do.
 func TestApplyThenUnchangedRerun(t *testing.T) {
 	f := newFixture(t)
-	f.write("repo/newtool_completion.bash", "# stale\n")
+	f.write("completions/newtool", marker+"# stale\n")
 	installs := f.entries("installs")
 
 	res, out := f.reconcile(context.Background(), run.Yolo)
 	want := `
 ## CLI Completions Section
 
-✗ - docker completions are missing ($ROOT/repo/docker_completion.bash)
-✗ - newtool completions are outdated ($ROOT/repo/newtool_completion.bash)
-△ - pnpm is not installed, skipping its completions
-✗ - bun completions are missing ($ROOT/global/completions/bun)
+✗ - bun completion script is missing ($ROOT/completions/bun)
+✗ - docker completion script is missing ($ROOT/completions/docker)
+✗ - newtool completion script is outdated ($ROOT/completions/newtool)
+△ - pnpm is not installed, skipping its completion script
 
-✗ - Completion files to write: (3)
- write $ROOT/repo/docker_completion.bash
- write $ROOT/repo/newtool_completion.bash
- write $ROOT/global/completions/bun
+✗ - Completion scripts to write: (3)
+ write $ROOT/completions/bun
+ write $ROOT/completions/docker
+ write $ROOT/completions/newtool
+✓ - No completion scripts to remove
 ✓ - CLI Completions applied
 `
 	if out != want {
@@ -203,9 +201,9 @@ func TestApplyThenUnchangedRerun(t *testing.T) {
 		t.Fatalf("exit code = %d: %v", res.ExitCode(), res.Err)
 	}
 	for name, want := range map[string]string{
-		"repo/docker_completion.bash":  "# docker completion completion bash\n",
-		"repo/newtool_completion.bash": "# newtool completion completion bash\n",
-		"global/completions/bun":       fixedBun,
+		"completions/bun":     marker + fixedBun,
+		"completions/docker":  marker + "# docker completion completion bash\n",
+		"completions/newtool": marker + "# newtool completion completion bash\n",
 	} {
 		if got := f.read(name); got != want {
 			t.Errorf("%s = %q, want %q", name, got, want)
@@ -214,8 +212,8 @@ func TestApplyThenUnchangedRerun(t *testing.T) {
 	if got := f.entries("installs"); !slices.Equal(got, installs) {
 		t.Errorf("installs changed to %q, want %q", got, installs)
 	}
-	if got := f.entries("repo"); len(got) != 3 {
-		t.Errorf("repo holds %q, want only the 2 scripts", got)
+	if got := f.entries("completions"); len(got) != 4 {
+		t.Errorf("completions holds %q, want only the 3 scripts", got)
 	}
 	f.assertScratchRemoved()
 
@@ -223,12 +221,13 @@ func TestApplyThenUnchangedRerun(t *testing.T) {
 	want = `
 ## CLI Completions Section
 
-✓ - docker completions are up to date ($ROOT/repo/docker_completion.bash)
-✓ - newtool completions are up to date ($ROOT/repo/newtool_completion.bash)
-△ - pnpm is not installed, skipping its completions
-✓ - bun completions are up to date ($ROOT/global/completions/bun)
+✓ - bun completion script is up to date ($ROOT/completions/bun)
+✓ - docker completion script is up to date ($ROOT/completions/docker)
+✓ - newtool completion script is up to date ($ROOT/completions/newtool)
+△ - pnpm is not installed, skipping its completion script
 
-✓ - No completion files to write
+✓ - No completion scripts to write
+✓ - No completion scripts to remove
 `
 	if out != want {
 		t.Errorf("rerun output =\n%s\nwant\n%s", out, want)
@@ -238,24 +237,18 @@ func TestApplyThenUnchangedRerun(t *testing.T) {
 	}
 }
 
-// A dry run writes no target, creates no target directory, and leaves the
+// A dry run writes nothing, creates no directory, and leaves the
 // installations and scratch as they were.
 func TestDryRunWritesNothing(t *testing.T) {
 	f := newFixture(t)
-	f.write("repo/newtool_completion.bash", "# stale\n")
 	installs := f.entries("installs")
 
 	res, out := f.reconcile(context.Background(), run.DryRun)
-	if res.Entries[0].Outcome != run.Previewed || !strings.Contains(out, " write $ROOT/global/completions/bun\n") {
+	if res.Entries[0].Outcome != run.Previewed || !strings.Contains(out, " write $ROOT/completions/bun\n") {
 		t.Errorf("outcome %v, want the writes previewed:\n%s", res.Entries[0].Outcome, out)
 	}
-	if got := f.read("repo/newtool_completion.bash"); got != "# stale\n" {
-		t.Errorf("dry run changed newtool's script to %q", got)
-	}
-	for _, name := range []string{"repo/docker_completion.bash", "global"} {
-		if _, err := os.Lstat(f.path(name)); !os.IsNotExist(err) {
-			t.Errorf("dry run created %s", name)
-		}
+	if _, err := os.Lstat(f.path("completions")); !os.IsNotExist(err) {
+		t.Error("dry run created the completions directory")
 	}
 	if got := f.entries("installs"); !slices.Equal(got, installs) {
 		t.Errorf("installs changed to %q, want %q", got, installs)
@@ -263,29 +256,112 @@ func TestDryRunWritesNothing(t *testing.T) {
 	f.assertScratchRemoved()
 }
 
-// A link at Bun's target is replaced by the corrected file, leaving Bun's
-// own file as it was.
-func TestBunLinkIsReplaced(t *testing.T) {
+// A link at a target is replaced by a file, leaving the file it points to
+// as it was.
+func TestLinkIsReplaced(t *testing.T) {
 	f := newFixture(t)
-	f.write("global/completions/bun.completion.bash", fixedBun)
-	if err := os.Symlink("bun.completion.bash", f.path("global", "completions", "bun")); err != nil {
+	f.write("elsewhere/docker", "# not reconfig's\n")
+	f.mkdir("completions")
+	if err := os.Symlink(f.path("elsewhere", "docker"), f.path("completions", "docker")); err != nil {
 		t.Fatal(err)
 	}
-	r := completions.New(nil, at(f.path("global", "completions", "bun")), proc.OS{})
+	res, out := f.reconcile(context.Background(), run.Yolo)
+	if !strings.Contains(out, "✗ - docker completion script: $ROOT/completions/docker is a symlink, to be replaced by a file\n") || res.ExitCode() != 0 {
+		t.Errorf("exit code %d, output:\n%s", res.ExitCode(), out)
+	}
+	info, err := os.Lstat(f.path("completions", "docker"))
+	if err != nil || !info.Mode().IsRegular() {
+		t.Fatalf("docker target is %v (%v), want a regular file", info, err)
+	}
+	if got := f.read("elsewhere/docker"); got != "# not reconfig's\n" {
+		t.Errorf("the linked file changed to %q", got)
+	}
+}
+
+// A fixed script is written as it is, marked, when its command is
+// installed, and skipped when it is missing.
+func TestFixedScript(t *testing.T) {
+	f := newFixture(t)
+	f.tool("bin/aws_completer", "exit 0")
+	tools := []completions.Tool{
+		{Name: "aws", Command: "aws_completer", Script: "complete -C aws_completer aws\n"},
+		{Name: "gone", Command: "gone_completer", Script: "complete -C gone_completer gone\n"},
+	}
 	var out strings.Builder
-	res := run.Runner{Mode: run.Yolo, Out: &out}.Run(context.Background(), []run.Reconciler{r})
-	if !strings.Contains(out.String(), "is a symlink, to be replaced by a file") || res.ExitCode() != 0 {
+	res := run.Runner{Mode: run.Yolo, Out: &out}.Run(context.Background(),
+		[]run.Reconciler{completions.New(f.path("completions"), tools, proc.OS{})})
+	if res.ExitCode() != 0 || !strings.Contains(out.String(), "△ - gone is not installed, skipping its completion script\n") {
 		t.Errorf("exit code %d, output:\n%s", res.ExitCode(), out.String())
 	}
-	info, err := os.Lstat(f.path("global", "completions", "bun"))
-	if err != nil || !info.Mode().IsRegular() {
-		t.Fatalf("bun target is %v (%v), want a regular file", info, err)
+	if got, want := f.read("completions/aws"), marker+"complete -C aws_completer aws\n"; got != want {
+		t.Errorf("aws = %q, want %q", got, want)
 	}
-	if got := f.read("global/completions/bun"); got != fixedBun {
-		t.Errorf("bun = %q, want %q", got, fixedBun)
+	if got := f.entries("completions"); len(got) != 2 {
+		t.Errorf("completions holds %q, want only aws", got)
 	}
-	if got := f.read("global/completions/bun.completion.bash"); got != fixedBun {
-		t.Errorf("Bun's own file changed to %q", got)
+}
+
+// A marked script whose tool is no longer listed is removed, as an
+// approved action. Unmarked files and links are never touched, and neither is
+// the script of a listed tool that is missing.
+func TestUnlistedScriptsAreRemoved(t *testing.T) {
+	f := newFixture(t)
+	f.write("completions/old", marker+"# old completion\n")
+	f.write("completions/copilot", "# copilot's own\n")
+	f.write("completions/pnpm", marker+"# pnpm completion\n")
+	if err := os.Symlink("old", f.path("completions", "alias")); err != nil {
+		t.Fatal(err)
+	}
+
+	res, out := f.reconcile(context.Background(), run.DryRun)
+	for _, line := range []string{
+		"✗ - old completion script is no longer listed ($ROOT/completions/old)\n",
+		"✗ - Completion scripts to remove: (1)\n remove $ROOT/completions/old\n",
+	} {
+		if !strings.Contains(out, line) {
+			t.Errorf("dry run output lacks %q:\n%s", line, out)
+		}
+	}
+	if got := f.read("completions/old"); got != marker+"# old completion\n" {
+		t.Errorf("dry run changed old to %q", got)
+	}
+
+	res, out = f.reconcile(context.Background(), run.Yolo)
+	if res.ExitCode() != 0 {
+		t.Fatalf("exit code %d, output:\n%s", res.ExitCode(), out)
+	}
+	if _, err := os.Lstat(f.path("completions", "old")); !os.IsNotExist(err) {
+		t.Error("old was not removed")
+	}
+	for name, want := range map[string]string{
+		"completions/copilot": "# copilot's own\n",
+		"completions/pnpm":    marker + "# pnpm completion\n",
+	} {
+		if got := f.read(name); got != want {
+			t.Errorf("%s = %q, want it untouched", name, got)
+		}
+	}
+	if _, err := os.Lstat(f.path("completions", "alias")); err != nil {
+		t.Errorf("the alias link was removed: %v", err)
+	}
+
+	_, out = f.reconcile(context.Background(), run.Yolo)
+	if !strings.Contains(out, "✓ - No completion scripts to remove\n") {
+		t.Errorf("rerun output still removes:\n%s", out)
+	}
+}
+
+// The directory is where bash-completion looks first: under XDG_DATA_HOME,
+// or under ~/.local/share when it is unset or empty.
+func TestDir(t *testing.T) {
+	for _, tc := range []struct{ xdg, want string }{
+		{"", "/home/me/.local/share/bash-completion/completions"},
+		{"/data", "/data/bash-completion/completions"},
+	} {
+		t.Setenv("XDG_DATA_HOME", tc.xdg)
+		if got := completions.Dir("/home/me"); got != tc.want {
+			t.Errorf("XDG_DATA_HOME=%q: Dir = %q, want %q", tc.xdg, got, tc.want)
+		}
 	}
 }
 
@@ -297,7 +373,7 @@ func TestFixedBunIsNoted(t *testing.T) {
 	if !strings.Contains(out, "△ - bun: its completion script no longer has the known regex bug, nothing to fix\n") {
 		t.Errorf("output lacks the note:\n%s", out)
 	}
-	if got, want := f.read("global/completions/bun"), "_bun() {\n}\n"; got != want {
+	if got, want := f.read("completions/bun"), marker+"_bun() {\n}\n"; got != want {
 		t.Errorf("bun = %q, want %q", got, want)
 	}
 }
@@ -312,8 +388,8 @@ func TestMissingToolsAreSkipped(t *testing.T) {
 		}
 	}
 	res, out := f.reconcile(context.Background(), run.Yolo)
-	for _, name := range []string{"docker", "newtool", "pnpm", "bun"} {
-		if !strings.Contains(out, "△ - "+name+" is not installed, skipping its completions\n") {
+	for _, name := range []string{"bun", "docker", "newtool", "pnpm"} {
+		if !strings.Contains(out, "△ - "+name+" is not installed, skipping its completion script\n") {
 			t.Errorf("output lacks %s's skip:\n%s", name, out)
 		}
 	}
@@ -356,8 +432,8 @@ func TestGenerationFailureStopsLaterApplies(t *testing.T) {
 			if applied || res.Entries[1].Outcome != run.Previewed {
 				t.Errorf("later reconciler applied: outcome %v", res.Entries[1].Outcome)
 			}
-			if _, err := os.Stat(f.path("repo", "docker_completion.bash")); !os.IsNotExist(err) {
-				t.Error("a failed plan wrote docker's script")
+			if _, err := os.Lstat(f.path("completions")); !os.IsNotExist(err) {
+				t.Error("a failed plan wrote a script")
 			}
 			f.assertScratchRemoved()
 		})
@@ -371,47 +447,28 @@ func TestPartialWriteFailure(t *testing.T) {
 		t.Skip("root can write a read-only directory")
 	}
 	f := newFixture(t)
-	f.mkdir("locked")
-	if err := os.Chmod(f.path("locked"), 0o555); err != nil {
+	f.mkdir("completions/locked")
+	if err := os.Chmod(f.path("completions", "locked"), 0o555); err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { os.Chmod(f.path("locked"), 0o755) })
-	gens := []completions.Generator{
-		{Name: "docker", Command: "docker", Args: []string{"one"}, Target: f.path("repo", "one.bash")},
-		{Name: "docker", Command: "docker", Args: []string{"two"}, Target: f.path("locked", "two.bash")},
-		{Name: "docker", Command: "docker", Args: []string{"three"}, Target: f.path("repo", "three.bash")},
+	t.Cleanup(func() { os.Chmod(f.path("completions", "locked"), 0o755) })
+	// The middle name lands in a read-only directory, so only its write fails.
+	tools := []completions.Tool{
+		{Name: "one", Command: "docker", Args: []string{"one"}},
+		{Name: "locked/two", Command: "docker", Args: []string{"two"}},
+		{Name: "three", Command: "docker", Args: []string{"three"}},
 	}
 	var out strings.Builder
 	res := run.Runner{Mode: run.Yolo, Out: &out}.Run(context.Background(),
-		[]run.Reconciler{completions.New(gens, at(""), proc.OS{})})
-	if res.Entries[0].Outcome != run.Failed || !strings.Contains(out.String(), "✗ - applying failed: failed to write "+f.path("locked", "two.bash")) {
+		[]run.Reconciler{completions.New(f.path("completions"), tools, proc.OS{})})
+	if res.Entries[0].Outcome != run.Failed || !strings.Contains(out.String(), "✗ - applying failed: failed to write "+f.path("completions", "locked", "two")) {
 		t.Errorf("outcome %v, output:\n%s", res.Entries[0].Outcome, out.String())
 	}
-	if got := f.read("repo/one.bash"); got != "# docker completion one\n" {
-		t.Errorf("one.bash = %q", got)
+	if got := f.read("completions/one"); got != marker+"# docker completion one\n" {
+		t.Errorf("one = %q", got)
 	}
-	if got := f.entries("repo"); len(got) != 2 {
-		t.Errorf("repo holds %q, want only one.bash", got)
-	}
-	if got := f.entries("locked"); len(got) != 1 {
-		t.Errorf("locked holds %q, want nothing", got)
-	}
-}
-
-// Failing to find Bun's target is a planning error, and later reconcilers
-// still plan.
-func TestBunTargetFailureIsAPlanningError(t *testing.T) {
-	f := newFixture(t)
-	failing := func(context.Context) (string, error) { return "", errors.New("failed to find Homebrew's prefix") }
-	applied := false
-	var out strings.Builder
-	res := run.Runner{Mode: run.Yolo, Out: &out}.Run(context.Background(),
-		[]run.Reconciler{completions.New(f.generators(), failing, proc.OS{}), recorder{&applied}})
-	if res.ExitCode() != 1 || !strings.Contains(out.String(), "✗ - planning failed: failed to find Homebrew's prefix") {
-		t.Errorf("exit code %d, output:\n%s", res.ExitCode(), out.String())
-	}
-	if len(res.Entries) != 2 || res.Entries[1].Outcome != run.Previewed || applied {
-		t.Errorf("entries %+v, applied %v; want the later reconciler previewed", res.Entries, applied)
+	if got := f.entries("completions"); !slices.Equal(got, []string{"/completions", "/completions/locked", "/completions/one"}) {
+		t.Errorf("completions holds %q, want only one and the locked directory", got)
 	}
 }
 

@@ -12,7 +12,7 @@ cd "$REPO_ROOT"
 
 CONFIG=e2e/config.yaml
 STRAY_CONFIG=e2e/config.stray.yaml
-DESIRED_FORMULAE="hello jq mise node stow tree"
+DESIRED_FORMULAE="bash-completion@2 hello jq mise node stow tree"
 EXTRANEOUS_FORMULA=figlet
 NPM_GLOBAL=semver
 STRAY_TOOL=jq
@@ -20,10 +20,11 @@ STRAY_VERSION=1.7.1
 MISE_CONFIG="$HOME/.config/mise/config.toml"
 MISE_COMMENT="# kept by reconfig"
 MISE_SETTING="jobs = 2"
-# A completion file reconfig generates into the repository; removed first,
-# so it is new and Stow must link it in the same run.
-GENERATED=core/.config/bash_includes/mise_completion.bash
-BUN_COMPLETION="$(brew --prefix)/share/bash-completion/completions/bun"
+# Where reconfig writes completion scripts, bash-completion's per-user
+# directory, and the tools of config.yaml it writes them for.
+COMPLETIONS="$HOME/.local/share/bash-completion/completions"
+COMPLETED_TOOLS="bun mise npm"
+MARKER="# Written by reconfig (daneroo/dotfiles); changes are overwritten on its next run."
 # core/.npmrc moves npm's global prefix here once Stow links it; set from the
 # start, so npm globals stay in one place, as on a machine already linked.
 export NPM_CONFIG_PREFIX="$HOME/.npm-global"
@@ -33,13 +34,9 @@ echo "Container: $(uname -sm), $(brew --version | head -1), bash ${BASH_VERSION}
 main() {
     local scenario_start=$EPOCHREALTIME
 
-    step "0. Setup: a new generated file, and an unfolded ~/.config/bash_includes"
-    rm "$GENERATED" || fail "cannot remove $GENERATED"
-    mkdir -p ~/.config/bash_includes
-    echo "# not managed by reconfig" >~/.config/bash_includes/local.sh
-    echo "✓ removed $GENERATED; ~/.config/bash_includes is a directory, not a link"
-    local fresh
+    local fresh core
     fresh=$(snapshot)
+    core=$(core_files)
 
     step "1. Help, and conflicting modes are a usage error"
     run_reconfig --help
@@ -87,22 +84,19 @@ main() {
     echo "✓ bun installed by mise"
     npm_global_installed || fail "npm global $NPM_GLOBAL is not installed"
     echo "✓ npm global installed: $NPM_GLOBAL"
-    [ -f "$GENERATED" ] || fail "$GENERATED was not generated"
-    echo "✓ generated: $GENERATED"
-    assert_bun_completion
+    assert_completions
+    assert_bun_completion_loads
+    [ "$(core_files)" = "$core" ] || fail "the repository's core changed: $(diff <(echo "$core") <(core_files))"
+    echo "✓ nothing generated into the repository's core"
     [ -L ~/.bashrc ] && fail "~/.bashrc was replaced despite the conflict"
     echo "✓ ~/.bashrc left as it was"
 
-    step "5. With the conflicting dotfiles moved aside, YOLO links core, including the new file"
+    step "5. With the conflicting dotfiles moved aside, YOLO links core"
     mv ~/.bashrc ~/.bashrc.orig && mv ~/.profile ~/.profile.orig || fail "cannot move dotfiles aside"
     run_reconfig -y -c "$CONFIG"
     assert_exit 0
-    assert_output_line " LINK: .config/bash_includes/mise_completion.bash => ../../.dotfiles/core/.config/bash_includes/mise_completion.bash"
     assert_output "✓ - Stow applied"
     assert_resolves ~/.bashrc "$REPO_ROOT/core/.bashrc"
-    assert_resolves ~/.config/bash_includes/mise_completion.bash "$REPO_ROOT/$GENERATED"
-    [ -L ~/.config/bash_includes/local.sh ] && fail "local.sh became a link"
-    echo "✓ ~/.config/bash_includes/local.sh left as it was"
 
     step "6. A YOLO rerun has nothing to apply"
     run_reconfig -y -c "$CONFIG"
@@ -184,12 +178,17 @@ run_reconfig_with_input() {
 }
 
 # snapshot describes what reconfig manages and a dry run must not change:
-# the repository's core files, links in the home directory, and Bun's
-# global completion.
+# the repository's core files, links in the home directory, and the
+# completion scripts.
 snapshot() {
-    find core -type f -exec sha256sum {} + | sort
+    core_files
     find ~ \( -path ~/.linuxbrew -o -path ~/.cache \) -prune -o -type l -printf '%p -> %l\n' | sort
-    ls -l "$BUN_COMPLETION" 2>&1
+    find "$COMPLETIONS" -type f -exec sha256sum {} + 2>&1 | sort
+}
+
+# core_files lists the repository's core files with their hashes.
+core_files() {
+    find core -type f -exec sha256sum {} + | sort
 }
 
 # assert_unchanged checks that the snapshot is the given one.
@@ -210,19 +209,34 @@ assert_unchanged_run() {
     for line in "All formulae and casks are up to date" "No missing formulae" "No unwanted formulae" \
         "No missing mise versions" "No mise defaults to change" "No unwanted mise versions" \
         "No strays in mise's global config" "No missing or outdated npm globals" \
-        "No unwanted npm globals" "No completion files to write" "No stow operations"; do
+        "No unwanted npm globals" "No completion scripts to write" "No completion scripts to remove" \
+        "No stow operations"; do
         assert_output_line "✓ - $line"
     done
 }
 
-# assert_bun_completion checks Bun's global completion: a file, not a link,
-# with its regex bug fixed once.
-assert_bun_completion() {
-    [ -f "$BUN_COMPLETION" ] && [ ! -L "$BUN_COMPLETION" ] || fail "$BUN_COMPLETION is not a file"
-    local fixes
-    fixes=$(grep -o 'return; local re_prev_script=' "$BUN_COMPLETION" | wc -l)
-    [ "$fixes" -eq 1 ] || fail "$BUN_COMPLETION has $fixes regex fixes, want 1"
-    echo "✓ bun completion written, fixed once: $BUN_COMPLETION"
+# assert_completions checks the completion scripts: a marked file, not a
+# link, for each tool, and Bun's with its regex bug fixed once.
+assert_completions() {
+    local tool script fixes
+    for tool in $COMPLETED_TOOLS; do
+        script="$COMPLETIONS/$tool"
+        [ -f "$script" ] && [ ! -L "$script" ] || fail "$script is not a file"
+        [ "$(head -1 "$script")" = "$MARKER" ] || fail "$script lacks the marker: $(head -1 "$script")"
+    done
+    echo "✓ completion scripts written, marked: $COMPLETED_TOOLS in $COMPLETIONS"
+    fixes=$(grep -o 'return; local re_prev_script=' "$COMPLETIONS/bun" | wc -l)
+    [ "$fixes" -eq 1 ] || fail "$COMPLETIONS/bun has $fixes regex fixes, want 1"
+    echo "✓ bun's completion fixed once"
+}
+
+# assert_bun_completion_loads checks that bash-completion's loader finds Bun's
+# script in the per-user directory, as a new shell's first bun <Tab> would.
+assert_bun_completion_loads() {
+    local got
+    got=$(bash --noprofile --norc -c 'source "$(brew --prefix)/share/bash-completion/bash_completion"; _comp_load bun && complete -p bun' 2>&1)
+    [ "$got" = "complete -F _bun_completions bun" ] || fail "bash did not load bun's completion: $got"
+    echo "✓ bash loads bun's completion on demand: $got"
 }
 
 # assert_resolves checks that a link leads to the given file.

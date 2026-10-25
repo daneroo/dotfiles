@@ -73,7 +73,7 @@ func reconfig(args []string, stdin *os.File, stdout, stderr io.Writer) int {
 		packages.New(cfg.Homebrew, x),
 		mise.New(cfg.Mise, x),
 		npm.New(cfg.Npm, x),
-		completions.New(generators(repo), func(ctx context.Context) (string, error) { return bunTarget(ctx, x) }, x),
+		completions.New(completions.Dir(home), tools(), x),
 		stow.New(repo, home, x),
 	}
 	runner := run.Runner{Mode: opts.mode, Interactive: interactive(stdin), In: stdin, Out: stdout, Prompt: stderr}
@@ -141,7 +141,7 @@ func usage(w io.Writer) {
 	fmt.Fprintf(w, `Usage: %s [options]
 
 Reconcile this machine with its desired state: Homebrew upgrades and
-packages, mise versioned tools, npm globals, cached shell completions, then
+packages, mise versioned tools, npm globals, shell completions, then
 dotfile links. Each reconciler shows its plan before anything is applied.
 
 Options:
@@ -181,41 +181,23 @@ func targets() (repo, home string, err error) {
 	return repo, home, nil
 }
 
-// generators are the completion scripts cached in the repository, so shells
-// source a file instead of running the tool at startup. Not loaded on demand
-// from the tools' own files: npm's and pnpm's live under versioned Cellar
-// paths that move on every brew upgrade.
-func generators(repo string) []completions.Generator {
-	dir := filepath.Join(repo, stow.Package, ".config", "bash_includes")
-	return []completions.Generator{
-		{Name: "npm", Command: "npm", Args: []string{"completion"}, Target: filepath.Join(dir, "npm_completion.sh")},
-		{Name: "pnpm", Command: "pnpm", Args: []string{"completion", "bash"}, Target: filepath.Join(dir, "pnpm_completion.bash")},
-		{Name: "docker", Command: "docker", Args: []string{"completion", "bash"}, Target: filepath.Join(dir, "docker_completion.bash")},
-		{Name: "mise", Command: "mise", Args: []string{"completion", "bash"}, Target: filepath.Join(dir, "mise_completion.bash")},
+// tools are the commands whose completion scripts reconfig writes to
+// bash-completion's per-user directory, whatever installed them, so bash loads
+// each on demand and no tool runs when a shell starts.
+//
+// Homebrew's own scripts for aws, mise, npm and pnpm load at shell start, from
+// its bash_completion.d, so bash never reads ours for them: they are shadowed.
+// Completion works either way, and ours take over when a tool stops coming
+// from Homebrew. Bun's corrected script relies on Homebrew providing none.
+func tools() []completions.Tool {
+	return []completions.Tool{
+		{Name: "aws", Command: "aws_completer", Script: "complete -C aws_completer aws\n"},
+		completions.Bun,
+		{Name: "docker", Command: "docker", Args: []string{"completion", "bash"}},
+		{Name: "mise", Command: "mise", Args: []string{"completion", "bash"}},
+		{Name: "npm", Command: "npm", Args: []string{"completion"}},
+		{Name: "pnpm", Command: "pnpm", Args: []string{"completion", "bash"}},
 	}
-}
-
-// bunTarget is where Bun's corrected completion goes: "bun" in Homebrew's
-// bash-completion directory, which bash-completion v2 loads on demand.
-// Without Homebrew there is none, and the completions reconciler reports
-// Bun's completion as skipped. It is found when the completions plan, so a
-// failure is that reconciler's planning error.
-func bunTarget(ctx context.Context, x proc.Exec) (string, error) {
-	prefix := os.Getenv("HOMEBREW_PREFIX")
-	if prefix == "" {
-		if _, err := x.LookPath("brew"); err != nil {
-			return "", nil
-		}
-		out, err := x.Output(ctx, proc.Command("brew", "--prefix"))
-		if err != nil {
-			return "", fmt.Errorf("failed to find Homebrew's prefix: %w", err)
-		}
-		prefix = strings.TrimSpace(string(out))
-		if prefix == "" {
-			return "", fmt.Errorf("failed to find Homebrew's prefix: brew --prefix printed nothing")
-		}
-	}
-	return filepath.Join(prefix, "share", "bash-completion", "completions", "bun"), nil
 }
 
 // interactive reports whether input is a terminal, where someone can answer
