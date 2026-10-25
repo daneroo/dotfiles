@@ -209,7 +209,7 @@ assert_unchanged_run() {
     for line in "All formulae and casks are up to date" "No missing formulae" "No unwanted formulae" \
         "No missing mise versions" "No mise defaults to change" "No unwanted mise versions" \
         "No strays in mise's global config" "No missing or outdated npm globals" \
-        "No unwanted npm globals" "No completion files to write" "No completion files to remove" \
+        "No unwanted npm globals" "No completion scripts to write" "No completion scripts to remove" \
         "No stow operations"; do
         assert_output_line "✓ - $line"
     done

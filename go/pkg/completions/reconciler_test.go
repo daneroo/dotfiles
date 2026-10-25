@@ -182,16 +182,16 @@ func TestApplyThenUnchangedRerun(t *testing.T) {
 	want := `
 ## CLI Completions Section
 
-✗ - bun completions are missing ($ROOT/completions/bun)
-✗ - docker completions are missing ($ROOT/completions/docker)
-✗ - newtool completions are outdated ($ROOT/completions/newtool)
-△ - pnpm is not installed, skipping its completions
+✗ - bun completion script is missing ($ROOT/completions/bun)
+✗ - docker completion script is missing ($ROOT/completions/docker)
+✗ - newtool completion script is outdated ($ROOT/completions/newtool)
+△ - pnpm is not installed, skipping its completion script
 
-✗ - Completion files to write: (3)
+✗ - Completion scripts to write: (3)
  write $ROOT/completions/bun
  write $ROOT/completions/docker
  write $ROOT/completions/newtool
-✓ - No completion files to remove
+✓ - No completion scripts to remove
 ✓ - CLI Completions applied
 `
 	if out != want {
@@ -221,13 +221,13 @@ func TestApplyThenUnchangedRerun(t *testing.T) {
 	want = `
 ## CLI Completions Section
 
-✓ - bun completions are up to date ($ROOT/completions/bun)
-✓ - docker completions are up to date ($ROOT/completions/docker)
-✓ - newtool completions are up to date ($ROOT/completions/newtool)
-△ - pnpm is not installed, skipping its completions
+✓ - bun completion script is up to date ($ROOT/completions/bun)
+✓ - docker completion script is up to date ($ROOT/completions/docker)
+✓ - newtool completion script is up to date ($ROOT/completions/newtool)
+△ - pnpm is not installed, skipping its completion script
 
-✓ - No completion files to write
-✓ - No completion files to remove
+✓ - No completion scripts to write
+✓ - No completion scripts to remove
 `
 	if out != want {
 		t.Errorf("rerun output =\n%s\nwant\n%s", out, want)
@@ -266,7 +266,7 @@ func TestLinkIsReplaced(t *testing.T) {
 		t.Fatal(err)
 	}
 	res, out := f.reconcile(context.Background(), run.Yolo)
-	if !strings.Contains(out, "✗ - docker completions: $ROOT/completions/docker is a symlink, to be replaced by a file\n") || res.ExitCode() != 0 {
+	if !strings.Contains(out, "✗ - docker completion script: $ROOT/completions/docker is a symlink, to be replaced by a file\n") || res.ExitCode() != 0 {
 		t.Errorf("exit code %d, output:\n%s", res.ExitCode(), out)
 	}
 	info, err := os.Lstat(f.path("completions", "docker"))
@@ -290,7 +290,7 @@ func TestFixedScript(t *testing.T) {
 	var out strings.Builder
 	res := run.Runner{Mode: run.Yolo, Out: &out}.Run(context.Background(),
 		[]run.Reconciler{completions.New(f.path("completions"), tools, proc.OS{})})
-	if res.ExitCode() != 0 || !strings.Contains(out.String(), "△ - gone is not installed, skipping its completions\n") {
+	if res.ExitCode() != 0 || !strings.Contains(out.String(), "△ - gone is not installed, skipping its completion script\n") {
 		t.Errorf("exit code %d, output:\n%s", res.ExitCode(), out.String())
 	}
 	if got, want := f.read("completions/aws"), marker+"complete -C aws_completer aws\n"; got != want {
@@ -315,8 +315,8 @@ func TestUnlistedScriptsAreRemoved(t *testing.T) {
 
 	res, out := f.reconcile(context.Background(), run.DryRun)
 	for _, line := range []string{
-		"✗ - old completions are no longer listed ($ROOT/completions/old)\n",
-		"✗ - Completion files to remove: (1)\n remove $ROOT/completions/old\n",
+		"✗ - old completion script is no longer listed ($ROOT/completions/old)\n",
+		"✗ - Completion scripts to remove: (1)\n remove $ROOT/completions/old\n",
 	} {
 		if !strings.Contains(out, line) {
 			t.Errorf("dry run output lacks %q:\n%s", line, out)
@@ -346,7 +346,7 @@ func TestUnlistedScriptsAreRemoved(t *testing.T) {
 	}
 
 	_, out = f.reconcile(context.Background(), run.Yolo)
-	if !strings.Contains(out, "✓ - No completion files to remove\n") {
+	if !strings.Contains(out, "✓ - No completion scripts to remove\n") {
 		t.Errorf("rerun output still removes:\n%s", out)
 	}
 }
@@ -389,7 +389,7 @@ func TestMissingToolsAreSkipped(t *testing.T) {
 	}
 	res, out := f.reconcile(context.Background(), run.Yolo)
 	for _, name := range []string{"bun", "docker", "newtool", "pnpm"} {
-		if !strings.Contains(out, "△ - "+name+" is not installed, skipping its completions\n") {
+		if !strings.Contains(out, "△ - "+name+" is not installed, skipping its completion script\n") {
 			t.Errorf("output lacks %s's skip:\n%s", name, out)
 		}
 	}

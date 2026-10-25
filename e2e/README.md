@@ -9,9 +9,10 @@ This directory contains end-to-end tests for the dotfiles repository using Docke
 The scenario runs `reconfig` in a fresh container from the official
 `ghcr.io/homebrew/ubuntu26.04` image, against its own small staged desired
 states. `e2e/config.yaml` has a few Linux-compatible formulae, including its
-own prerequisites (mise, node for npm, and stow) and bash-completion@2, which
-proves bash loads the completion scripts reconfig writes, no casks, bun at `latest`
-through mise, and one tiny npm global plus npm itself, which comes with node.
+own prerequisites (mise, node for npm, and stow) and bash-completion@2,
+which proves bash loads the completion scripts reconfig writes, no casks,
+bun at `latest` through mise, and one tiny npm global plus npm itself, which
+comes with node.
 `e2e/config.stray.yaml` adds jq through mise, so going back leaves a stray.
 The Ubuntu version matters: current bottles need the glibc of Ubuntu 24.04 or newer;
 on older images brew installs its own glibc and gcc first.

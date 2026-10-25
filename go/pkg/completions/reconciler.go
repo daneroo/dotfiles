@@ -106,7 +106,7 @@ func (r *Reconciler) Plan(ctx context.Context) (run.Plan, error) {
 	}
 	for _, name := range unlisted {
 		path := filepath.Join(r.dir, name)
-		p.notes = append(p.notes, run.Note{Mark: run.Problem, Text: fmt.Sprintf("%s completions are no longer listed (%s)", name, path)})
+		p.notes = append(p.notes, run.Note{Mark: run.Problem, Text: fmt.Sprintf("%s completion script is no longer listed (%s)", name, path)})
 		p.removes = append(p.removes, path)
 	}
 	return p, nil
@@ -120,7 +120,7 @@ func unlistedScripts(dir string, listed map[string]bool) ([]string, error) {
 		return nil, nil
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to list completions in %s: %w", dir, err)
+		return nil, fmt.Errorf("failed to list completion scripts in %s: %w", dir, err)
 	}
 	var names []string
 	for _, e := range entries {
@@ -153,24 +153,33 @@ func hasMarker(path string) (bool, error) {
 	return string(head[:n]) == Marker, nil
 }
 
-// script produces a tool's marked script; ok is false when the tool is
-// missing.
+// script produces a tool's marked script, one of three ways: Bun's own
+// generation, a fixed script, or the tool's command. ok is false when the
+// tool is missing.
 func (r *Reconciler) script(ctx context.Context, p *completionsPlan, t Tool) (script []byte, ok bool, err error) {
-	if t.bun {
+	switch {
+	case t.bun:
 		script, ok, err = r.bunScript(ctx, p)
-	} else {
-		var cmd proc.Cmd
-		if cmd, ok = r.resolve(ctx, t.Command); ok && t.Script != "" {
-			script = []byte(t.Script)
-		} else if ok {
-			cmd.Args = t.Args
-			script, err = generate(ctx, r.x, t.Name, cmd)
-		}
+	case t.Script != "":
+		script, ok = []byte(t.Script), r.installed(ctx, t.Command)
+	default:
+		script, ok, err = r.generated(ctx, t)
 	}
 	if !ok || err != nil {
 		return nil, ok, err
 	}
 	return append([]byte(Marker), script...), true, nil
+}
+
+// generated runs the tool's command to print its script.
+func (r *Reconciler) generated(ctx context.Context, t Tool) ([]byte, bool, error) {
+	cmd, ok := r.resolve(ctx, t.Command)
+	if !ok {
+		return nil, false, nil
+	}
+	cmd.Args = t.Args
+	script, err := generate(ctx, r.x, t.Name, cmd)
+	return script, true, err
 }
 
 // bunScript generates Bun's script with bug 2 fixed.
@@ -188,6 +197,15 @@ func (r *Reconciler) bunScript(ctx context.Context, p *completionsPlan) ([]byte,
 		p.notes = append(p.notes, run.Note{Mark: run.Info, Text: "bun: its completion script no longer has the known regex bug, nothing to fix"})
 	}
 	return script, true, nil
+}
+
+// installed reports whether a tool is on PATH or installed through mise.
+func (r *Reconciler) installed(ctx context.Context, name string) bool {
+	if _, err := r.x.LookPath(name); err == nil {
+		return true
+	}
+	_, ok := r.miseWhich(ctx, name)
+	return ok
 }
 
 // resolve finds a tool on PATH or, when the tool was installed earlier in
@@ -241,10 +259,10 @@ func (r *Reconciler) miseWhich(ctx context.Context, name string) (string, bool) 
 func generate(ctx context.Context, x proc.Exec, name string, c proc.Cmd) ([]byte, error) {
 	out, err := x.Output(ctx, c)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get %s completion: %w", name, err)
+		return nil, fmt.Errorf("failed to get %s completion script: %w", name, err)
 	}
 	if len(bytes.TrimSpace(out)) == 0 {
-		return nil, fmt.Errorf("failed to get %s completion: %s printed nothing", name, c)
+		return nil, fmt.Errorf("failed to get %s completion script: %s printed nothing", name, c)
 	}
 	return out, nil
 }
@@ -340,7 +358,7 @@ type write struct {
 
 // skip notes a missing tool.
 func (p *completionsPlan) skip(name string) {
-	p.notes = append(p.notes, run.Note{Mark: run.Info, Text: name + " is not installed, skipping its completions"})
+	p.notes = append(p.notes, run.Note{Mark: run.Info, Text: name + " is not installed, skipping its completion script"})
 }
 
 // compare notes whether the target already holds the script, and plans to
@@ -350,23 +368,23 @@ func (p *completionsPlan) compare(name, target string, script []byte) error {
 	info, err := os.Lstat(target)
 	switch {
 	case errors.Is(err, fs.ErrNotExist):
-		p.notes = append(p.notes, run.Note{Mark: run.Problem, Text: fmt.Sprintf("%s completions are missing (%s)", name, target)})
+		p.notes = append(p.notes, run.Note{Mark: run.Problem, Text: fmt.Sprintf("%s completion script is missing (%s)", name, target)})
 	case err != nil:
-		return fmt.Errorf("failed to check %s completions: %w", name, err)
+		return fmt.Errorf("failed to check %s completion script: %w", name, err)
 	case info.Mode()&fs.ModeSymlink != 0:
-		p.notes = append(p.notes, run.Note{Mark: run.Problem, Text: fmt.Sprintf("%s completions: %s is a symlink, to be replaced by a file", name, target)})
+		p.notes = append(p.notes, run.Note{Mark: run.Problem, Text: fmt.Sprintf("%s completion script: %s is a symlink, to be replaced by a file", name, target)})
 	case !info.Mode().IsRegular():
-		return fmt.Errorf("failed to check %s completions: %s is not a regular file", name, target)
+		return fmt.Errorf("failed to check %s completion script: %s is not a regular file", name, target)
 	default:
 		current, err := os.ReadFile(target)
 		if err != nil {
-			return fmt.Errorf("failed to read %s completions: %w", name, err)
+			return fmt.Errorf("failed to read %s completion script: %w", name, err)
 		}
 		if bytes.Equal(current, script) {
-			p.notes = append(p.notes, run.Note{Mark: run.OK, Text: fmt.Sprintf("%s completions are up to date (%s)", name, target)})
+			p.notes = append(p.notes, run.Note{Mark: run.OK, Text: fmt.Sprintf("%s completion script is up to date (%s)", name, target)})
 			return nil
 		}
-		p.notes = append(p.notes, run.Note{Mark: run.Problem, Text: fmt.Sprintf("%s completions are outdated (%s)", name, target)})
+		p.notes = append(p.notes, run.Note{Mark: run.Problem, Text: fmt.Sprintf("%s completion script is outdated (%s)", name, target)})
 	}
 	p.writes = append(p.writes, write{target: target, script: script})
 	return nil
@@ -374,11 +392,11 @@ func (p *completionsPlan) compare(name, target string, script []byte) error {
 
 // Report describes the plan.
 func (p *completionsPlan) Report() run.Report {
-	writes := run.Group{Title: "Completion files to write"}
+	writes := run.Group{Title: "Completion scripts to write"}
 	for _, w := range p.writes {
 		writes.Actions = append(writes.Actions, "write "+w.target)
 	}
-	removes := run.Group{Title: "Completion files to remove"}
+	removes := run.Group{Title: "Completion scripts to remove"}
 	for _, path := range p.removes {
 		removes.Actions = append(removes.Actions, "remove "+path)
 	}

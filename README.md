@@ -32,9 +32,10 @@ This repo is for managing:
     unwanted ones
   - Shell completions: writes the completion scripts of aws, bun (corrected),
     docker, mise, npm and pnpm to bash-completion's per-user directory,
-    `~/.local/share/bash-completion/completions`, where bash loads each on
-    demand, on its first Tab; only changed files are written, and scripts of
-    tools no longer listed are removed. Other files there are never touched
+    `${XDG_DATA_HOME:-~/.local/share}/bash-completion/completions`, where bash
+    loads each on demand, on its first Tab; only changed scripts are written,
+    and scripts of tools no longer listed are removed. Other files there are
+    never touched
   - Dotfiles: **GNU Stow** links `core/` into `~`; dead links in `~` are
     reported, never changed
   - Common features across all reconcilers:
