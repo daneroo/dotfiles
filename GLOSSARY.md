@@ -66,6 +66,21 @@ desired state is reported and skipped rather than reconciled: its plan, or that
 part of it, is unavailable.
 _Avoid_: Missing dependency
 
+**Completion script**:
+The Bash code that completes a tool's commands and arguments on Tab. Reconfig
+produces one for each tool it manages completions for.
+_Avoid_: Completion file, cached completion
+
+**On-demand loading**:
+Bash reads a tool's completion script the first time that tool is completed,
+not when the shell starts.
+_Avoid_: Lazy loading, autoload
+
+**Shadowed**:
+A completion script that bash never reads, because another script for the same
+tool was already loaded when the shell started. Completion still works.
+_Avoid_: Overridden, duplicate
+
 **Versioned tool**:
 A program the machine keeps at specific versions, possibly several side by
 side, one of them the default. Python and Bun are versioned tools.
