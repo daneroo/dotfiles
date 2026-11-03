@@ -169,9 +169,10 @@ homebrew:
     # - steipete/tap/codexbar
     - ghostty
     - google-drive
+    - anomalyco/tap/hex # local voice dictation (replaces macwhisper)
     - livebook
     - losslesscut
-    - macwhisper
+    # - macwhisper # replaced by Hex (anomalyco/hex)
     # Moonlioght is a streaming client for Sunshine (I us it on omarchy)
     - moonlight
     - opencode-desktop
