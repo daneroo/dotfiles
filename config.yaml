@@ -167,6 +167,7 @@ homebrew:
     - codex # openai cl1
     # codexbar: prefer OpenUsage.app
     # - steipete/tap/codexbar
+    - deltachat # to chat with Peter over Iroh
     - ghostty
     - google-drive
     - anomalyco/tap/hex # local voice dictation (replaces macwhisper)
@@ -181,8 +182,8 @@ homebrew:
     - pearcleaner
     - rustdesk
     - stats
-    # Theo's agent harness - not quite yet
-    # - t3-code
+    # Theo's control plane
+    - t3-code
     - visual-studio-code
     - vlc
     # Previously Microsoft Remote Desktop
